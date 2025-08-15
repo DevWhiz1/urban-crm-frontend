@@ -16,6 +16,8 @@ import { MaterialPaymentForm } from './components/MaterialPaymentForm';
 import { ProjectPaymentForm } from './components/ProjectPaymentForm';
 import { ProjectPaymentSummary } from './components/ProjectPaymentSummary';
 import { ProjectContractPayments } from './components/ProjectContractPayments';
+import { AddUser } from './components/users/AddUser';
+import { UsersList } from './components/users/UsersList';
 
 function App() {
   return (
@@ -46,8 +48,8 @@ function App() {
             <Route path="payments/material" element={<MaterialPaymentForm />} />
             <Route path="payments/project" element={<ProjectPaymentForm />} />
             <Route path="payments" element={<ProjectPaymentSummary />} />
-            <Route path="users" element={<div className="p-6"><h1 className="text-2xl font-bold">All Users</h1><p className="text-gray-600 mt-2">Users list will be implemented here.</p></div>} />
-            <Route path="users/add" element={<div className="p-6"><h1 className="text-2xl font-bold">Add User</h1><p className="text-gray-600 mt-2">Add user form will be implemented here.</p></div>} />
+            <Route path="users" element={<UsersList />} />
+            <Route path="users/add" element={<AddUser />} />
             <Route path="reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reports</h1><p className="text-gray-600 mt-2">Reports and analytics will be implemented here.</p></div>} />
             <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-gray-600 mt-2">Application settings will be implemented here.</p></div>} />
           </Route>
