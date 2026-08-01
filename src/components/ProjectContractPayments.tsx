@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   Building, 
   Handshake, 
@@ -445,23 +446,23 @@ export const ProjectContractPayments: React.FC = () => {
   // Contract Payment Summary View
   if (selectedContract) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-100 py-8 px-4">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
         <div className="max-w-7xl mx-auto">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboard', path: '/dashboard' },
+              { label: 'Payments', path: '/dashboard/payments' },
+              { label: 'Contractor Payments', onClick: handleBackToProjects },
+              { label: selectedContract.projectName, onClick: handleBackToContracts },
+              { label: selectedContract.contractorName }
+            ]}
+          />
+
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button
-                variant="outline"
-                onClick={handleBackToContracts}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Contracts
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{selectedContract.contractorName}</h1>
-                <p className="text-gray-600">{selectedContract.projectName} - Contract Payment Summary</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{selectedContract.contractorName}</h1>
+              <p className="text-gray-600">{selectedContract.projectName} - Contract Payment Summary</p>
             </div>
             <Button
               variant="outline"
@@ -475,7 +476,7 @@ export const ProjectContractPayments: React.FC = () => {
 
           {/* Summary Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Contract Amount</p>
@@ -487,7 +488,7 @@ export const ProjectContractPayments: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Payments</p>
@@ -499,7 +500,7 @@ export const ProjectContractPayments: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Net Amount</p>
@@ -513,7 +514,7 @@ export const ProjectContractPayments: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Payments</p>
@@ -527,8 +528,8 @@ export const ProjectContractPayments: React.FC = () => {
           </div>
 
           {/* Contract Details */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 mb-8 overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-600 to-amber-600 px-8 py-6">
+          <div className="bg-white rounded-2xl border border-gray-200 mb-8 overflow-hidden">
+            <div className="bg-orange-600 px-8 py-6">
               <h2 className="text-xl font-semibold text-white">Contract Details</h2>
             </div>
             <div className="p-6">
@@ -556,7 +557,7 @@ export const ProjectContractPayments: React.FC = () => {
           </div>
 
           {/* Payments List */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900">Payment History ({selectedContract.payments.length})</h2>
             </div>
@@ -644,23 +645,22 @@ export const ProjectContractPayments: React.FC = () => {
   // Project Contracts List View
   if (selectedProject) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-100 py-8 px-4">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
         <div className="max-w-6xl mx-auto">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboard', path: '/dashboard' },
+              { label: 'Payments', path: '/dashboard/payments' },
+              { label: 'Contractor Payments', onClick: handleBackToProjects },
+              { label: selectedProject.name }
+            ]}
+          />
+
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button
-                variant="outline"
-                onClick={handleBackToProjects}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Projects
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{selectedProject.name}</h1>
-                <p className="text-gray-600">Project Contracts</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{selectedProject.name}</h1>
+              <p className="text-gray-600">Project Contracts</p>
             </div>
           </div>
 
@@ -680,7 +680,7 @@ export const ProjectContractPayments: React.FC = () => {
               {contracts.map((contract) => (
                 <div
                   key={contract._id}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-white rounded-xl border border-gray-200 p-6 transition-shadow cursor-pointer"
                   onClick={() => handleContractClick(contract._id)}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -741,8 +741,16 @@ export const ProjectContractPayments: React.FC = () => {
 
   // Projects List View
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Payments', path: '/dashboard/payments' },
+            { label: 'Contractor Payments' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-600 rounded-full mb-4">
@@ -782,7 +790,7 @@ export const ProjectContractPayments: React.FC = () => {
             {filteredProjects.map((project) => (
               <div
                 key={project._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-xl border border-gray-200 p-6 transition-shadow cursor-pointer"
                 onClick={() => handleProjectClick(project._id)}
               >
                 <div className="flex items-start justify-between mb-4">

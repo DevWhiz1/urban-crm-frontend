@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   Building, 
   DollarSign, 
@@ -277,23 +278,21 @@ export const ProjectPaymentSummary: React.FC = () => {
 
   if (selectedProject) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
         <div className="max-w-7xl mx-auto">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboard', path: '/dashboard' },
+              { label: 'Payments', onClick: handleBackToProjects },
+              { label: selectedProject.projectName }
+            ]}
+          />
+
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button
-                variant="outline"
-                onClick={handleBackToProjects}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Projects
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{selectedProject.projectName}</h1>
-                <p className="text-gray-600">Payment Summary & Details</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{selectedProject.projectName}</h1>
+              <p className="text-gray-600">Payment Summary & Details</p>
             </div>
             <div className="flex gap-3">
               <Button
@@ -317,7 +316,7 @@ export const ProjectPaymentSummary: React.FC = () => {
 
           {/* Summary Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Project Cost</p>
@@ -329,7 +328,7 @@ export const ProjectPaymentSummary: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Received</p>
@@ -341,9 +340,8 @@ export const ProjectPaymentSummary: React.FC = () => {
               </div>
             </div>
 
-
             
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Debits</p>
@@ -356,7 +354,7 @@ export const ProjectPaymentSummary: React.FC = () => {
             </div>
 
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Material Payments</p>
@@ -368,7 +366,7 @@ export const ProjectPaymentSummary: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Net Amount</p>
@@ -384,7 +382,7 @@ export const ProjectPaymentSummary: React.FC = () => {
           </div>
 
           {/* Tabs */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="border-b border-gray-200">
               <nav className="flex">
                 <button
@@ -539,7 +537,7 @@ export const ProjectPaymentSummary: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -580,7 +578,7 @@ export const ProjectPaymentSummary: React.FC = () => {
             {filteredProjects.map((project) => (
               <div
                 key={project._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-xl border border-gray-200 p-6 transition-shadow cursor-pointer"
                 onClick={() => handleProjectClick(project._id)}
               >
                 <div className="flex items-start justify-between mb-4">

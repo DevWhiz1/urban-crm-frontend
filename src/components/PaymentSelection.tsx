@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   CreditCard, 
   Wrench, 
@@ -18,7 +19,7 @@ export const PaymentSelection: React.FC = () => {
       title: 'Add Payment for Contractor',
       description: 'Record payments made to contractors for project work and services',
       icon: Wrench,
-      color: 'from-blue-600 to-indigo-600',
+      color: 'bg-blue-600',
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600',
       path: '/dashboard/payments/contractor'
@@ -28,7 +29,7 @@ export const PaymentSelection: React.FC = () => {
       title: 'Add Material Payment',
       description: 'Record payments for materials, supplies, and equipment purchases',
       icon: Package,
-      color: 'from-green-600 to-emerald-600',
+      color: 'bg-green-600',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600',
       path: '/dashboard/payments/material'
@@ -38,7 +39,7 @@ export const PaymentSelection: React.FC = () => {
       title: 'Add Payment for Project',
       description: 'Record general project payments and miscellaneous expenses',
       icon: Building,
-      color: 'from-purple-600 to-violet-600',
+      color: 'bg-purple-600',
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600',
       path: '/dashboard/payments/project'
@@ -46,11 +47,19 @@ export const PaymentSelection: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Payments', path: '/dashboard/payments' },
+            { label: 'Select Payment Type' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-6">
             <CreditCard className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Payment Management</h1>
@@ -65,10 +74,10 @@ export const PaymentSelection: React.FC = () => {
             <Link
               key={type.id}
               to={type.path}
-              className="group relative bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              className="group relative bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300 transform hover:-translate-y-2"
             >
-              {/* Gradient Header */}
-              <div className={`h-32 bg-gradient-to-r ${type.color} relative overflow-hidden`}>
+              {/* Header */}
+              <div className={`h-32 ${type.color} relative overflow-hidden`}>
                 <div className="absolute inset-0 bg-black/10"></div>
                 <div className="relative z-10 p-6 h-full flex items-center justify-center">
                   <type.icon className="w-12 h-12 text-white" />
@@ -106,7 +115,7 @@ export const PaymentSelection: React.FC = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Payment Overview</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-6 bg-blue-50 rounded-xl">

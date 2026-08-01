@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
-  FileText, 
-  Handshake, 
-  Building, 
-  Users, 
-  Calculator, 
-  Calendar, 
+  X,
+  Handshake,
+  Building,
+  User,
+  FileText,
+  Calendar,
   DollarSign,
-  Wrench,
-  CheckCircle,
-  AlertTriangle,
-  Clock,
   Edit3
 } from 'lucide-react';
 import { Button } from './ui/Button';
@@ -19,11 +14,30 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { createProjectContract, fetchProjects, fetchContractorsForContract } from '../services/projectContractApi';
+import { 
+  createProjectContract, 
+  updateProjectContract, 
+  fetchProjects, 
+  fetchContractorsForContract 
+} from '../services/projectContractApi';
 import { validateProjectContractForm, hasProjectContractErrors, formatPKRCurrency } from '../utils/projectContractValidation';
-import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption } from '../types/projectContract';
+import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption, ProjectContract } from '../types/projectContract';
 
-export const ProjectContractForm: React.FC = () => {
+interface ProjectContractModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (contract: ProjectContract) => void;
+  contract?: ProjectContract;
+  mode: 'add' | 'edit';
+}
+
+export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  contract,
+  mode
+}) => {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [contractors, setContractors] = useState<ContractorOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,20 +49,36 @@ export const ProjectContractForm: React.FC = () => {
   });
 
   const [formData, setFormData] = useState<ProjectContractFormData>({
-    project: '',
-    contractor: '',
-    contractType: '',
-    totalAmount: '',
-    startDate: '',
-    endDate: '',
-    Description: ''
+    project: contract?.project?._id || contract?.project || '',
+    contractor: contract?.contractor?._id || contract?.contractor || '',
+    contractType: contract?.contractType || '',
+    totalAmount: contract?.totalAmount?.toString() || '',
+    startDate: contract?.startDate || '',
+    endDate: contract?.endDate || '',
+    Description: contract?.Description || ''
   });
 
   const [errors, setErrors] = useState<ProjectContractFormErrors>({});
 
   useEffect(() => {
-    loadInitialData();
-  }, []);
+    if (isOpen) {
+      loadInitialData();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (contract && mode === 'edit') {
+      setFormData({
+        project: contract.project?._id || contract.project || '',
+        contractor: contract.contractor?._id || contract.contractor || '',
+        contractType: contract.contractType || '',
+        totalAmount: contract.totalAmount?.toString() || '',
+        startDate: contract.startDate || '',
+        endDate: contract.endDate || '',
+        Description: contract.Description || ''
+      });
+    }
+  }, [contract, mode]);
 
   const loadInitialData = async () => {
     try {
@@ -103,28 +133,34 @@ export const ProjectContractForm: React.FC = () => {
 
     try {
       setLoading(true);
-      await createProjectContract(formData);
       
-      // Reset form
-      setFormData({
-        project: '',
-        contractor: '',
-        contractType: '',
-        totalAmount: '',
-        startDate: '',
-        endDate: '',
-        Description: ''
-      });
-      
-      showNotification('success', 'Project contract created successfully!');
+      if (mode === 'edit' && contract) {
+        const updatedContract = await updateProjectContract(contract._id, formData);
+        showNotification('success', 'Project contract updated successfully!');
+        onSave(updatedContract);
+      } else {
+        await createProjectContract(formData);
+        showNotification('success', 'Project contract created successfully!');
+        // Reset form for add mode
+        setFormData({
+          project: '',
+          contractor: '',
+          contractType: '',
+          totalAmount: '',
+          startDate: '',
+          endDate: '',
+          Description: ''
+        });
+        onSave({} as ProjectContract); // Trigger parent to refresh list
+      }
     } catch (error) {
-      showNotification('error', 'Failed to create project contract. Please try again.');
+      showNotification('error', `Failed to ${mode === 'edit' ? 'update' : 'create'} project contract. Please try again.`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReset = () => {
+  const handleClose = () => {
     setFormData({
       project: '',
       contractor: '',
@@ -135,6 +171,7 @@ export const ProjectContractForm: React.FC = () => {
       Description: ''
     });
     setErrors({});
+    onClose();
   };
 
   const projectOptions = projects.map(project => ({
@@ -150,43 +187,48 @@ export const ProjectContractForm: React.FC = () => {
   const selectedProject = projects.find(p => p._id === formData.project);
   const selectedContractor = contractors.find(c => c._id === formData.contractor);
 
+  if (!isOpen) return null;
+
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <Breadcrumbs
-          items={[
-            { label: 'Dashboard', path: '/dashboard' },
-            { label: 'Project Contracts', path: '/dashboard/project-contracts' },
-            { label: 'Create Project Contract' }
-          ]}
-        />
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        {/* Background overlay */}
+        <div 
+          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          onClick={handleClose}
+        ></div>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-600 rounded-full mb-4">
-            <Handshake className="w-8 h-8 text-white" />
+        {/* Modal panel */}
+        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden border border-gray-200 transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+          {/* Header */}
+          <div className="bg-orange-600 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <Handshake className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  {mode === 'edit' ? 'Edit Project Contract' : 'Create Project Contract'}
+                </h3>
+              </div>
+              <button
+                onClick={handleClose}
+                className="text-white hover:text-orange-200 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Project Contract</h1>
-          <p className="text-gray-600">Assign contractors to projects with rate and area specifications</p>
-        </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="bg-orange-600 px-8 py-6">
-            <h2 className="text-xl font-semibold text-white">Contract Details</h2>
-            <p className="text-orange-100 mt-1">Specify terms, rates, and coverage area for the contractor</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8">
-            <div className="space-y-8">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-6">
               {/* Project & Contractor Selection */}
               <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Building className="w-4 h-4 text-orange-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">Project & Contractor Assignment</h3>
-                </div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Building className="w-4 h-4 text-orange-600" />
+                  Project & Contractor Assignment
+                </h4>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
@@ -235,12 +277,10 @@ export const ProjectContractForm: React.FC = () => {
 
               {/* Contract Details */}
               <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">Contract Details</h3>
-                </div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Contract Details
+                </h4>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
@@ -286,12 +326,10 @@ export const ProjectContractForm: React.FC = () => {
 
               {/* Timeline */}
               <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">Contract Timeline</h3>
-                </div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-purple-600" />
+                  Contract Timeline
+                </h4>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Input
@@ -315,12 +353,10 @@ export const ProjectContractForm: React.FC = () => {
 
               {/* Description */}
               <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-gray-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">Contract Description</h3>
-                </div>
+                <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-600" />
+                  Contract Description
+                </h4>
                 
                 <Textarea
                   label="Description"
@@ -334,15 +370,15 @@ export const ProjectContractForm: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-end mt-12 pt-8 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end mt-8 pt-6 border-t border-gray-200">
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleReset}
+                onClick={handleClose}
                 disabled={loading}
                 className="sm:w-auto w-full"
               >
-                Reset Form
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -350,61 +386,10 @@ export const ProjectContractForm: React.FC = () => {
                 disabled={loadingData}
                 className="sm:w-auto w-full bg-orange-600 hover:bg-orange-700 focus:ring-orange-500"
               >
-                Create Contract
+                {mode === 'edit' ? 'Update Contract' : 'Create Contract'}
               </Button>
             </div>
           </form>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Available Projects</p>
-                <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Wrench className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Available Contractors</p>
-                <p className="text-2xl font-bold text-gray-900">{contractors.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Handshake className="w-5 h-5 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Contracts</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Currency</p>
-                <p className="text-2xl font-bold text-gray-900">PKR</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { Mail, Lock, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -85,7 +86,14 @@ export const AddUser: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+    <div className="w-full max-w-md mx-auto p-8 bg-white rounded-2xl border border-gray-200">
+      <Breadcrumbs
+        items={[
+          { label: 'Dashboard', path: '/dashboard' },
+          { label: 'Users', path: '/dashboard/users' },
+          { label: 'Add New User' }
+        ]}
+      />
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Add New User</h2>
         <p className="text-gray-600">Fill in the details to create a new user</p>

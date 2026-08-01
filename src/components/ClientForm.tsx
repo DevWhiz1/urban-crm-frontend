@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { Users, UserCheck, CreditCard, MapPin, Phone, Banknote } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -121,8 +122,16 @@ export const ClientForm: React.FC = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Clients', path: '/dashboard/clients' },
+            { label: 'Add New Client' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
@@ -133,8 +142,8 @@ export const ClientForm: React.FC = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-6">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-green-600 px-8 py-6">
             <h2 className="text-xl font-semibold text-white">Client Information</h2>
             <p className="text-green-100 mt-1">Fill in the details below to create a new client profile</p>
           </div>
@@ -249,7 +258,7 @@ export const ClientForm: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-green-600" />
@@ -261,7 +270,7 @@ export const ClientForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <UserCheck className="w-5 h-5 text-blue-600" />
@@ -273,7 +282,7 @@ export const ClientForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-purple-600" />

@@ -1,144 +1,390 @@
-import React from 'react';
-import { Users, Wrench, FileText, TrendingUp, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { 
+  Users, 
+  Wrench, 
+  TrendingUp, 
+  AlertCircle, 
+  Clock,
+  DollarSign,
+  Building,
+  UserCheck,
+  Activity,
+  BarChart3,
+  PieChart,
+  ArrowUpRight,
+  RefreshCw,
+  Eye,
+  Star,
+  CreditCard,
+  Banknote,
+  Target
+} from 'lucide-react';
+import { fetchDashboardStats, DashboardStats } from '../../services/dashboardApi';
+import { PaymentAnalytics } from './PaymentAnalytics';
 
 export const Dashboard: React.FC = () => {
-  // const stats = [
-  //   { label: 'Total Contractors', value: '24', icon: Wrench, color: 'bg-blue-500', change: '+12%' },
-  //   { label: 'Active Projects', value: '8', icon: FileText, color: 'bg-green-500', change: '+5%' },
-  //   { label: 'Team Members', value: '16', icon: Users, color: 'bg-purple-500', change: '+8%' },
-  //   { label: 'Monthly Revenue', value: '$45.2K', icon: TrendingUp, color: 'bg-orange-500', change: '+15%' }
-  // ];
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // const recentProjects = [
-  //   { name: 'Downtown Office Complex', status: 'In Progress', progress: 75, dueDate: '2024-02-15' },
-  //   { name: 'Residential Villa', status: 'Planning', progress: 25, dueDate: '2024-03-01' },
-  //   { name: 'Shopping Mall Renovation', status: 'Completed', progress: 100, dueDate: '2024-01-20' },
-  //   { name: 'Industrial Warehouse', status: 'In Progress', progress: 60, dueDate: '2024-02-28' }
-  // ];
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
 
-  // const recentActivities = [
-  //   { action: 'New contractor added', user: 'John Smith', time: '2 hours ago', type: 'success' },
-  //   { action: 'Project milestone completed', user: 'Sarah Johnson', time: '4 hours ago', type: 'success' },
-  //   { action: 'Payment pending review', user: 'Mike Wilson', time: '6 hours ago', type: 'warning' },
-  //   { action: 'New user registered', user: 'Emma Davis', time: '1 day ago', type: 'info' }
-  // ];
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const dashboardData = await fetchDashboardStats();
+      setStats(dashboardData);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // const getStatusColor = (status: string) => {
-  //   switch (status) {
-  //     case 'Completed': return 'text-green-600 bg-green-100';
-  //     case 'In Progress': return 'text-blue-600 bg-blue-100';
-  //     case 'Planning': return 'text-orange-600 bg-orange-100';
-  //     default: return 'text-gray-600 bg-gray-100';
-  //   }
-  // };
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-  // const getActivityIcon = (type: string) => {
-  //   switch (type) {
-  //     case 'success': return <CheckCircle className="w-4 h-4 text-green-500" />;
-  //     case 'warning': return <AlertCircle className="w-4 h-4 text-orange-500" />;
-  //     default: return <Clock className="w-4 h-4 text-blue-500" />;
-  //   }
-  // };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Dashboard</h3>
+            <p className="text-gray-600 mb-4">Unable to load dashboard statistics. Please try again.</p>
+            <button
+              onClick={loadDashboardStats}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <Breadcrumbs />
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+            <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Clock className="w-4 h-4" />
+              <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
+            </div>
+            <button
+              onClick={loadDashboardStats}
+              className="flex items-center space-x-2 bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-200"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Key Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Revenue */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+                <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.projects.totalRevenue)}</p>
+                <p className="text-sm text-green-600 flex items-center mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
+                  All Projects
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Projects */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Active Projects</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.projects.active}</p>
+                <p className="text-sm text-blue-600 flex items-center mt-1">
+                  <Target className="w-4 h-4 mr-1" />
+                  {stats.projects.total} Total
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Building className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Contractors */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Active Contractors</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.contractors.active}</p>
+                <p className="text-sm text-orange-600 flex items-center mt-1">
+                  <Star className="w-4 h-4 mr-1" />
+                  {stats.contractors.averageRating}/5 Avg Rating
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Wrench className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Clients */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Navigate To Projects, Contractor to Manage them.</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Active Clients</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.clients.active}</p>
+                <p className="text-sm text-purple-600 flex items-center mt-1">
+                  <UserCheck className="w-4 h-4 mr-1" />
+                  {stats.clients.newThisMonth} New This Month
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <span className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}</span>
+
+        {/* Detailed Statistics */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Project Statistics */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Building className="w-5 h-5 text-blue-600 mr-2" />
+                Project Statistics
+              </h3>
+              <BarChart3 className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Projects</span>
+                <span className="font-semibold text-gray-900">{stats.projects.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Active</span>
+                <span className="font-semibold text-green-600">{stats.projects.active}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Completed</span>
+                <span className="font-semibold text-blue-600">{stats.projects.completed}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Planning</span>
+                <span className="font-semibold text-yellow-600">{stats.projects.planning}</span>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Average Value</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(stats.projects.averageProjectValue)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Analytics */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <CreditCard className="w-5 h-5 text-green-600 mr-2" />
+                Payment Analytics
+              </h3>
+              <Banknote className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Amount</span>
+                <span className="font-semibold text-gray-900">{formatCurrency(stats.payments.totalAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Paid This Month</span>
+                <span className="font-semibold text-green-600">{formatCurrency(stats.payments.paidThisMonth)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Pending</span>
+                <span className="font-semibold text-yellow-600">{formatCurrency(stats.payments.pendingAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Overdue</span>
+                <span className="font-semibold text-red-600">{formatCurrency(stats.payments.overdueAmount)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contractor Performance */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Wrench className="w-5 h-5 text-orange-600 mr-2" />
+                Contractor Performance
+              </h3>
+              <Star className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Contractors</span>
+                <span className="font-semibold text-gray-900">{stats.contractors.total}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Active</span>
+                <span className="font-semibold text-green-600">{stats.contractors.active}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Average Rating</span>
+                <span className="font-semibold text-orange-600">{stats.contractors.averageRating}/5</span>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Top Contractor</span>
+                  <span className="font-semibold text-gray-900 text-right max-w-32 truncate">{stats.contractors.topContractor}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts and Visualizations */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Monthly Revenue Chart */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <TrendingUp className="w-5 h-5 text-green-600 mr-2" />
+                Monthly Revenue
+              </h3>
+              <BarChart3 className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              {stats.monthlyRevenue.map((month, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 w-20">{month.month}</span>
+                  <div className="flex-1 mx-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${Math.min((month.revenue / Math.max(...stats.monthlyRevenue.map(m => m.revenue))) * 100, 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 w-20 text-right">{formatCurrency(month.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Project Status Distribution */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <PieChart className="w-5 h-5 text-blue-600 mr-2" />
+                Project Status Distribution
+              </h3>
+              <Activity className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-4">
+              {stats.projectStatusDistribution.map((status, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div 
+                      className={`w-3 h-3 rounded-full mr-3 ${
+                        status.status === 'active' ? 'bg-green-500' :
+                        status.status === 'completed' ? 'bg-blue-500' :
+                        status.status === 'planning' ? 'bg-yellow-500' :
+                        'bg-gray-500'
+                      }`}
+                    ></div>
+                    <span className="text-sm text-gray-600 capitalize">{status.status}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-semibold text-gray-900">{status.count}</span>
+                    <span className="text-xs text-gray-500">({status.percentage.toFixed(1)}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="w-5 h-5 text-purple-600 mr-2" />
+              Recent Activity
+            </h3>
+            <Eye className="w-5 h-5 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            {stats.recentActivity.length > 0 ? (
+              stats.recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.type === 'project' ? 'bg-blue-500' :
+                    activity.type === 'contractor' ? 'bg-orange-500' :
+                    activity.type === 'client' ? 'bg-purple-500' :
+                    'bg-green-500'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                    <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No recent activity</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                <p className="text-sm text-green-600 mt-1">{stat.change} from last month</p>
-              </div>
-              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <stat.icon className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div> */}
-
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Projects</h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {recentProjects.map((project, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{project.name}</h3>
-                    <div className="flex items-center mt-2 space-x-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
-                        {project.status}
-                      </span>
-                      <span className="text-sm text-gray-500">Due: {project.dueDate}</span>
-                    </div>
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-medium">{project.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
-
-        {/* Recent Activities */}
-        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Activities</h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-1">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">{activity.action}</span>
-                    </p>
-                    <p className="text-sm text-gray-500">by {activity.user}</p>
-                    <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div> */}
-    </div>
+      {/* Payment Analytics Section */}
+      <div className="mt-8">
+        <PaymentAnalytics />
+      </div>
+     </div>
   );
 };

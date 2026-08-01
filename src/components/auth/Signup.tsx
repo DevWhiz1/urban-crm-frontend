@@ -90,9 +90,9 @@ export const Signup: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
+    <div className="min-h-screen bg-slate-50 flex">
       {/* Left Section - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 p-12 flex-col justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 p-12 flex-col justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <div className="flex items-center mb-8">
@@ -137,7 +137,7 @@ export const Signup: React.FC = () => {
             <p className="text-gray-600">Join us to start managing your projects</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />

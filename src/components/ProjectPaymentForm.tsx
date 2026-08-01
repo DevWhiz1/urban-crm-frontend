@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   Building, 
   DollarSign, 
@@ -141,8 +142,16 @@ export const ProjectPaymentForm: React.FC = () => {
   const requiresTransactionId = formData.paymentMethod && formData.paymentMethod !== 'cash';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-violet-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Payments', path: '/dashboard/payments' },
+            { label: 'Add Project Payment' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4">
@@ -153,8 +162,8 @@ export const ProjectPaymentForm: React.FC = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-violet-600 px-8 py-6">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-purple-600 px-8 py-6">
             <h2 className="text-xl font-semibold text-white">Project Payment Information</h2>
             <p className="text-purple-100 mt-1">Record payment details for project expenses</p>
           </div>
@@ -361,7 +370,7 @@ export const ProjectPaymentForm: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Building className="w-5 h-5 text-blue-600" />
@@ -373,7 +382,7 @@ export const ProjectPaymentForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-purple-600" />
@@ -385,7 +394,7 @@ export const ProjectPaymentForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-green-600" />
@@ -397,7 +406,7 @@ export const ProjectPaymentForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-orange-600" />
