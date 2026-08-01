@@ -1,24 +1,15 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
+import apiClient from './apiClient';
 import { ProjectContractFormData, ProjectOption, ContractorOption, ProjectContract } from '../types/projectContract';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const createProjectContract = async (data: ProjectContractFormData): Promise<void> => {
   try {
-    // Convert string values to numbers where needed
     const contractData = {
       ...data,
       totalAmount: parseFloat(data.totalAmount),
-      endDate: data.endDate || undefined, // Don't send empty string
+      endDate: data.endDate || undefined,
     };
 
-    await api.post('/api/project-contract/create-project-contract', contractData);
+    await apiClient.post('/api/project-contract/create-project-contract', contractData);
   } catch (error) {
     console.error('Failed to create project contract:', error);
     throw new Error('Failed to create project contract. Please try again.');
@@ -27,7 +18,7 @@ export const createProjectContract = async (data: ProjectContractFormData): Prom
 
 export const fetchProjects = async (): Promise<ProjectOption[]> => {
   try {
-    const response = await api.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -37,7 +28,7 @@ export const fetchProjects = async (): Promise<ProjectOption[]> => {
 
 export const fetchContractorsForContract = async (): Promise<ContractorOption[]> => {
   try {
-    const response = await api.get('/api/contractor/get-all-contractors');
+    const response = await apiClient.get('/api/contractor/get-all-contractors');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch contractors:', error);
@@ -47,7 +38,7 @@ export const fetchContractorsForContract = async (): Promise<ContractorOption[]>
 
 export const fetchAllProjectContracts = async (): Promise<ProjectContract[]> => {
   try {
-    const response = await api.get('/api/project-contract/get-all-project-contracts');
+    const response = await apiClient.get('/api/project-contract/get-all-project-contracts');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch project contracts:', error);
@@ -57,7 +48,7 @@ export const fetchAllProjectContracts = async (): Promise<ProjectContract[]> => 
 
 export const fetchProjectContractById = async (id: string): Promise<ProjectContract> => {
   try {
-    const response = await api.get(`/api/project-contract/get-single-project-contract/${id}`);
+    const response = await apiClient.get(`/api/project-contract/get-single-project-contract/${id}`);
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch project contract:', error);
@@ -67,14 +58,13 @@ export const fetchProjectContractById = async (id: string): Promise<ProjectContr
 
 export const updateProjectContract = async (id: string, data: Partial<ProjectContractFormData>): Promise<ProjectContract> => {
   try {
-    // Convert string values to numbers where needed
     const contractData = {
       ...data,
       totalAmount: data.totalAmount ? parseFloat(data.totalAmount) : undefined,
       endDate: data.endDate || undefined,
     };
 
-    const response = await api.put(`/api/project-contract/update-project-contract/${id}`, contractData);
+    const response = await apiClient.put(`/api/project-contract/update-project-contract/${id}`, contractData);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update project contract:', error);
@@ -84,7 +74,7 @@ export const updateProjectContract = async (id: string, data: Partial<ProjectCon
 
 export const deleteProjectContract = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/api/project-contract/delete-project-contract/${id}`);
+    await apiClient.delete(`/api/project-contract/delete-project-contract/${id}`);
   } catch (error) {
     console.error('Failed to delete project contract:', error);
     throw new Error('Failed to delete project contract. Please try again.');

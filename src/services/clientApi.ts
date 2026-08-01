@@ -1,18 +1,10 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
+import apiClient from './apiClient';
 import { User } from '../types/contractor';
 import { ClientFormData, Client } from '../types/client';
 
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
 export const createClient = async (data: ClientFormData): Promise<void> => {
   try {
-    await api.post('/api/client/create-client', data);
+    await apiClient.post('/api/client/create-client', data);
   } catch (error) {
     console.error('Failed to create client:', error);
     throw new Error('Failed to create client. Please try again.');
@@ -21,7 +13,7 @@ export const createClient = async (data: ClientFormData): Promise<void> => {
 
 export const fetchUsersForClient = async (): Promise<User[]> => {
   try {
-    const response = await api.get('/api/user/get-all-users');
+    const response = await apiClient.get('/api/user/get-all-users');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch users:', error);
@@ -29,12 +21,11 @@ export const fetchUsersForClient = async (): Promise<User[]> => {
   }
 };
 
-// Re-export User type for convenience
 export type { User } from '../types/contractor';
 
 export const fetchAllClients = async (): Promise<Client[]> => {
   try {
-    const response = await api.get('/api/client/get-all-clients');
+    const response = await apiClient.get('/api/client/get-all-clients');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch clients:', error);
@@ -44,7 +35,7 @@ export const fetchAllClients = async (): Promise<Client[]> => {
 
 export const fetchClientById = async (id: string): Promise<Client> => {
   try {
-    const response = await api.get(`/api/client/get-single-client/${id}`);
+    const response = await apiClient.get(`/api/client/get-single-client/${id}`);
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch client:', error);
@@ -54,7 +45,7 @@ export const fetchClientById = async (id: string): Promise<Client> => {
 
 export const updateClient = async (id: string, data: Partial<ClientFormData>): Promise<Client> => {
   try {
-    const response = await api.put(`/api/client/update-client/${id}`, data);
+    const response = await apiClient.put(`/api/client/update-client/${id}`, data);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update client:', error);
@@ -64,7 +55,7 @@ export const updateClient = async (id: string, data: Partial<ClientFormData>): P
 
 export const deleteClient = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/api/client/delete-client/${id}`);
+    await apiClient.delete(`/api/client/delete-client/${id}`);
   } catch (error) {
     console.error('Failed to delete client:', error);
     throw new Error('Failed to delete client. Please try again.');

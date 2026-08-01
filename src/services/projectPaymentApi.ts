@@ -1,18 +1,9 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
+import apiClient from './apiClient';
 import { ProjectPaymentFormData, ProjectPaymentProjectOption } from '../types/projectPayment';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const createProjectPayment = async (data: ProjectPaymentFormData): Promise<void> => {
   try {
-    // Convert string values to appropriate types
-            const userString = localStorage.getItem('user');
+    const userString = localStorage.getItem('user');
     if (!userString) {
       throw new Error('User not authenticated');
     }
@@ -24,12 +15,10 @@ export const createProjectPayment = async (data: ProjectPaymentFormData): Promis
       transactionId: data.transactionId || undefined,
       receiptPhoto: data.receiptPhoto || undefined,
       notes: data.notes || undefined,
-      createdBy: user.id,
-      
+      createdBy: user.id || user._id,
     };
 
-    await api.post('/api/payment/add-payment-for-project', projectPaymentData);
-    console.log(projectPaymentData)
+    await apiClient.post('/api/payment/add-payment-for-project', projectPaymentData);
   } catch (error) {
     console.error('Failed to create project payment:', error);
     throw new Error('Failed to create project payment. Please try again.');
@@ -38,7 +27,7 @@ export const createProjectPayment = async (data: ProjectPaymentFormData): Promis
 
 export const fetchProjectsForProjectPayment = async (): Promise<ProjectPaymentProjectOption[]> => {
   try {
-    const response = await api.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
