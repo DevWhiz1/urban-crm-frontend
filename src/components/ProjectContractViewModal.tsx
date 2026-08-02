@@ -13,13 +13,15 @@ import {
   Banknote,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  PlusCircle
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Notification } from './ui/Notification';
-import { fetchProjectContractById } from '../services/projectContractApi';
+import { fetchProjectContractById, addContractAddition } from '../services/projectContractApi';
 import { ProjectContract } from '../types/projectContract';
 import { formatPKRCurrency } from '../utils/projectContractValidation';
+import { PriceAdditionModal } from './PriceAdditionModal';
 
 interface ProjectContractViewModalProps {
   isOpen: boolean;
@@ -36,11 +38,37 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
 }) => {
   const [contract, setContract] = useState<ProjectContract | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     type: 'success' as 'success' | 'error',
     message: ''
   });
+
+  const handleAddContractAddition = async (amount: number, reason: string) => {
+    if (!contract) return;
+    const updatedContract = await addContractAddition(contract._id, amount, reason);
+    setContract(updatedContract);
+    showNotification('success', 'Price addition added to contract successfully!');
+  };
+
+  const getTotalContractAdditions = (c: ProjectContract) => {
+    if (!c.additions || c.additions.length === 0) return 0;
+    return c.additions.reduce((sum, item) => sum + (item.amount || 0), 0);
+  };
+
+  const getRevisedContractAmount = (c: ProjectContract) => {
+    return (c.totalAmount || 0) + getTotalContractAdditions(c);
+  };
+
+  const formatAddedBy = (addedBy?: string): string => {
+    if (!addedBy) return 'Admin';
+    if (!addedBy.includes('@')) return addedBy;
+    const handle = addedBy.split('@')[0];
+    if (!handle) return 'Admin';
+    const words = handle.replace(/[._\-]/g, ' ').split(' ').filter(Boolean);
+    return words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  };
 
   useEffect(() => {
     if (isOpen && contractId) {
@@ -218,20 +246,43 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
               <div className="space-y-6">
                 {/* Contract Information */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-orange-600" />
-                    Contract Information
-                  </h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-orange-600" />
+                      Contract Information
+                    </h4>
+                    <Button
+                      onClick={() => setIsAdditionModalOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3 py-1.5"
+                    >
+                      <PlusCircle className="w-4 h-4 mr-1" />
+                      Add Price Addition
+                    </Button>
+                  </div>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-500">Contract Type:</span>
                       <span className="text-sm text-gray-900">{contract.contractType}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-500">Total Amount:</span>
-                      <span className="text-sm font-semibold text-gray-900 flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
+                      <span className="text-sm font-medium text-gray-500">Base Amount:</span>
+                      <span className="text-sm font-semibold text-gray-900">
                         {formatPKRCurrency(contract.totalAmount.toString())}
+                      </span>
+                    </div>
+                    {getTotalContractAdditions(contract) > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-amber-700">Total Additions:</span>
+                        <span className="text-sm font-semibold text-amber-700">
+                          +{formatPKRCurrency(getTotalContractAdditions(contract).toString())}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <span className="text-sm font-semibold text-gray-900">Revised Total Amount:</span>
+                      <span className="text-base font-bold text-emerald-700 flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        {formatPKRCurrency(getRevisedContractAmount(contract).toString())}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -243,6 +294,32 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
                     </div>
                   </div>
                 </div>
+
+                {/* Price Additions Log */}
+                {contract.additions && contract.additions.length > 0 && (
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <PlusCircle className="w-5 h-5 text-emerald-600" />
+                      Price Additions History ({contract.additions.length})
+                    </h4>
+                    <div className="bg-emerald-50/50 rounded-lg p-3 border border-emerald-100 divide-y divide-emerald-100 max-h-48 overflow-y-auto">
+                      {contract.additions.map((item, idx) => (
+                        <div key={item._id || idx} className="py-2 first:pt-0 last:pb-0 flex items-start justify-between text-xs">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-emerald-800">+{formatPKRCurrency(item.amount.toString())}</span>
+                              <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">by {formatAddedBy(item.addedBy)}</span>
+                            </div>
+                            <p className="text-gray-700 mt-0.5">{item.reason}</p>
+                          </div>
+                          <span className="text-gray-400 whitespace-nowrap ml-2">
+                            {new Date(item.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Timeline */}
                 <div>
@@ -405,6 +482,14 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
           </div>
         </div>
       </div>
+
+      <PriceAdditionModal
+        isOpen={isAdditionModalOpen}
+        onClose={() => setIsAdditionModalOpen(false)}
+        onSubmit={handleAddContractAddition}
+        title="Add Price Addition to Contract"
+        entityName={`${getContractorName(contract.contractor)} - ${getProjectName(contract.project)}`}
+      />
 
       <Notification
         show={notification.show}

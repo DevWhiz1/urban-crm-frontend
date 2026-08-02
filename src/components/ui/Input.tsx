@@ -12,8 +12,23 @@ export const Input: React.FC<InputProps> = ({
   error, 
   required = false, 
   className = '', 
+  type,
+  value,
   ...props 
 }) => {
+  let formattedValue = value;
+  if (type === 'date' && typeof value === 'string' && value) {
+    if (value.includes('T')) {
+      formattedValue = value.split('T')[0];
+    } else if (value.length > 10 && !isNaN(Date.parse(value))) {
+      try {
+        formattedValue = new Date(value).toISOString().split('T')[0];
+      } catch (e) {
+        // fallback
+      }
+    }
+  }
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
@@ -21,6 +36,8 @@ export const Input: React.FC<InputProps> = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <input
+        type={type}
+        value={formattedValue}
         className={`
           w-full px-4 py-3 border border-gray-300 rounded-lg
           focus:ring-2 focus:ring-blue-500 focus:border-blue-500

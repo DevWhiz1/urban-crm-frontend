@@ -1,3 +1,11 @@
+export interface PriceAddition {
+  _id?: string;
+  amount: number;
+  reason: string;
+  date: string;
+  addedBy?: string;
+}
+
 export interface Project {
   _id: string;
   name: string;
@@ -11,11 +19,12 @@ export interface Project {
   totalCost?: number;
   labouRate?: number;
   totalLabourCost?: number;
+  additions?: PriceAddition[];
   startDate?: string;
   estimatedDuration?: string;
   actualCompletionDate?: string;
   customer: string;
-  contractors: string[];
+  contractors?: string[];
   description?: string;
   status: 'planning' | 'pending' | 'ongoing' | 'completed' | 'on_hold' | 'cancelled';
   progress: number;
@@ -38,7 +47,7 @@ export interface ProjectFormData {
   totalLabourCost: string;
   startDate: string;
   estimatedDuration: string;
-  contractors: string[];
+  contractors?: string[];
   drawings: string[];
   contracts: string[];
   description: string;

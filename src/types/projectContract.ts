@@ -1,3 +1,5 @@
+import { PriceAddition } from './project';
+
 export interface ProjectContract {
   _id: string;
   project: string | {
@@ -25,6 +27,7 @@ export interface ProjectContract {
   };
   contractType: string;
   totalAmount: number;
+  additions?: PriceAddition[];
   startDate: string;
   endDate?: string;
   payments: string[];

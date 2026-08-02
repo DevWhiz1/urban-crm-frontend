@@ -32,16 +32,7 @@ export const validateProjectContractForm = (data: ProjectContractFormData): Proj
     }
   }
 
-  // Start date should not be in the past
-  if (data.startDate) {
-    const startDate = new Date(data.startDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (startDate < today) {
-      errors.startDate = 'Start date cannot be in the past';
-    }
-  }
+
 
   return errors;
 };

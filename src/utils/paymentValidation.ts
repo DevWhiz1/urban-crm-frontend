@@ -26,16 +26,7 @@ export const validatePaymentForm = (data: PaymentFormData): PaymentFormErrors =>
     errors.date = 'Payment date is required';
   }
 
-  // Date validation - payment date should not be in the future
-  if (data.date) {
-    const paymentDate = new Date(data.date);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
-    
-    if (paymentDate > today) {
-      errors.date = 'Payment date cannot be in the future';
-    }
-  }
+
 
   // Transaction ID validation for non-cash payments
   if (data.paymentMethod && data.paymentMethod !== 'cash' && !data.transactionId.trim()) {

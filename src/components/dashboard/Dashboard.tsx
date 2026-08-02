@@ -57,61 +57,50 @@ export const Dashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
     if (!stats) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center">
-                        <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Dashboard</h3>
-                        <p className="text-gray-600 mb-4">Unable to load dashboard statistics. Please try again.</p>
-                        <button
-                            onClick={loadDashboardStats}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Retry
-                        </button>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto py-12 text-center">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Dashboard</h3>
+                <p className="text-gray-600 mb-4">Unable to load dashboard statistics. Please try again.</p>
+                <button
+                    onClick={loadDashboardStats}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    Retry
+                </button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                <Breadcrumbs />
+        <div className="max-w-7xl mx-auto space-y-6">
+            <Breadcrumbs />
 
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-                        <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                            <Clock className="w-4 h-4" />
-                            <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
-                        </div>
-                        <button
-                            onClick={loadDashboardStats}
-                            className="flex items-center space-x-2 bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-200"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Refresh</span>
-                        </button>
-                    </div>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
+                    <p className="text-sm text-gray-500 mt-1">Welcome back! Here is a summary of active projects, payments, and metrics</p>
                 </div>
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <Clock className="w-4 h-4" />
+                    <span>Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <button
+                        onClick={loadDashboardStats}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                        title="Refresh Data"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
 
                 {/* Key Metrics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -377,7 +366,6 @@ export const Dashboard: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
 
             {/* Payment Analytics Section */}
             <div className="mt-8">

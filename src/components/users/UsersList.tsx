@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { User, Search, RefreshCw, ArrowUpDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { User, Search, RefreshCw, ArrowUpDown, ChevronsLeft, ChevronsRight, Plus } from 'lucide-react';
 import { Notification } from '../ui/Notification';
 import { Button } from '../ui/Button';
 import { getAllUsers } from '../../services/userApi';
@@ -87,38 +87,47 @@ export const UsersList: React.FC = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto p-8 bg-white rounded-2xl border border-gray-200">
+        <div className="max-w-7xl mx-auto space-y-6">
             <Breadcrumbs />
-            <div className="flex items-center mb-6">
-                <User className="w-8 h-8 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">All Users & Credentials</h2>
+
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Users & Credentials</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage system user accounts and view authorization details</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button variant="secondary" size="sm" onClick={loadUsers}>
+                        <RefreshCw className="w-4 h-4 mr-1.5" />Refresh
+                    </Button>
+                    <Button to="/dashboard/users/add" size="sm" variant="primary">
+                        <Plus className="w-4 h-4 mr-1.5" />
+                        Add User
+                    </Button>
+                </div>
             </div>
+
             <Notification
                 show={notification.show}
                 type={notification.type}
                 message={notification.message}
                 onClose={() => setNotification(prev => ({ ...prev, show: false }))}
             />
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-                <div className="relative w-full md:w-80">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => { setSearch(e.target.value); setPage(1); }}
-                        placeholder="Search users..."
-                        className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
+
+            {/* Main Content Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                    <div className="relative w-full md:w-80">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => { setSearch(e.target.value); setPage(1); }}
+                            placeholder="Search users by name, email or role..."
+                            className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="secondary" size="sm" onClick={loadUsers}>
-                        <RefreshCw className="w-4 h-4 mr-1" />Refresh
-                    </Button>
-                    <Button to="/dashboard/users/add" size="sm" variant="primary">
-                        Add User
-                    </Button>
-                </div>
-            </div>
             <div className="overflow-x-auto border rounded-lg">
                 <table className="min-w-full bg-white">
                     <thead>
@@ -205,11 +214,7 @@ export const UsersList: React.FC = () => {
                     </Button>
                 </div>
             </div>
-            <div className="mt-6 flex justify-end">
-                <Button to="/dashboard/users/add" size="md" variant="primary">
-                    Add User
-                </Button>
-            </div>
         </div>
-    );
+    </div>
+);
 };

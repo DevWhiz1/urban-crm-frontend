@@ -23,13 +23,17 @@ import {
     Calculator,
     Wrench,
     File,
-    ExternalLink
+    ExternalLink,
+    PlusCircle
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Notification } from './ui/Notification';
-import { fetchProjectById, deleteProject } from '../services/projectApi';
+import { fetchProjectById, deleteProject, addProjectAddition } from '../services/projectApi';
+import { fetchProjectContractsByProjectId } from '../services/projectContractApi';
 import { Project } from '../types/project';
+import { ProjectContract } from '../types/projectContract';
 import { formatPKRCurrency } from '../utils/projectValidation';
+import { PriceAdditionModal } from './PriceAdditionModal';
 
 interface ProjectViewProps {
     projectId: string;
@@ -45,7 +49,9 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     onDelete
 }) => {
     const [project, setProject] = useState<Project | null>(null);
+    const [projectContracts, setProjectContracts] = useState<ProjectContract[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -56,11 +62,46 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         loadProject();
     }, [projectId]);
 
+    const handleAddAddition = async (amount: number, reason: string) => {
+        if (!project) return;
+        const updatedProject = await addProjectAddition(project._id, amount, reason);
+        setProject(updatedProject);
+        showNotification('success', 'Price addition recorded successfully!');
+    };
+
+    const getTotalAdditions = (proj: Project) => {
+        if (!proj.additions || proj.additions.length === 0) return 0;
+        return proj.additions.reduce((sum, item) => sum + (item.amount || 0), 0);
+    };
+
+    const getBaseCost = (proj: Project) => {
+        if (proj.projectType === 'withMaterial') return proj.totalCost || 0;
+        if (proj.projectType === 'labourRate') return proj.totalLabourCost || 0;
+        return 0;
+    };
+
+    const getRevisedCost = (proj: Project) => {
+        return getBaseCost(proj) + getTotalAdditions(proj);
+    };
+
+    const formatAddedBy = (addedBy?: string): string => {
+        if (!addedBy) return 'Admin';
+        if (!addedBy.includes('@')) return addedBy;
+        const handle = addedBy.split('@')[0];
+        if (!handle) return 'Admin';
+        const words = handle.replace(/[._\-]/g, ' ').split(' ').filter(Boolean);
+        return words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    };
+
     const loadProject = async () => {
         try {
             setLoading(true);
-            const projectData = await fetchProjectById(projectId);
+            const [projectData, contractsData] = await Promise.all([
+                fetchProjectById(projectId),
+                fetchProjectContractsByProjectId(projectId)
+            ]);
             setProject(projectData);
+            setProjectContracts(contractsData);
         } catch (error) {
             showNotification('error', 'Failed to load project details. Please try again.');
         } finally {
@@ -253,46 +294,58 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
 
                         {/* Financial Information */}
                         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                            <div className="bg-green-600 px-6 py-4">
+                            <div className="bg-green-600 px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-white flex items-center gap-2">
                                     <DollarSign className="w-5 h-5" />
                                     Financial Details
                                 </h2>
+                                <Button
+                                    onClick={() => setIsAdditionModalOpen(true)}
+                                    className="bg-white/20 hover:bg-white/30 text-white text-xs font-medium border border-white/30"
+                                >
+                                    <PlusCircle className="w-4 h-4 mr-1.5" />
+                                    Add Price Addition
+                                </Button>
                             </div>
                             <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Base Project Cost</label>
+                                        <p className="text-xl font-semibold text-gray-900">
+                                            {formatPKRCurrency(getBaseCost(project).toString())}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                        <label className="block text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">Total Additions</label>
+                                        <p className="text-xl font-semibold text-amber-700">
+                                            +{formatPKRCurrency(getTotalAdditions(project).toString())}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                        <label className="block text-xs font-medium text-emerald-700 uppercase tracking-wider mb-1">Revised Total Cost</label>
+                                        <p className="text-xl font-bold text-emerald-700">
+                                            {formatPKRCurrency(getRevisedCost(project).toString())}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                                     {project.projectType === 'withMaterial' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-500 mb-1">Rate per Square Foot</label>
-                                                <p className="text-lg font-semibold text-gray-900">
-                                                    {project.ratePerSquareFoot ? formatPKRCurrency(project.ratePerSquareFoot.toString()) : 'Not set'}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-500 mb-1">Total Cost</label>
-                                                <p className="text-lg font-semibold text-green-600">
-                                                    {project.totalCost ? formatPKRCurrency(project.totalCost.toString()) : 'Not calculated'}
-                                                </p>
-                                            </div>
-                                        </>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-500 mb-1">Rate per Square Foot</label>
+                                            <p className="text-lg font-semibold text-gray-900">
+                                                {project.ratePerSquareFoot ? formatPKRCurrency(project.ratePerSquareFoot.toString()) : 'Not set'}
+                                            </p>
+                                        </div>
                                     )}
 
                                     {project.projectType === 'labourRate' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-500 mb-1">Labour Rate per Sq Ft</label>
-                                                <p className="text-lg font-semibold text-gray-900">
-                                                    {project.labouRate ? formatPKRCurrency(project.labouRate.toString()) : 'Not set'}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-500 mb-1">Total Labour Cost</label>
-                                                <p className="text-lg font-semibold text-green-600">
-                                                    {project.totalLabourCost ? formatPKRCurrency(project.totalLabourCost.toString()) : 'Not calculated'}
-                                                </p>
-                                            </div>
-                                        </>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-500 mb-1">Labour Rate per Sq Ft</label>
+                                            <p className="text-lg font-semibold text-gray-900">
+                                                {project.labouRate ? formatPKRCurrency(project.labouRate.toString()) : 'Not set'}
+                                            </p>
+                                        </div>
                                     )}
 
                                     <div>
@@ -312,6 +365,48 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Price Additions History Log */}
+                        {project.additions && project.additions.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <div className="bg-amber-600 px-6 py-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                                        <PlusCircle className="w-5 h-5" />
+                                        Price Additions Log ({project.additions.length})
+                                    </h2>
+                                </div>
+                                <div className="divide-y divide-gray-100 overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason / Scope</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-100">
+                                            {project.additions.map((item, idx) => (
+                                                <tr key={item._id || idx} className="hover:bg-amber-50/50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                                                        {new Date(item.date).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap font-semibold text-emerald-700">
+                                                        +{formatPKRCurrency(item.amount.toString())}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-gray-900">
+                                                        {item.reason}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-xs font-medium">
+                                                        {formatAddedBy(item.addedBy)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Timeline */}
                         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -442,6 +537,91 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                 </div>
                             </div>
                         ) : null}
+
+                        {/* Associated Project Contracts */}
+                        {projectContracts.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <div className="bg-teal-600 px-6 py-4">
+                                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                                        <Wrench className="w-5 h-5" />
+                                        Associated Contracts ({projectContracts.length})
+                                    </h2>
+                                </div>
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        {projectContracts.map((contract) => {
+                                            const contractor = typeof contract.contractor === 'object' ? contract.contractor : null;
+                                            const totalAdditions = (contract.additions || []).reduce((sum, a) => sum + (a.amount || 0), 0);
+                                            const revisedTotal = contract.totalAmount + totalAdditions;
+                                            return (
+                                                <div key={contract._id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Wrench className="w-4 h-4 text-teal-600" />
+                                                            <span className="font-semibold text-gray-900">
+                                                                {contractor?.companyName || 'N/A'}
+                                                            </span>
+                                                            {contract.contractType && (
+                                                                <span className="text-xs px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full">
+                                                                    {contract.contractType}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                            contract.isTerminated
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-green-100 text-green-700'
+                                                        }`}>
+                                                            {contract.isTerminated ? 'Terminated' : 'Active'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                                        <div>
+                                                            <span className="text-gray-500">Contact:</span>
+                                                            <span className="ml-1 text-gray-900">{contractor?.user?.userName || 'N/A'}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-500">Type:</span>
+                                                            <span className="ml-1 text-gray-900 capitalize">{contractor?.contractorType || 'N/A'}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-500">Start:</span>
+                                                            <span className="ml-1 text-gray-900">{formatDate(contract.startDate)}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-500">End:</span>
+                                                            <span className="ml-1 text-gray-900">{formatDate(contract.endDate)}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-500">Base Amount:</span>
+                                                            <span className="ml-1 text-gray-900 font-medium">
+                                                                {formatPKRCurrency(contract.totalAmount.toString())}
+                                                            </span>
+                                                        </div>
+                                                        {totalAdditions > 0 && (
+                                                            <div>
+                                                                <span className="text-gray-500">Additions:</span>
+                                                                <span className="ml-1 text-amber-700 font-medium">
+                                                                    +{formatPKRCurrency(totalAdditions.toString())}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {totalAdditions > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
+                                                            <span className="text-sm font-medium text-gray-700">Revised Total:</span>
+                                                            <span className="text-sm font-bold text-teal-700">
+                                                                {formatPKRCurrency(revisedTotal.toString())}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Sidebar */}
@@ -565,6 +745,14 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                     </div>
                 </div>
             </div>
+
+            <PriceAdditionModal
+                isOpen={isAdditionModalOpen}
+                onClose={() => setIsAdditionModalOpen(false)}
+                onSubmit={handleAddAddition}
+                title="Add Price Addition to Project"
+                entityName={project.name}
+            />
 
             <Notification
                 show={notification.show}

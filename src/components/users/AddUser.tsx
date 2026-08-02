@@ -86,7 +86,7 @@ export const AddUser: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-8 bg-white rounded-2xl border border-gray-200">
+        <div className="max-w-4xl mx-auto space-y-6">
             <Breadcrumbs
                 items={[
                     { label: 'Dashboard', path: '/dashboard' },
@@ -94,70 +94,76 @@ export const AddUser: React.FC = () => {
                     { label: 'Add New User' }
                 ]}
             />
-            <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Add New User</h2>
-                <p className="text-gray-600">Fill in the details to create a new user</p>
+
+            {/* Page Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New User</h1>
+                <p className="text-sm text-gray-500 mt-1">Fill in the details below to create a new user profile</p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <Input
-                        label="Username"
-                        type="text"
-                        value={formData.userName}
-                        onChange={handleInputChange('userName')}
-                        error={errors.userName}
-                        placeholder="Enter username"
-                        className="pl-12"
-                        required
-                    />
-                </div>
-                <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <Input
-                        label="Email Address"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange('email')}
-                        error={errors.email}
-                        placeholder="Enter email"
-                        className="pl-12"
-                        required
-                    />
-                </div>
-                <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <Input
-                        label="Password"
-                        type="password"
-                        value={formData.password}
-                        onChange={handleInputChange('password')}
-                        error={errors.password}
-                        placeholder="Create a password (min. 6 characters)"
-                        className="pl-12"
-                        required
-                    />
-                </div>
-                <div>
-                    <Select
-                        label="Role"
-                        value={formData.role}
-                        onChange={handleInputChange('role')}
-                        error={errors.role}
-                        required
-                        options={ROLE_OPTIONS}
-                        className="w-full"
-                    />
-                </div>
-                <Button
-                    type="submit"
-                    loading={loading}
-                    className="w-full"
-                    size="lg"
-                >
-                    Add User
-                </Button>
-            </form>
+
+            {/* Form Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <Input
+                                label="Username"
+                                type="text"
+                                value={formData.userName}
+                                onChange={handleInputChange('userName')}
+                                error={errors.userName}
+                                placeholder="Enter username"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <Input
+                                label="Email Address"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleInputChange('email')}
+                                error={errors.email}
+                                placeholder="Enter email address"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <Input
+                                label="Password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleInputChange('password')}
+                                error={errors.password}
+                                placeholder="Create password (min. 6 chars)"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <Select
+                                label="Role"
+                                value={formData.role}
+                                onChange={handleInputChange('role')}
+                                error={errors.role}
+                                required
+                                options={ROLE_OPTIONS}
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-end">
+                        <Button
+                            type="submit"
+                            loading={loading}
+                            size="lg"
+                            className="px-8"
+                        >
+                            Add User
+                        </Button>
+                    </div>
+                </form>
+            </div>
+
             <Notification
                 show={notification.show}
                 type={notification.type}

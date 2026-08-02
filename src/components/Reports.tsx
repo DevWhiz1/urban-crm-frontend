@@ -114,34 +114,35 @@ export const Reports: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <Breadcrumbs />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <Breadcrumbs />
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
-            <p className="text-gray-600">Generate comprehensive reports and insights for your business</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button
-              onClick={exportReport}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
-            <Button
-              onClick={loadReport}
-              loading={loading}
-              variant="outline"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Reports & Analytics</h1>
+          <p className="text-sm text-gray-500 mt-1">Generate comprehensive reports, financial summaries, and business insights</p>
         </div>
+        <div className="flex items-center space-x-3">
+          <Button
+            onClick={exportReport}
+            variant="primary"
+            size="sm"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+          <Button
+            onClick={loadReport}
+            loading={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
 
         {/* Report Type Tabs */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
@@ -245,7 +246,6 @@ export const Reports: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 

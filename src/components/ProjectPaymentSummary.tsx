@@ -278,22 +278,21 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     if (selectedProject) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <Breadcrumbs
-                        items={[
-                            { label: 'Dashboard', path: '/dashboard' },
-                            { label: 'Payments', onClick: handleBackToProjects },
-                            { label: selectedProject.projectName }
-                        ]}
-                    />
+            <div className="max-w-7xl mx-auto space-y-6">
+                <Breadcrumbs
+                    items={[
+                        { label: 'Dashboard', path: '/dashboard' },
+                        { label: 'Payments', onClick: handleBackToProjects },
+                        { label: selectedProject.projectName }
+                    ]}
+                />
 
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">{selectedProject.projectName}</h1>
-                            <p className="text-gray-600">Payment Summary & Details</p>
-                        </div>
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{selectedProject.projectName}</h1>
+                        <p className="text-sm text-gray-500 mt-1">Payment Summary & Financial Breakdown</p>
+                    </div>
                         <div className="flex gap-3">
                             <Button
                                 variant="outline"
@@ -522,43 +521,38 @@ export const ProjectPaymentSummary: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </div>
 
-                <Notification
-                    show={notification.show}
-                    type={notification.type}
-                    message={notification.message}
-                    onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-                />
+                    <Notification
+                        show={notification.show}
+                        type={notification.type}
+                        message={notification.message}
+                        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                    />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                        <Building className="w-8 h-8 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Payment Summary</h1>
-                    <p className="text-gray-600">View detailed payment information for all projects</p>
-                </div>
+        <div className="max-w-7xl mx-auto space-y-6">
+            <Breadcrumbs />
 
-                {/* Search */}
-                <div className="mb-6">
-                    <div className="relative max-w-md mx-auto">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                            label=""
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search projects..."
-                            className="pl-10"
-                        />
-                    </div>
+            {/* Header & Search */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Project Payment Summary</h1>
+                    <p className="text-sm text-gray-500 mt-1">View detailed financial summary and transaction history for all projects</p>
                 </div>
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                        label=""
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search projects..."
+                        className="pl-10"
+                    />
+                </div>
+            </div>
 
                 {/* Projects Grid */}
                 {loadingProjects ? (
@@ -610,14 +604,12 @@ export const ProjectPaymentSummary: React.FC = () => {
                         ))}
                     </div>
                 )}
+                <Notification
+                    show={notification.show}
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
             </div>
-
-            <Notification
-                show={notification.show}
-                type={notification.type}
-                message={notification.message}
-                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-            />
-        </div>
     );
 };

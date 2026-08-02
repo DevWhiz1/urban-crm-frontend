@@ -18,16 +18,7 @@ export const validateMaterialPaymentForm = (data: MaterialPaymentFormData): Mate
     errors.date = 'Payment date is required';
   }
 
-  // Date validation - payment date should not be in the future
-  if (data.date) {
-    const paymentDate = new Date(data.date);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
-    
-    if (paymentDate > today) {
-      errors.date = 'Payment date cannot be in the future';
-    }
-  }
+
 
   // Quantity validation
   if (data.MaterialQuantity.trim() && (isNaN(parseFloat(data.MaterialQuantity)) || parseFloat(data.MaterialQuantity) <= 0)) {
