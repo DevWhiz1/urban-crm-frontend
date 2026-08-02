@@ -1,12 +1,4 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import apiClient from './apiClient';
 
 export interface DashboardStats {
   projects: {
@@ -55,7 +47,7 @@ export interface DashboardStats {
 
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    const response = await api.get('/api/dashboard/stats');
+    const response = await apiClient.get('/api/dashboard/stats');
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error);

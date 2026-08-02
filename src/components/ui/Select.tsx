@@ -9,14 +9,14 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string;
 }
 
-export const Select: React.FC<SelectProps> = ({ 
-  label, 
-  error, 
-  required = false, 
+export const Select: React.FC<SelectProps> = ({
+  label,
+  error,
+  required = false,
   options,
   placeholder = "Select an option",
-  className = '', 
-  ...props 
+  className = '',
+  ...props
 }) => {
   return (
     <div className="space-y-2">
@@ -42,9 +42,9 @@ export const Select: React.FC<SelectProps> = ({
             </option>
           ))}
         </select>
-        <ChevronDown 
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" 
-          size={20} 
+        <ChevronDown
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+          size={20}
         />
       </div>
       {error && (

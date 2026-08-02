@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Building2, 
   Home, 
@@ -14,7 +15,6 @@ import {
   Plus,
   BarChart3,
   UserCheck,
-  Menu,
   X,
   Handshake,
   CreditCard
@@ -25,82 +25,92 @@ interface MenuItem {
   label: string;
   icon: React.ComponentType<any>;
   path?: string;
+  roles?: string[];
   children?: MenuItem[];
 }
 
-const menuItems: MenuItem[] = [
+const allMenuItems: MenuItem[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
     icon: Home,
-    path: '/dashboard'
+    path: '/dashboard',
+    roles: ['Admin', 'Contractor', 'User']
   },
   {
     id: 'projects',
     label: 'Projects',
     icon: FileText,
+    roles: ['Admin', 'Contractor', 'User'],
     children: [
-      { id: 'add-project', label: 'Add Project', icon: Plus, path: '/dashboard/projects/add' },
-      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects' }
+      { id: 'add-project', label: 'Add Project', icon: Plus, path: '/dashboard/projects/add', roles: ['Admin'] },
+      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects', roles: ['Admin', 'Contractor', 'User'] }
     ]
   },
   {
     id: 'project-contracts',
     label: 'Project Contracts',
     icon: Handshake,
+    roles: ['Admin', 'Contractor'],
     children: [
-      { id: 'add-project-contract', label: 'Create Contract', icon: Plus, path: '/dashboard/project-contracts/add' },
-      { id: 'list-project-contracts', label: 'All Contracts', icon: List, path: '/dashboard/project-contracts' }
+      { id: 'add-project-contract', label: 'Create Contract', icon: Plus, path: '/dashboard/project-contracts/add', roles: ['Admin'] },
+      { id: 'list-project-contracts', label: 'All Contracts', icon: List, path: '/dashboard/project-contracts', roles: ['Admin', 'Contractor'] }
     ]
   },
   {
     id: 'payments',
     label: 'Payments',
     icon: CreditCard,
+    roles: ['Admin', 'Contractor', 'User'],
     children: [
-      { id: 'add-payment', label: 'Record Payment', icon: Plus, path: '/dashboard/payments/add' },
-      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments' },
-      { id: 'list-contarctor-payments', label: 'All Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor' }
+      { id: 'add-payment', label: 'Record Payment', icon: Plus, path: '/dashboard/payments/add', roles: ['Admin'] },
+      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments', roles: ['Admin', 'Contractor', 'User'] },
+      { id: 'list-contarctor-payments', label: 'All Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor', roles: ['Admin', 'Contractor'] }
     ]
   },
   {
     id: 'contractors',
     label: 'Contractors',
     icon: Wrench,
+    roles: ['Admin'],
     children: [
-      { id: 'add-contractor', label: 'Add Contractor', icon: Plus, path: '/dashboard/contractors/add' },
-      { id: 'list-contractors', label: 'All Contractors', icon: List, path: '/dashboard/contractors' }
+      { id: 'add-contractor', label: 'Add Contractor', icon: Plus, path: '/dashboard/contractors/add', roles: ['Admin'] },
+      { id: 'list-contractors', label: 'All Contractors', icon: List, path: '/dashboard/contractors', roles: ['Admin'] }
     ]
   },
   {
     id: 'clients',
     label: 'Clients',
     icon: UserCheck,
+    roles: ['Admin'],
     children: [
-      { id: 'add-client', label: 'Add Client', icon: Plus, path: '/dashboard/clients/add' },
-      { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients' }
+      { id: 'add-client', label: 'Add Client', icon: Plus, path: '/dashboard/clients/add', roles: ['Admin'] },
+      { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] }
     ]
   },
   {
     id: 'users',
     label: 'Users',
     icon: Users,
+    roles: ['Admin'],
     children: [
-      { id: 'add-user', label: 'Add User', icon: UserPlus, path: '/dashboard/users/add' },
-      { id: 'list-users', label: 'All Users', icon: List, path: '/dashboard/users' }
+      { id: 'add-user', label: 'Add User', icon: UserPlus, path: '/dashboard/users/add', roles: ['Admin'] },
+      { id: 'list-users', label: 'All Users', icon: List, path: '/dashboard/users', roles: ['Admin'] }
     ]
   },
   {
     id: 'reports',
     label: 'Reports',
     icon: BarChart3,
-    path: '/dashboard/reports'
+    path: '/dashboard/reports',
+    roles: ['Admin']
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: Settings,
-    path: '/dashboard/settings'
+    path: '/dashboard/settings',
+    roles: ['Admin']
   }
 ];
 
@@ -111,7 +121,27 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
+  const { user } = useAuth();
+  const userRole = user?.role || 'User';
+
   const [expandedItems, setExpandedItems] = useState<string[]>(['projects', 'project-contracts', 'payments', 'contractors', 'clients']);
+
+  const filterMenuByRole = (items: MenuItem[]): MenuItem[] => {
+    return items
+      .filter(item => !item.roles || item.roles.includes(userRole))
+      .map(item => {
+        if (item.children) {
+          return {
+            ...item,
+            children: filterMenuByRole(item.children)
+          };
+        }
+        return item;
+      })
+      .filter(item => !item.children || item.children.length > 0);
+  };
+
+  const visibleMenuItems = filterMenuByRole(allMenuItems);
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -167,7 +197,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         key={item.id}
         to={item.path!}
         onClick={() => {
-          // Close sidebar on mobile when clicking a link
           if (window.innerWidth < 1024) {
             onToggle();
           }
@@ -218,7 +247,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Urban Design</h1>
-              <p className="text-sm text-gray-500">Construction Hub</p>
+              <p className="text-sm text-gray-500">{userRole} Portal</p>
             </div>
           </div>
         </div>
@@ -226,7 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         {/* Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-1">
-            {menuItems.map(item => renderMenuItem(item))}
+            {visibleMenuItems.map(item => renderMenuItem(item))}
           </div>
         </nav>
       </div>

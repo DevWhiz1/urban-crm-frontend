@@ -1,17 +1,8 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
+import apiClient from './apiClient';
 import { ProjectFormData, Client, Contractor, Project } from '../types/project';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const createProject = async (data: ProjectFormData): Promise<void> => {
   try {
-    // Convert string values to numbers where needed
     const projectData = {
       ...data,
       ratePerSquareFoot: data.ratePerSquareFoot ? parseFloat(data.ratePerSquareFoot) : undefined,
@@ -20,10 +11,10 @@ export const createProject = async (data: ProjectFormData): Promise<void> => {
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
       totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
-      contractors: data.contractors.filter(id => id.trim() !== ''), // Remove empty contractor IDs
+      contractors: data.contractors.filter(id => id.trim() !== ''),
     };
 
-    await api.post('/api/project/create-project', projectData);
+    await apiClient.post('/api/project/create-project', projectData);
   } catch (error) {
     console.error('Failed to create project:', error);
     throw new Error('Failed to create project. Please try again.');
@@ -32,7 +23,7 @@ export const createProject = async (data: ProjectFormData): Promise<void> => {
 
 export const fetchClients = async (): Promise<Client[]> => {
   try {
-    const response = await api.get('/api/client/get-all-clients');
+    const response = await apiClient.get('/api/client/get-all-clients');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch clients:', error);
@@ -42,7 +33,7 @@ export const fetchClients = async (): Promise<Client[]> => {
 
 export const fetchContractors = async (): Promise<Contractor[]> => {
   try {
-    const response = await api.get('/api/contractor/get-all-contractors');
+    const response = await apiClient.get('/api/contractor/get-all-contractors');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch contractors:', error);
@@ -52,7 +43,7 @@ export const fetchContractors = async (): Promise<Contractor[]> => {
 
 export const fetchAllProjects = async (): Promise<Project[]> => {
   try {
-    const response = await api.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -62,7 +53,7 @@ export const fetchAllProjects = async (): Promise<Project[]> => {
 
 export const fetchProjectById = async (id: string): Promise<Project> => {
   try {
-    const response = await api.get(`/api/project/get-single-project/${id}`);
+    const response = await apiClient.get(`/api/project/get-single-project/${id}`);
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch project:', error);
@@ -72,7 +63,6 @@ export const fetchProjectById = async (id: string): Promise<Project> => {
 
 export const updateProject = async (id: string, data: Partial<ProjectFormData>): Promise<Project> => {
   try {
-    // Convert string values to numbers where needed
     const projectData = {
       ...data,
       ratePerSquareFoot: data.ratePerSquareFoot ? parseFloat(data.ratePerSquareFoot) : undefined,
@@ -84,7 +74,7 @@ export const updateProject = async (id: string, data: Partial<ProjectFormData>):
       contractors: data.contractors?.filter(id => id.trim() !== '') || [],
     };
 
-    const response = await api.put(`/api/project/update-project/${id}`, projectData);
+    const response = await apiClient.put(`/api/project/update-project/${id}`, projectData);
     return response.data.data;
   } catch (error) {
     console.error('Failed to update project:', error);
@@ -94,7 +84,7 @@ export const updateProject = async (id: string, data: Partial<ProjectFormData>):
 
 export const deleteProject = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/api/project/delete-project/${id}`);
+    await apiClient.delete(`/api/project/delete-project/${id}`);
   } catch (error) {
     console.error('Failed to delete project:', error);
     throw new Error('Failed to delete project. Please try again.');

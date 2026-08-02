@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   X,
   Handshake,
   Building,
@@ -14,11 +14,11 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { 
-  createProjectContract, 
-  updateProjectContract, 
-  fetchProjects, 
-  fetchContractorsForContract 
+import {
+  createProjectContract,
+  updateProjectContract,
+  fetchProjects,
+  fetchContractorsForContract
 } from '../services/projectContractApi';
 import { validateProjectContractForm, hasProjectContractErrors, formatPKRCurrency } from '../utils/projectContractValidation';
 import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption, ProjectContract } from '../types/projectContract';
@@ -87,10 +87,10 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
         fetchProjects(),
         fetchContractorsForContract()
       ]);
-      
+
       setProjects(projectsData);
       setContractors(contractorsData);
-      
+
       if (projectsData.length === 0) {
         showNotification('error', 'No projects found. Please create projects first.');
       }
@@ -113,7 +113,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
   ) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -122,7 +122,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors = validateProjectContractForm(formData);
     setErrors(validationErrors);
 
@@ -133,7 +133,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
 
     try {
       setLoading(true);
-      
+
       if (mode === 'edit' && contract) {
         const updatedContract = await updateProjectContract(contract._id, formData);
         showNotification('success', 'Project contract updated successfully!');
@@ -193,7 +193,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
+        <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={handleClose}
         ></div>
@@ -229,7 +229,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                   <Building className="w-4 h-4 text-orange-600" />
                   Project & Contractor Assignment
                 </h4>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <Select
@@ -245,13 +245,13 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                     {selectedProject && (
                       <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p className="text-sm text-blue-800">
-                          <strong>Status:</strong> {selectedProject.status} | 
+                          <strong>Status:</strong> {selectedProject.status} |
                           <strong> Code:</strong> {selectedProject.projectCode}
                         </p>
                       </div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Select
                       label="Select Contractor"
@@ -266,7 +266,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                     {selectedContractor && (
                       <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
                         <p className="text-sm text-green-800">
-                          <strong>Type:</strong> {selectedContractor.contractorType} | 
+                          <strong>Type:</strong> {selectedContractor.contractorType} |
                           <strong> Contact:</strong> {selectedContractor.user.email}
                         </p>
                       </div>
@@ -281,7 +281,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                   <FileText className="w-4 h-4 text-blue-600" />
                   Contract Details
                 </h4>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <Input
@@ -301,7 +301,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Input
                       label="Total Amount (PKR)"
@@ -330,7 +330,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                   <Calendar className="w-4 h-4 text-purple-600" />
                   Contract Timeline
                 </h4>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Input
                     label="Start Date"
@@ -357,7 +357,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                   <FileText className="w-4 h-4 text-gray-600" />
                   Contract Description
                 </h4>
-                
+
                 <Textarea
                   label="Description"
                   value={formData.Description}

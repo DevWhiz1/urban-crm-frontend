@@ -69,7 +69,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar }) => {
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-gray-900">{user?.userName}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-500">{user?.email} • <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 rounded-full">{user?.role || 'User'}</span></p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </button>

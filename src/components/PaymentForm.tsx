@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
-import { 
-  CreditCard, 
-  DollarSign, 
-  Building, 
-  Users, 
-  Calendar, 
+import {
+  CreditCard,
+  DollarSign,
+  Building,
+  Users,
+  Calendar,
   FileText,
   Wrench,
   CheckCircle,
@@ -22,25 +22,25 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { 
-  createPayment, 
-  fetchProjectsForPayment, 
-  fetchContractorsForPayment, 
+import {
+  createPayment,
+  fetchProjectsForPayment,
+  fetchContractorsForPayment,
   fetchContractsForPayment,
   getFilteredContracts
 } from '../services/paymentApi';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
-import { 
-  validatePaymentForm, 
-  hasPaymentErrors, 
+import {
+  validatePaymentForm,
+  hasPaymentErrors,
   formatPKRCurrency,
   getPaymentStatusColor
 } from '../utils/paymentValidation';
-import { 
-  PaymentFormData, 
-  PaymentFormErrors, 
-  PaymentNotificationState, 
-  PaymentProjectOption, 
+import {
+  PaymentFormData,
+  PaymentFormErrors,
+  PaymentNotificationState,
+  PaymentProjectOption,
   PaymentContractorOption,
   PaymentContractOption
 } from '../types/payment';
@@ -83,7 +83,7 @@ export const PaymentForm: React.FC = () => {
     if (formData.project && formData.contractor) {
       const filtered = getFilteredContracts(contracts, formData.project, formData.contractor);
       setFilteredContracts(filtered);
-      
+
       // Reset contract selection if current selection is not valid
       if (formData.contract && !filtered.find(c => c._id === formData.contract)) {
         setFormData(prev => ({ ...prev, contract: '' }));
@@ -102,11 +102,11 @@ export const PaymentForm: React.FC = () => {
         fetchContractorsForPayment(),
         fetchContractsForPayment()
       ]);
-      
+
       setProjects(projectsData);
       setContractors(contractorsData);
       setContracts(contractsData);
-      
+
       if (projectsData.length === 0) {
         showNotification('error', 'No projects found. Please create projects first.');
       }
@@ -129,7 +129,7 @@ export const PaymentForm: React.FC = () => {
   ) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -138,7 +138,7 @@ export const PaymentForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const validationErrors = validatePaymentForm(formData);
     setErrors(validationErrors);
 
@@ -150,7 +150,7 @@ export const PaymentForm: React.FC = () => {
     try {
       setLoading(true);
       await createPayment(formData);
-      
+
       // Reset form
       setFormData({
         project: '',
@@ -165,7 +165,7 @@ export const PaymentForm: React.FC = () => {
         receiptPhoto: '',
         notes: ''
       });
-      
+
       showNotification('success', 'Payment recorded successfully!');
     } catch (error) {
       showNotification('error', 'Failed to record payment. Please try again.');
@@ -248,7 +248,7 @@ export const PaymentForm: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Project & Contractor</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <Select
@@ -264,13 +264,13 @@ export const PaymentForm: React.FC = () => {
                     {selectedProject && (
                       <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p className="text-sm text-blue-800">
-                          <strong>Client:</strong> {selectedProject.customer?.user?.userName} | 
+                          <strong>Client:</strong> {selectedProject.customer?.user?.userName} |
                           <strong> Status:</strong> {selectedProject.status}
                         </p>
                       </div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Select
                       label="Select Contractor"
@@ -285,7 +285,7 @@ export const PaymentForm: React.FC = () => {
                     {selectedContractor && (
                       <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
                         <p className="text-sm text-green-800">
-                          <strong>Type:</strong> {selectedContractor.contractorType} | 
+                          <strong>Type:</strong> {selectedContractor.contractorType} |
                           <strong> Contact:</strong> {selectedContractor.user.email}
                         </p>
                       </div>
@@ -312,10 +312,10 @@ export const PaymentForm: React.FC = () => {
                       onChange={handleInputChange('contract')}
                       error={errors.contract}
                       placeholder={
-                        !formData.project || !formData.contractor 
+                        !formData.project || !formData.contractor
                           ? "Please select project and contractor first"
-                          : filteredContracts.length > 0 
-                            ? "Select a contract" 
+                          : filteredContracts.length > 0
+                            ? "Select a contract"
                             : "No contracts found for this combination"
                       }
                       disabled={!formData.project || !formData.contractor || filteredContracts.length === 0}
@@ -369,7 +369,7 @@ export const PaymentForm: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Payment Details</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <Input
@@ -427,7 +427,7 @@ export const PaymentForm: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Payment Method & Transaction</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Select
                     label="Payment Method"
@@ -458,7 +458,7 @@ export const PaymentForm: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Work Description</h3>
                 </div>
-                
+
                 <Textarea
                   label="Work Description"
                   value={formData.workDescription}
@@ -477,7 +477,7 @@ export const PaymentForm: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Receipt & Additional Notes</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Input
                     label="Receipt Photo URL (Optional)"
@@ -537,7 +537,7 @@ export const PaymentForm: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -549,7 +549,7 @@ export const PaymentForm: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">

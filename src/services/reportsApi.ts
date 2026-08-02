@@ -1,12 +1,4 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import apiClient from './apiClient';
 
 export interface ProjectReport {
   summary: {
@@ -125,7 +117,7 @@ export interface ReportFilters {
 // Get project reports
 export const getProjectReports = async (filters: ReportFilters = {}): Promise<ProjectReport> => {
   try {
-    const response = await api.get('/api/reports/projects', { params: filters });
+    const response = await apiClient.get('/api/reports/projects', { params: filters });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch project reports:', error);
@@ -136,7 +128,7 @@ export const getProjectReports = async (filters: ReportFilters = {}): Promise<Pr
 // Get contractor reports
 export const getContractorReports = async (filters: ReportFilters = {}): Promise<ContractorReport> => {
   try {
-    const response = await api.get('/api/reports/contractors', { params: filters });
+    const response = await apiClient.get('/api/reports/contractors', { params: filters });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch contractor reports:', error);
@@ -147,7 +139,7 @@ export const getContractorReports = async (filters: ReportFilters = {}): Promise
 // Get client reports
 export const getClientReports = async (filters: ReportFilters = {}): Promise<ClientReport> => {
   try {
-    const response = await api.get('/api/reports/clients', { params: filters });
+    const response = await apiClient.get('/api/reports/clients', { params: filters });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch client reports:', error);
@@ -158,7 +150,7 @@ export const getClientReports = async (filters: ReportFilters = {}): Promise<Cli
 // Get payment reports
 export const getPaymentReports = async (filters: ReportFilters = {}): Promise<PaymentReport> => {
   try {
-    const response = await api.get('/api/reports/payments', { params: filters });
+    const response = await apiClient.get('/api/reports/payments', { params: filters });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch payment reports:', error);
@@ -169,7 +161,7 @@ export const getPaymentReports = async (filters: ReportFilters = {}): Promise<Pa
 // Get financial summary
 export const getFinancialSummary = async (filters: ReportFilters = {}): Promise<FinancialSummary> => {
   try {
-    const response = await api.get('/api/reports/financial-summary', { params: filters });
+    const response = await apiClient.get('/api/reports/financial-summary', { params: filters });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch financial summary:', error);
@@ -198,7 +190,7 @@ export interface PaymentAnalytics {
 // Get payment analytics for dashboard graphs
 export const getPaymentAnalytics = async (period: string = 'monthly'): Promise<PaymentAnalytics> => {
   try {
-    const response = await api.get('/api/reports/payment-analytics', { params: { period } });
+    const response = await apiClient.get('/api/reports/payment-analytics', { params: { period } });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch payment analytics:', error);

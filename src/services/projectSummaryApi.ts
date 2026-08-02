@@ -1,16 +1,8 @@
-import axios from 'axios';
-import { BACKEND_URL } from '../constants/contractor';
-
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import apiClient from './apiClient';
 
 export const fetchAllProjects = async () => {
   try {
-    const response = await api.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -20,7 +12,7 @@ export const fetchAllProjects = async () => {
 
 export const fetchProjectPaymentSummary = async (projectId: string) => {
   try {
-    const response = await api.get(`/api/payment/full-summary/${projectId}`);
+    const response = await apiClient.get(`/api/payment/full-summary/${projectId}`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch project payment summary:', error);

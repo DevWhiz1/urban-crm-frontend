@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Breadcrumbs } from './ui/Breadcrumbs';
-import { 
-  CreditCard, 
-  Wrench, 
-  Package, 
-  Building, 
+import {
+  CreditCard,
+  Wrench,
+  Package,
+  Building,
   ArrowRight,
   DollarSign,
   Users,
@@ -95,7 +95,7 @@ export const PaymentSelection: React.FC = () => {
                 <p className="text-gray-600 mb-6 leading-relaxed">
                   {type.description}
                 </p>
-                
+
                 {/* Action Button */}
                 <div className="flex items-center justify-between">
                   <div className={`w-10 h-10 ${type.bgColor} rounded-lg flex items-center justify-center`}>

@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import apiClient from './apiClient';
 
 export interface IUserResponse {
   _id: string;
@@ -8,11 +6,12 @@ export interface IUserResponse {
   email: string;
   role: string;
   status: string;
+  plainPassword?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export const getAllUsers = async (): Promise<IUserResponse[]> => {
-  const res = await axios.get(`${BASE_URL}/api/user/get-all-users`);
+  const res = await apiClient.get('/api/user/get-all-users');
   return res.data?.data || [];
 };
