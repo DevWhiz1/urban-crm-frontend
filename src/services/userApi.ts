@@ -6,6 +6,7 @@ export interface IUserResponse {
   email: string;
   role: string;
   status: string;
+  plainPassword?: string;
   createdAt: string;
   updatedAt: string;
 }

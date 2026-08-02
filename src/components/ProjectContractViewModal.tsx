@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   X,
   Handshake,
   Building,
@@ -65,13 +65,13 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
   };
 
   const getStatusColor = (isTerminated: boolean) => {
-    return isTerminated 
-      ? 'text-red-600 bg-red-100' 
+    return isTerminated
+      ? 'text-red-600 bg-red-100'
       : 'text-green-600 bg-green-100';
   };
 
   const getStatusIcon = (isTerminated: boolean) => {
-    return isTerminated 
+    return isTerminated
       ? <XCircle className="w-5 h-5" />
       : <CheckCircle className="w-5 h-5" />;
   };
@@ -173,7 +173,7 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
+        <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={onClose}
         ></div>
