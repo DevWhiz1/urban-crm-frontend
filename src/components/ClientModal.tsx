@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
     X,
     User as UserIcon,
+    Users,
+    CreditCard,
+    MapPin,
     Phone,
     CheckCircle,
     XCircle,
@@ -19,7 +22,9 @@ import {
     fetchUsersForClient,
     User
 } from '../services/clientApi';
-import { Client, ClientFormData } from '../types/client';
+import { PAYMENT_TERMS } from '../constants/contractor';
+import { validateClientForm, hasClientErrors } from '../utils/clientValidation';
+import { Client, ClientFormData, ClientFormErrors } from '../types/client';
 
 interface ClientModalProps {
     isOpen: boolean;
@@ -45,33 +50,24 @@ export const ClientModal: React.FC<ClientModalProps> = ({
         message: ''
     });
 
-    const [formData, setFormData] = useState<ClientFormData>({
-        user: typeof client?.user === 'object' ? client.user._id : client?.user || '',
-        paymentTerms: client?.paymentTerms || '',
-        bankDetails: client?.bankDetails || '',
-        address: client?.address || '',
-        phoneNumber: client?.phoneNumber || ''
+    const getInitialFormData = (c?: Client): ClientFormData => ({
+        user: typeof c?.user === 'object' ? c.user._id : (c?.user || ''),
+        paymentTerms: c?.paymentTerms || '',
+        bankDetails: c?.bankDetails || '',
+        address: c?.address || (typeof c?.user === 'object' ? c.user.address : '') || '',
+        phoneNumber: c?.phoneNumber || (typeof c?.user === 'object' ? c.user.phoneNumber : '') || ''
     });
 
-    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+    const [formData, setFormData] = useState<ClientFormData>(getInitialFormData(client));
+    const [errors, setErrors] = useState<ClientFormErrors>({});
 
     useEffect(() => {
         if (isOpen) {
             loadInitialData();
+            setFormData(getInitialFormData(client));
+            setErrors({});
         }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (client && (mode === 'edit' || mode === 'view')) {
-            setFormData({
-                user: typeof client.user === 'object' ? client.user._id : client.user || '',
-                paymentTerms: client.paymentTerms || '',
-                bankDetails: client.bankDetails || '',
-                address: client.address || '',
-                phoneNumber: client.phoneNumber || ''
-            });
-        }
-    }, [client, mode]);
+    }, [isOpen, client, mode]);
 
     const loadInitialData = async () => {
         try {
@@ -104,16 +100,10 @@ export const ClientModal: React.FC<ClientModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation
-        const newErrors: Record<string, string> = {};
-        if (!formData.user) newErrors.user = 'User is required';
-        if (!formData.paymentTerms) newErrors.paymentTerms = 'Payment terms are required';
-        if (!formData.address) newErrors.address = 'Address is required';
-        if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+        const validationErrors = validateClientForm(formData);
+        setErrors(validationErrors);
 
-        setErrors(newErrors);
-
-        if (Object.keys(newErrors).length > 0) {
+        if (hasClientErrors(validationErrors)) {
             showNotification('error', 'Please fix the errors below before submitting.');
             return;
         }
@@ -128,14 +118,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({
             } else {
                 await createClient(formData);
                 showNotification('success', 'Client created successfully!');
-                // Reset form for add mode
-                setFormData({
-                    user: '',
-                    paymentTerms: '',
-                    bankDetails: '',
-                    address: '',
-                    phoneNumber: ''
-                });
+                setFormData(getInitialFormData());
                 onSave({} as Client); // Trigger parent to refresh list
             }
         } catch (error) {
@@ -146,13 +129,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({
     };
 
     const handleClose = () => {
-        setFormData({
-            user: '',
-            paymentTerms: '',
-            bankDetails: '',
-            address: '',
-            phoneNumber: ''
-        });
+        setFormData(getInitialFormData());
         setErrors({});
         onClose();
     };
@@ -161,6 +138,13 @@ export const ClientModal: React.FC<ClientModalProps> = ({
         value: user._id,
         label: `${user.userName} (${user.email})`
     }));
+
+    const paymentTermOptions = [
+        ...PAYMENT_TERMS.map(term => ({ value: term, label: term })),
+        ...(formData.paymentTerms && !PAYMENT_TERMS.includes(formData.paymentTerms as any)
+            ? [{ value: formData.paymentTerms, label: formData.paymentTerms }]
+            : [])
+    ];
 
     const selectedUser = users.find(u => u._id === formData.user);
 
@@ -198,7 +182,7 @@ export const ClientModal: React.FC<ClientModalProps> = ({
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 max-h-96 overflow-y-auto">
+                    <div className="p-6 max-h-[75vh] overflow-y-auto">
                         {mode === 'view' ? (
                             // View Mode
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -307,10 +291,18 @@ export const ClientModal: React.FC<ClientModalProps> = ({
                                 </div>
                             </div>
                         ) : (
-                            // Add/Edit Mode
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div>
+                            // Add/Edit Mode Form matching ClientForm layout & fields
+                            <form onSubmit={handleSubmit} className="space-y-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {/* User Assignment */}
+                                    <div className="lg:col-span-2">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <Users className="w-4 h-4 text-green-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">User Assignment</h3>
+                                        </div>
+
                                         <Select
                                             label="Select User"
                                             options={userOptions}
@@ -319,60 +311,77 @@ export const ClientModal: React.FC<ClientModalProps> = ({
                                             error={errors.user}
                                             required
                                             placeholder={loadingData ? "Loading users..." : "Choose a user"}
-                                            disabled={loadingData || (mode as string) === 'view'}
+                                            disabled={loadingData}
                                         />
                                         {selectedUser && (
-                                            <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                                            <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
                                                 <p className="text-sm text-green-800">
-                                                    <strong>Email:</strong> {selectedUser.email} |
+                                                    <strong>Email:</strong> {selectedUser.email} | 
                                                     <strong> Status:</strong> {selectedUser.status}
                                                 </p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <Input
-                                        label="Phone Number"
-                                        value={formData.phoneNumber}
-                                        onChange={handleInputChange('phoneNumber')}
-                                        error={errors.phoneNumber}
-                                        placeholder="Enter phone number"
-                                        required
-                                        disabled={(mode as string) === 'view'}
-                                    />
-
-                                    <Input
-                                        label="Payment Terms"
-                                        value={formData.paymentTerms}
-                                        onChange={handleInputChange('paymentTerms')}
-                                        error={errors.paymentTerms}
-                                        placeholder="Enter payment terms"
-                                        required
-                                        disabled={(mode as string) === 'view'}
-                                    />
-
+                                    {/* Payment & Contact */}
                                     <div className="lg:col-span-2">
-                                        <Textarea
-                                            label="Address"
-                                            value={formData.address}
-                                            onChange={handleInputChange('address')}
-                                            error={errors.address}
-                                            placeholder="Enter address"
-                                            rows={3}
-                                            required
-                                            disabled={(mode as string) === 'view'}
-                                        />
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <CreditCard className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Payment & Contact</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <Select
+                                                label="Payment Terms"
+                                                options={paymentTermOptions}
+                                                value={formData.paymentTerms}
+                                                onChange={handleInputChange('paymentTerms')}
+                                                error={errors.paymentTerms}
+                                                placeholder="Select payment terms"
+                                            />
+
+                                            <Input
+                                                label="Phone Number"
+                                                type="tel"
+                                                value={formData.phoneNumber}
+                                                onChange={handleInputChange('phoneNumber')}
+                                                error={errors.phoneNumber}
+                                                placeholder="+1 (555) 123-4567"
+                                            />
+                                        </div>
                                     </div>
 
+                                    {/* Additional Information */}
                                     <div className="lg:col-span-2">
-                                        <Textarea
-                                            label="Bank Details"
-                                            value={formData.bankDetails}
-                                            onChange={handleInputChange('bankDetails')}
-                                            placeholder="Enter bank details"
-                                            rows={2}
-                                            disabled={(mode as string) === 'view'}
-                                        />
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                <MapPin className="w-4 h-4 text-purple-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Additional Information</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <Input
+                                                label="Bank Details"
+                                                value={formData.bankDetails}
+                                                onChange={handleInputChange('bankDetails')}
+                                                error={errors.bankDetails}
+                                                placeholder="Account number, routing details, etc."
+                                            />
+
+                                            <div className="lg:row-span-1">
+                                                <Textarea
+                                                    label="Address"
+                                                    value={formData.address}
+                                                    onChange={handleInputChange('address')}
+                                                    error={errors.address}
+                                                    placeholder="Enter complete address"
+                                                    rows={3}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </form>
@@ -421,3 +430,4 @@ export const ClientModal: React.FC<ClientModalProps> = ({
         </div>
     );
 };
+

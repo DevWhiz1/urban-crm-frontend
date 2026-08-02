@@ -145,13 +145,19 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
     };
 
     const getProjectCost = (project: Project) => {
-        if (project.projectType === 'withMaterial' && project.totalCost) {
-            return formatPKRCurrency(project.totalCost.toString());
+        const totalAdditions = (project.additions || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+        if (project.projectType === 'withMaterial' && project.totalCost !== undefined) {
+            return formatPKRCurrency((project.totalCost + totalAdditions).toString());
         }
-        if (project.projectType === 'labourRate' && project.totalLabourCost) {
-            return formatPKRCurrency(project.totalLabourCost.toString());
+        if (project.projectType === 'labourRate' && project.totalLabourCost !== undefined) {
+            return formatPKRCurrency((project.totalLabourCost + totalAdditions).toString());
         }
         return 'Not calculated';
+    };
+
+    const getProjectAdditionsTotal = (project: Project) => {
+        if (!project.additions || project.additions.length === 0) return 0;
+        return project.additions.reduce((sum, item) => sum + (item.amount || 0), 0);
     };
 
     if (loading) {
@@ -297,11 +303,17 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                         {/* Cost Information */}
                                         <div className="bg-gray-50 rounded-lg p-4">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Total Cost:</span>
+                                                <span className="text-sm text-gray-600">Revised Total Cost:</span>
                                                 <span className="font-semibold text-gray-900">{getProjectCost(project)}</span>
                                             </div>
+                                            {getProjectAdditionsTotal(project) > 0 && (
+                                                <div className="flex items-center justify-between mt-1 text-xs text-amber-700 font-medium">
+                                                    <span>Includes Additions:</span>
+                                                    <span>+{formatPKRCurrency(getProjectAdditionsTotal(project).toString())}</span>
+                                                </div>
+                                            )}
                                             {project.totalCoverageArea && (
-                                                <div className="flex items-center justify-between mt-2">
+                                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200/60">
                                                     <span className="text-sm text-gray-600">Coverage Area:</span>
                                                     <span className="text-sm font-medium text-gray-900">{project.totalCoverageArea} sq ft</span>
                                                 </div>

@@ -21,10 +21,10 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { createProject, updateProject, fetchClients, fetchContractors } from '../services/projectApi';
+import { createProject, updateProject, fetchClients } from '../services/projectApi';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { validateProjectForm, hasProjectErrors, calculateTotalCost, calculateTotalLabourCost, formatPKRCurrency, formatDateForInput } from '../utils/projectValidation';
-import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Contractor, Project } from '../types/project';
+import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Project } from '../types/project';
 
 interface ProjectFormProps {
     project?: Project;
@@ -40,7 +40,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     mode = 'add'
 }) => {
     const [clients, setClients] = useState<Client[]>([]);
-    const [contractors, setContractors] = useState<Contractor[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [notification, setNotification] = useState<ProjectNotificationState>({
@@ -76,7 +75,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         totalLabourCost: project?.totalLabourCost?.toString() || '',
         startDate: formatDateForInput(project?.startDate),
         estimatedDuration: formatDateForInput(project?.estimatedDuration),
-        contractors: normalizeStringIds(project?.contractors),
         drawings: normalizeStringIds(project?.drawings),
         contracts: normalizeStringIds(project?.contracts),
         description: project?.description || '',
@@ -105,7 +103,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 totalLabourCost: project.totalLabourCost?.toString() || '',
                 startDate: formatDateForInput(project.startDate),
                 estimatedDuration: formatDateForInput(project.estimatedDuration),
-                contractors: normalizeStringIds(project.contractors),
                 drawings: normalizeStringIds(project.drawings),
                 contracts: normalizeStringIds(project.contracts),
                 description: project.description || '',
@@ -140,13 +137,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     const loadInitialData = async () => {
         try {
             setLoadingData(true);
-            const [clientsData, contractorsData] = await Promise.all([
-                fetchClients(),
-                fetchContractors()
-            ]);
+            const clientsData = await fetchClients();
 
             setClients(clientsData);
-            setContractors(contractorsData);
 
             if (clientsData.length === 0) {
                 showNotification('error', 'No clients found. Please add clients first.');
@@ -171,23 +164,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         // Clear error when user starts typing
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: undefined }));
-        }
-    };
-
-    const handleContractorChange = (index: number, value: string) => {
-        const newContractors = [...formData.contractors];
-        newContractors[index] = value;
-        setFormData(prev => ({ ...prev, contractors: newContractors }));
-    };
-
-    const addContractor = () => {
-        setFormData(prev => ({ ...prev, contractors: [...prev.contractors, ''] }));
-    };
-
-    const removeContractor = (index: number) => {
-        if (formData.contractors.length > 1) {
-            const newContractors = formData.contractors.filter((_, i) => i !== index);
-            setFormData(prev => ({ ...prev, contractors: newContractors }));
         }
     };
 
@@ -298,7 +274,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             totalLabourCost: '',
             startDate: '',
             estimatedDuration: '',
-            contractors: [''],
             drawings: [''],
             contracts: [''],
             description: '',
@@ -310,11 +285,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     const clientOptions = clients.map(client => ({
         value: client._id,
         label: `${client.user.userName} (${client.user.email})`
-    }));
-
-    const contractorOptions = contractors.map(contractor => ({
-        value: contractor._id,
-        label: `${contractor.companyName} - ${contractor.user.userName}`
     }));
 
     const isWithMaterial = formData.projectType === 'withMaterial';
@@ -476,12 +446,32 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                                 {formData.totalCost && !isNaN(parseFloat(formData.totalCost)) && (
                                                     <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
                                                         <p className="text-sm text-green-800 font-medium">
-                                                            Total: {formatPKRCurrency(formData.totalCost)}
+                                                            Base Cost: {formatPKRCurrency(formData.totalCost)}
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
+                                        {project?.additions && project.additions.length > 0 && (
+                                            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-2 text-sm">
+                                                <div className="flex items-center justify-between font-medium text-amber-900">
+                                                    <span>Base Cost:</span>
+                                                    <span>{formatPKRCurrency(formData.totalCost || '0')}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between font-medium text-amber-700">
+                                                    <span>Recorded Additions ({project.additions.length}):</span>
+                                                    <span>+{formatPKRCurrency(project.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between font-bold text-emerald-800 pt-2 border-t border-amber-200 text-base">
+                                                    <span>Effective Final Total Cost:</span>
+                                                    <span>
+                                                        {formatPKRCurrency(
+                                                            ((parseFloat(formData.totalCost || '0') || 0) + project.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -513,12 +503,32 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                                 {formData.totalLabourCost && !isNaN(parseFloat(formData.totalLabourCost)) && (
                                                     <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
                                                         <p className="text-sm text-green-800 font-medium">
-                                                            Total: {formatPKRCurrency(formData.totalLabourCost)}
+                                                            Base Labour Cost: {formatPKRCurrency(formData.totalLabourCost)}
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
+                                        {project?.additions && project.additions.length > 0 && (
+                                            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-2 text-sm">
+                                                <div className="flex items-center justify-between font-medium text-amber-900">
+                                                    <span>Base Labour Cost:</span>
+                                                    <span>{formatPKRCurrency(formData.totalLabourCost || '0')}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between font-medium text-amber-700">
+                                                    <span>Recorded Additions ({project.additions.length}):</span>
+                                                    <span>+{formatPKRCurrency(project.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between font-bold text-emerald-800 pt-2 border-t border-amber-200 text-base">
+                                                    <span>Effective Final Total Cost:</span>
+                                                    <span>
+                                                        {formatPKRCurrency(
+                                                            ((parseFloat(formData.totalLabourCost || '0') || 0) + project.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -548,57 +558,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         onChange={handleInputChange('estimatedDuration')}
                                         error={errors.estimatedDuration}
                                     />
-                                </div>
-                            </div>
-
-                            {/* People Assignment */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <Users className="w-4 h-4 text-blue-600" />
-                                    </div>
-                                    <h3 className="text-lg font-medium text-gray-900">Contractors Assignment</h3>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                                        Contractors
-                                    </label>
-                                    <div className="space-y-3">
-                                        {formData.contractors.map((contractorId, index) => (
-                                            <div key={index} className="flex items-center gap-3">
-                                                <div className="flex-1">
-                                                    <Select
-                                                        label=""
-                                                        options={contractorOptions}
-                                                        value={contractorId}
-                                                        onChange={(e) => handleContractorChange(index, e.target.value)}
-                                                        placeholder="Select a contractor"
-                                                    />
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {index === formData.contractors.length - 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={addContractor}
-                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    {formData.contractors.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeContractor(index)}
-                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        >
-                                                            <Minus className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                             </div>
 

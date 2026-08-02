@@ -46,6 +46,18 @@ export const fetchAllProjectContracts = async (): Promise<ProjectContract[]> => 
   }
 };
 
+export const fetchProjectContractsByProjectId = async (projectId: string): Promise<ProjectContract[]> => {
+  try {
+    const response = await apiClient.get('/api/project-contract/get-all-project-contracts', {
+      params: { project: projectId }
+    });
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch project contracts by project:', error);
+    throw new Error('Failed to load project contracts');
+  }
+};
+
 export const fetchProjectContractById = async (id: string): Promise<ProjectContract> => {
   try {
     const response = await apiClient.get(`/api/project-contract/get-single-project-contract/${id}`);
@@ -78,5 +90,16 @@ export const deleteProjectContract = async (id: string): Promise<void> => {
   } catch (error) {
     console.error('Failed to delete project contract:', error);
     throw new Error('Failed to delete project contract. Please try again.');
+  }
+};
+
+export const addContractAddition = async (id: string, amount: number, reason: string): Promise<ProjectContract> => {
+  try {
+    const response = await apiClient.post(`/api/project-contract/add-addition/${id}`, { amount, reason });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to add price addition to project contract:', error);
+    const msg = error.response?.data?.message || 'Failed to add price addition. Please try again.';
+    throw new Error(msg);
   }
 };

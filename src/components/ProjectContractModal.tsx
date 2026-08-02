@@ -317,8 +317,28 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                     {formData.totalAmount && !isNaN(parseFloat(formData.totalAmount)) && (
                       <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
                         <p className="text-sm text-green-800 font-medium">
-                          Amount: {formatPKRCurrency(formData.totalAmount)}
+                          Base Amount: {formatPKRCurrency(formData.totalAmount)}
                         </p>
+                      </div>
+                    )}
+                    {contract?.additions && contract.additions.length > 0 && (
+                      <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between font-medium text-amber-900">
+                          <span>Base Contract Amount:</span>
+                          <span>{formatPKRCurrency(formData.totalAmount || '0')}</span>
+                        </div>
+                        <div className="flex items-center justify-between font-medium text-amber-700">
+                          <span>Recorded Additions ({contract.additions.length}):</span>
+                          <span>+{formatPKRCurrency(contract.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                        </div>
+                        <div className="flex items-center justify-between font-bold text-emerald-800 pt-1.5 border-t border-amber-200 text-sm">
+                          <span>Revised Total Amount:</span>
+                          <span>
+                            {formatPKRCurrency(
+                              ((parseFloat(formData.totalAmount || '0') || 0) + contract.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
+                            )}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>

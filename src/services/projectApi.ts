@@ -19,7 +19,7 @@ export const createProject = async (data: ProjectFormData): Promise<void> => {
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
       totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
-      contractors: (data.contractors || []).map(normalizeId).filter(id => id !== ''),
+      contractors: data.contractors ? data.contractors.map(normalizeId).filter(id => id !== '') : undefined,
     };
 
     await apiClient.post('/api/project/create-project', projectData);
@@ -97,5 +97,16 @@ export const deleteProject = async (id: string): Promise<void> => {
   } catch (error) {
     console.error('Failed to delete project:', error);
     throw new Error('Failed to delete project. Please try again.');
+  }
+};
+
+export const addProjectAddition = async (id: string, amount: number, reason: string): Promise<Project> => {
+  try {
+    const response = await apiClient.post(`/api/project/add-addition/${id}`, { amount, reason });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to add price addition to project:', error);
+    const msg = error.response?.data?.message || 'Failed to add price addition. Please try again.';
+    throw new Error(msg);
   }
 };

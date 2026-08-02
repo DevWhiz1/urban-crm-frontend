@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { User, Search, RefreshCw, ArrowUpDown, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { User, Search, RefreshCw, ArrowUpDown, ChevronsLeft, ChevronsRight, Plus } from 'lucide-react';
 import { Notification } from '../ui/Notification';
 import { Button } from '../ui/Button';
 import { getAllUsers } from '../../services/userApi';
@@ -101,6 +101,7 @@ export const UsersList: React.FC = () => {
                         <RefreshCw className="w-4 h-4 mr-1.5" />Refresh
                     </Button>
                     <Button to="/dashboard/users/add" size="sm" variant="primary">
+                        <Plus className="w-4 h-4 mr-1.5" />
                         Add User
                     </Button>
                 </div>
