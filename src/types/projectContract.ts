@@ -1,7 +1,28 @@
 export interface ProjectContract {
   _id: string;
-  project: string;
-  contractor: string;
+  project: string | {
+    _id: string;
+    name: string;
+    projectCode: string;
+    status: string;
+    location?: string;
+    projectCategory?: string;
+    projectType?: string;
+  };
+  contractor: string | {
+    _id: string;
+    companyName: string;
+    contractorType: string;
+    user: {
+      _id: string;
+      userName: string;
+      email: string;
+    };
+    paymentTerms?: string;
+    bankDetails?: string;
+    address?: string;
+    phoneNumber?: string;
+  };
   contractType: string;
   totalAmount: number;
   startDate: string;
@@ -9,6 +30,8 @@ export interface ProjectContract {
   payments: string[];
   isTerminated: boolean;
   Description: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectContractFormData {

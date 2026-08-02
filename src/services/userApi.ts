@@ -13,6 +13,6 @@ export interface IUserResponse {
 }
 
 export const getAllUsers = async (): Promise<IUserResponse[]> => {
-  const res = await axios.get(`${BASE_URL}/user/get-all-users`);
+  const res = await axios.get(`${BASE_URL}/api/user/get-all-users`);
   return res.data?.data || [];
 };

@@ -59,7 +59,8 @@ const menuItems: MenuItem[] = [
     icon: CreditCard,
     children: [
       { id: 'add-payment', label: 'Record Payment', icon: Plus, path: '/dashboard/payments/add' },
-      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments' }
+      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments' },
+      { id: 'list-contarctor-payments', label: 'All Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor' }
     ]
   },
   {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   Package, 
   Building, 
@@ -144,8 +145,16 @@ export const MaterialPaymentForm: React.FC = () => {
   const selectedProject = projects.find(p => p._id === formData.project);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Payments', path: '/dashboard/payments' },
+            { label: 'Add Material Payment' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
@@ -156,8 +165,8 @@ export const MaterialPaymentForm: React.FC = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-6">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-green-600 px-8 py-6">
             <h2 className="text-xl font-semibold text-white">Material Payment Information</h2>
             <p className="text-green-100 mt-1">Record material purchase and payment details</p>
           </div>
@@ -335,7 +344,7 @@ export const MaterialPaymentForm: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Building className="w-5 h-5 text-blue-600" />
@@ -347,7 +356,7 @@ export const MaterialPaymentForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Package className="w-5 h-5 text-green-600" />
@@ -359,7 +368,7 @@ export const MaterialPaymentForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-purple-600" />

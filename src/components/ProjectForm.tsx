@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Breadcrumbs } from './ui/Breadcrumbs';
 import { 
   FileText, 
   MapPin, 
@@ -20,12 +21,24 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { createProject, fetchClients, fetchContractors } from '../services/projectApi';
+import { createProject, updateProject, fetchClients, fetchContractors } from '../services/projectApi';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { validateProjectForm, hasProjectErrors, calculateTotalCost, calculateTotalLabourCost, formatPKRCurrency } from '../utils/projectValidation';
-import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Contractor } from '../types/project';
+import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Contractor, Project } from '../types/project';
 
-export const ProjectForm: React.FC = () => {
+interface ProjectFormProps {
+  project?: Project;
+  onSave?: (project: Project) => void;
+  onCancel?: () => void;
+  mode?: 'add' | 'edit';
+}
+
+export const ProjectForm: React.FC<ProjectFormProps> = ({ 
+  project, 
+  onSave, 
+  onCancel, 
+  mode = 'add' 
+}) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,24 +50,24 @@ export const ProjectForm: React.FC = () => {
   });
 
   const [formData, setFormData] = useState<ProjectFormData>({
-    name: '',
-    customer: '',
-    location: '',
-    projectCategory: '',
-    projectType: '',
-    ratePerSquareFoot: '',
-    totalArea: '',
-    totalCoverageArea: '',
-    totalCost: '',
-    labouRate: '',
-    totalLabourCost: '',
-    startDate: '',
-    estimatedDuration: '',
-    contractors: [''],
-    drawings: [''],
-    contracts: [''],
-    description: '',
-    status: 'planning'
+    name: project?.name || '',
+    customer: project?.customer?._id || project?.customer || '',
+    location: project?.location || '',
+    projectCategory: project?.projectCategory || '',
+    projectType: project?.projectType || '',
+    ratePerSquareFoot: project?.ratePerSquareFoot?.toString() || '',
+    totalArea: project?.totalArea?.toString() || '',
+    totalCoverageArea: project?.totalCoverageArea?.toString() || '',
+    totalCost: project?.totalCost?.toString() || '',
+    labouRate: project?.labouRate?.toString() || '',
+    totalLabourCost: project?.totalLabourCost?.toString() || '',
+    startDate: project?.startDate || '',
+    estimatedDuration: project?.estimatedDuration || '',
+    contractors: project?.contractors?.length ? project.contractors : [''],
+    drawings: project?.drawings?.length ? project.drawings : [''],
+    contracts: project?.contracts?.length ? project.contracts : [''],
+    description: project?.description || '',
+    status: project?.status || 'planning'
   });
 
   const [errors, setErrors] = useState<ProjectFormErrors>({});
@@ -187,33 +200,46 @@ export const ProjectForm: React.FC = () => {
 
     try {
       setLoading(true);
-      await createProject(formData);
       
-      // Reset form
-      setFormData({
-        name: '',
-        customer: '',
-        location: '',
-        projectCategory: '',
-        projectType: '',
-        ratePerSquareFoot: '',
-        totalArea: '',
-        totalCoverageArea: '',
-        totalCost: '',
-        labouRate: '',
-        totalLabourCost: '',
-        startDate: '',
-        estimatedDuration: '',
-        contractors: [''],
-        drawings: [''],
-        contracts: [''],
-        description: '',
-        status: 'planning'
-      });
+      if (mode === 'edit' && project) {
+        const updatedProject = await updateProject(project._id, formData);
+        showNotification('success', 'Project updated successfully!');
+        if (onSave) {
+          onSave(updatedProject);
+        }
+      } else {
+        await createProject(formData);
+        showNotification('success', 'Project created successfully!');
+        if (onSave) {
+          onSave({} as Project); // This will trigger the parent to handle the success
+        }
+      }
       
-      showNotification('success', 'Project created successfully!');
+      // Reset form only for add mode
+      if (mode === 'add') {
+        setFormData({
+          name: '',
+          customer: '',
+          location: '',
+          projectCategory: '',
+          projectType: '',
+          ratePerSquareFoot: '',
+          totalArea: '',
+          totalCoverageArea: '',
+          totalCost: '',
+          labouRate: '',
+          totalLabourCost: '',
+          startDate: '',
+          estimatedDuration: '',
+          contractors: [''],
+          drawings: [''],
+          contracts: [''],
+          description: '',
+          status: 'planning'
+        });
+      }
     } catch (error) {
-      showNotification('error', 'Failed to create project. Please try again.');
+      showNotification('error', `Failed to ${mode === 'edit' ? 'update' : 'create'} project. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -257,20 +283,35 @@ export const ProjectForm: React.FC = () => {
   const isLabourRate = formData.projectType === 'labourRate';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-100 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', path: '/dashboard' },
+            { label: 'Projects', path: '/dashboard/projects', onClick: onCancel },
+            { label: mode === 'edit' ? 'Edit Project' : 'Create New Project' }
+          ]}
+        />
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
             <FileText className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Project</h1>
-          <p className="text-gray-600">Set up a comprehensive project with all necessary details and calculations</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {mode === 'edit' ? 'Edit Project' : 'Create New Project'}
+          </h1>
+          <p className="text-gray-600">
+            {mode === 'edit' 
+              ? 'Update project details and calculations' 
+              : 'Set up a comprehensive project with all necessary details and calculations'
+            }
+          </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-indigo-600 px-8 py-6">
             <h2 className="text-xl font-semibold text-white">Project Information</h2>
             <p className="text-indigo-100 mt-1">Fill in the details below to create a new project</p>
           </div>
@@ -656,22 +697,35 @@ export const ProjectForm: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-end mt-12 pt-8 border-t border-gray-200">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleReset}
-                disabled={loading}
-                className="sm:w-auto w-full"
-              >
-                Reset Form
-              </Button>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={loading}
+                  className="sm:w-auto w-full"
+                >
+                  Cancel
+                </Button>
+              )}
+              {mode === 'add' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleReset}
+                  disabled={loading}
+                  className="sm:w-auto w-full"
+                >
+                  Reset Form
+                </Button>
+              )}
               <Button
                 type="submit"
                 loading={loading}
                 disabled={loadingData}
                 className="sm:w-auto w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
               >
-                Create Project
+                {mode === 'edit' ? 'Update Project' : 'Create Project'}
               </Button>
             </div>
           </form>
@@ -679,7 +733,7 @@ export const ProjectForm: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <UserCheck className="w-5 h-5 text-blue-600" />
@@ -691,7 +745,7 @@ export const ProjectForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Wrench className="w-5 h-5 text-green-600" />
@@ -703,7 +757,7 @@ export const ProjectForm: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Building className="w-5 h-5 text-purple-600" />
@@ -715,7 +769,7 @@ export const ProjectForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-orange-600" />

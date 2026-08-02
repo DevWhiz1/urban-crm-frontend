@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  *, ::before, ::after {
+    box-shadow: none !important;
+    filter: none !important;
+  }
+}
+
