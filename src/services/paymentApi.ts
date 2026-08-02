@@ -72,3 +72,27 @@ export const getFilteredContracts = (
     contract.contractor._id === contractorId
   );
 };
+
+export interface BulkImportPaymentItem {
+  date: string;
+  amount: number;
+  workDescription?: string;
+  type?: 'credit' | 'debit';
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export const bulkImportPayments = async (data: {
+  project: string;
+  contractor: string;
+  contract?: string;
+  payments: BulkImportPaymentItem[];
+}): Promise<{ message: string; count: number }> => {
+  try {
+    const response = await apiClient.post('/api/payment/bulk-import', data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to bulk import payments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to bulk import payments. Please try again.');
+  }
+};

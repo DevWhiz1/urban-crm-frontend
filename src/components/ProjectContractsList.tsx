@@ -265,24 +265,25 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                                 <div className="text-sm text-gray-900">{contract.contractType}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {(() => {
-                                                    const totalAdditions = contract.additions?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-                                                    const revisedAmount = (contract.totalAmount || 0) + totalAdditions;
-                                                    return (
-                                                        <div>
-                                                            <div className="flex items-center text-sm font-semibold text-gray-900">
-                                                                <DollarSign className="w-4 h-4 text-emerald-600 mr-0.5" />
-                                                                {formatPKRCurrency(revisedAmount.toString())}
-                                                            </div>
-                                                            {totalAdditions > 0 ? (
-                                                                <div className="text-xs text-amber-600 font-medium mt-0.5">
-                                                                    Base: {formatPKRCurrency(contract.totalAmount.toString())} (+{formatPKRCurrency(totalAdditions.toString())})
-                                                                </div>
-                                                            ) : (
-                                                                <div className="text-xs text-gray-400 mt-0.5">Base contract</div>
-                                                            )}
-                                                        </div>
-                                                    );
+                                                 {(() => {
+                                                     const totalAdditions = contract.additions?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+                                                     const revisedAmount = contract.totalAmount || 0;
+                                                     const baseAmount = Math.max(0, revisedAmount - totalAdditions);
+                                                     return (
+                                                         <div>
+                                                             <div className="flex items-center text-sm font-semibold text-gray-900">
+                                                                 <DollarSign className="w-4 h-4 text-emerald-600 mr-0.5" />
+                                                                 {formatPKRCurrency(revisedAmount.toString())}
+                                                             </div>
+                                                             {totalAdditions > 0 ? (
+                                                                 <div className="text-xs text-amber-600 font-medium mt-0.5">
+                                                                     Base: {formatPKRCurrency(baseAmount.toString())} (+{formatPKRCurrency(totalAdditions.toString())})
+                                                                 </div>
+                                                             ) : (
+                                                                 <div className="text-xs text-gray-400 mt-0.5">Base contract</div>
+                                                             )}
+                                                         </div>
+                                                     );
                                                 })()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

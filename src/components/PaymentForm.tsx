@@ -15,8 +15,12 @@ import {
   Camera,
   Hash,
   Banknote,
-  Handshake
+  Handshake,
+  FileSpreadsheet,
+  Plus,
+  Minus
 } from 'lucide-react';
+import { ExcelImportModal } from './ExcelImportModal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
@@ -52,6 +56,8 @@ export const PaymentForm: React.FC = () => {
   const [filteredContracts, setFilteredContracts] = useState<PaymentContractOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [notification, setNotification] = useState<PaymentNotificationState>({
     show: false,
     type: 'success',
@@ -222,9 +228,26 @@ export const PaymentForm: React.FC = () => {
       />
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Payment for Contractor</h1>
-        <p className="text-sm text-gray-500 mt-1">Record payments made to contractors for project work</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Payment for Contractor</h1>
+          <p className="text-sm text-gray-500 mt-1">Record single payments or import bulk payment records from Excel</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (!formData.project || !formData.contractor) {
+              showNotification('error', 'Please select a Project and Contractor first before importing Excel payments.');
+              return;
+            }
+            setIsImportModalOpen(true);
+          }}
+          className="flex items-center space-x-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 self-start sm:self-auto"
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+          <span>Import from Excel / CSV</span>
+        </Button>
       </div>
 
       {/* Form Card */}
@@ -284,6 +307,31 @@ export const PaymentForm: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Excel Import Highlight Banner */}
+              {formData.project && formData.contractor && (
+                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-emerald-600 text-white rounded-lg shrink-0">
+                      <FileSpreadsheet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-950">Bulk Import Payments from Excel?</p>
+                      <p className="text-xs text-emerald-700">
+                        Upload your Excel sheet to log all past payments for <strong className="font-bold">{selectedContractor?.companyName}</strong> automatically.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                  >
+                    Upload Excel Sheet
+                  </Button>
+                </div>
+              )}
 
               {/* Contract Selection */}
               <div>
@@ -441,55 +489,85 @@ export const PaymentForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Work Description */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-indigo-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">Work Description</h3>
+              {/* Optional Fields Toggle */}
+              {!showOptionalFields ? (
+                <div className="flex justify-center mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowOptionalFields(true)}
+                    className="flex items-center space-x-2 border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 w-full justify-center py-4"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Optional Details (Work Description, Receipt, Notes)</span>
+                  </Button>
                 </div>
-
-                <Textarea
-                  label="Work Description"
-                  value={formData.workDescription}
-                  onChange={handleInputChange('workDescription')}
-                  error={errors.workDescription}
-                  placeholder="Describe the work completed for this payment..."
-                  rows={3}
-                />
-              </div>
-
-              {/* Receipt & Notes */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-gray-600" />
+              ) : (
+                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium text-gray-900">Optional Details</h3>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowOptionalFields(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <Minus className="w-4 h-4 mr-2" /> Hide
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900">Receipt & Additional Notes</h3>
-                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Input
-                    label="Receipt Photo URL (Optional)"
-                    value={formData.receiptPhoto}
-                    onChange={handleInputChange('receiptPhoto')}
-                    error={errors.receiptPhoto}
-                    placeholder="https://example.com/receipt.jpg"
-                  />
+                  {/* Work Description */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900">Work Description</h3>
+                    </div>
 
-                  <div className="lg:row-span-1">
                     <Textarea
-                      label="Additional Notes (Optional)"
-                      value={formData.notes}
-                      onChange={handleInputChange('notes')}
-                      error={errors.notes}
-                      placeholder="Any additional notes about this payment..."
+                      label="Work Description"
+                      value={formData.workDescription}
+                      onChange={handleInputChange('workDescription')}
+                      error={errors.workDescription}
+                      placeholder="Describe the work completed for this payment..."
                       rows={3}
                     />
                   </div>
+
+                  {/* Receipt & Notes */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <Receipt className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900">Receipt & Additional Notes</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Input
+                        label="Receipt Photo URL (Optional)"
+                        value={formData.receiptPhoto}
+                        onChange={handleInputChange('receiptPhoto')}
+                        error={errors.receiptPhoto}
+                        placeholder="https://example.com/receipt.jpg"
+                      />
+
+                      <div className="lg:row-span-1">
+                        <Textarea
+                          label="Additional Notes (Optional)"
+                          value={formData.notes}
+                          onChange={handleInputChange('notes')}
+                          error={errors.notes}
+                          placeholder="Any additional notes about this payment..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -521,6 +599,19 @@ export const PaymentForm: React.FC = () => {
         message={notification.message}
         onClose={() => setNotification(prev => ({ ...prev, show: false }))}
       />
+
+      {selectedProject && selectedContractor && (
+        <ExcelImportModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          project={{ id: selectedProject._id, name: selectedProject.name }}
+          contractor={{ id: selectedContractor._id, name: selectedContractor.companyName }}
+          contract={selectedContract ? { id: selectedContract._id, type: selectedContract.contractType } : null}
+          onSuccess={(count) => {
+            showNotification('success', `Successfully imported ${count} payments from Excel!`);
+          }}
+        />
+      )}
     </div>
   );
 };

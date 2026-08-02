@@ -18,7 +18,6 @@ export interface Project {
   totalCoverageArea?: number;
   totalCost?: number;
   labouRate?: number;
-  totalLabourCost?: number;
   additions?: PriceAddition[];
   startDate?: string;
   estimatedDuration?: string;
@@ -44,7 +43,6 @@ export interface ProjectFormData {
   totalCoverageArea: string;
   totalCost: string;
   labouRate: string;
-  totalLabourCost: string;
   startDate: string;
   estimatedDuration: string;
   contractors?: string[];

@@ -58,7 +58,11 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
   };
 
   const getRevisedContractAmount = (c: ProjectContract) => {
-    return (c.totalAmount || 0) + getTotalContractAdditions(c);
+    return c.totalAmount || 0;
+  };
+
+  const getBaseContractAmount = (c: ProjectContract) => {
+    return Math.max(0, (c.totalAmount || 0) - getTotalContractAdditions(c));
   };
 
   const formatAddedBy = (addedBy?: string): string => {
@@ -267,7 +271,7 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-500">Base Amount:</span>
                       <span className="text-sm font-semibold text-gray-900">
-                        {formatPKRCurrency(contract.totalAmount.toString())}
+                        {formatPKRCurrency(getBaseContractAmount(contract).toString())}
                       </span>
                     </div>
                     {getTotalContractAdditions(contract) > 0 && (

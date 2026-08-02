@@ -10,13 +10,15 @@ import {
     Hash,
     CheckCircle,
     TrendingUp,
-    TrendingDown
+    TrendingDown,
+    FileSpreadsheet
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
+import { ProjectPaymentExcelImportModal } from './ProjectPaymentExcelImportModal';
 import { createProjectPayment, fetchProjectsForProjectPayment } from '../services/projectPaymentApi';
 import { PAYMENT_METHODS, PAYMENT_STATUSES, PAYMENT_TYPES } from '../constants/payment';
 import { validateProjectPaymentForm, hasProjectPaymentErrors, formatPKRCurrency, getPaymentStatusColor, getPaymentTypeColor } from '../utils/projectPaymentValidation';
@@ -26,6 +28,7 @@ export const ProjectPaymentForm: React.FC = () => {
     const [projects, setProjects] = useState<ProjectPaymentProjectOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [notification, setNotification] = useState<ProjectPaymentNotificationState>({
         show: false,
         type: 'success',
@@ -152,9 +155,26 @@ export const ProjectPaymentForm: React.FC = () => {
             />
 
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Payment for Project</h1>
-                <p className="text-sm text-gray-500 mt-1">Record general project payments and expenses</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Payment for Project</h1>
+                    <p className="text-sm text-gray-500 mt-1">Record client credit payments or import bulk payment records from Excel</p>
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                        if (!formData.project) {
+                            showNotification('error', 'Please select a Project first before importing Excel payments.');
+                            return;
+                        }
+                        setIsImportModalOpen(true);
+                    }}
+                    className="flex items-center space-x-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 self-start sm:self-auto"
+                >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <span>Import Credit Payments (Excel)</span>
+                </Button>
             </div>
 
             {/* Form Card */}
@@ -182,11 +202,18 @@ export const ProjectPaymentForm: React.FC = () => {
                                         disabled={loadingData}
                                     />
                                     {selectedProject && (
-                                        <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                            <p className="text-sm text-blue-800">
-                                                <strong>Status:</strong> {selectedProject.status} |
-                                                <strong> Code:</strong> {selectedProject.projectCode}
+                                        <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200 flex items-center justify-between">
+                                            <p className="text-sm text-emerald-900">
+                                                <strong>Selected Project:</strong> {selectedProject.name} ({selectedProject.projectCode})
                                             </p>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                onClick={() => setIsImportModalOpen(true)}
+                                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                            >
+                                                Upload Credit Excel Sheet
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -365,6 +392,17 @@ export const ProjectPaymentForm: React.FC = () => {
                 message={notification.message}
                 onClose={() => setNotification(prev => ({ ...prev, show: false }))}
             />
+
+            {selectedProject && (
+                <ProjectPaymentExcelImportModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => setIsImportModalOpen(false)}
+                    project={{ id: selectedProject._id, name: selectedProject.name }}
+                    onSuccess={(count) => {
+                        showNotification('success', `Successfully imported ${count} credit payments from Excel!`);
+                    }}
+                />
+            )}
         </div>
     );
 };

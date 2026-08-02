@@ -188,6 +188,10 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
   const selectedProject = projects.find(p => p._id === formData.project);
   const selectedContractor = contractors.find(c => c._id === formData.contractor);
 
+  const contractAdditionsTotal = (contract?.additions || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+  const contractEffectiveTotalAmount = parseFloat(formData.totalAmount || '0') || 0;
+  const contractBaseAmount = Math.max(0, contractEffectiveTotalAmount - contractAdditionsTotal);
+
   if (!isOpen) return null;
 
   return (
@@ -325,19 +329,15 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                       <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-1.5 text-xs">
                         <div className="flex items-center justify-between font-medium text-amber-900">
                           <span>Base Contract Amount:</span>
-                          <span>{formatPKRCurrency(formData.totalAmount || '0')}</span>
+                          <span>{formatPKRCurrency(contractBaseAmount.toString())}</span>
                         </div>
                         <div className="flex items-center justify-between font-medium text-amber-700">
                           <span>Recorded Additions ({contract.additions.length}):</span>
-                          <span>+{formatPKRCurrency(contract.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                          <span>+{formatPKRCurrency(contractAdditionsTotal.toString())}</span>
                         </div>
                         <div className="flex items-center justify-between font-bold text-emerald-800 pt-1.5 border-t border-amber-200 text-sm">
                           <span>Revised Total Amount:</span>
-                          <span>
-                            {formatPKRCurrency(
-                              ((parseFloat(formData.totalAmount || '0') || 0) + contract.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
-                            )}
-                          </span>
+                          <span>{formatPKRCurrency(contractEffectiveTotalAmount.toString())}</span>
                         </div>
                       </div>
                     )}
