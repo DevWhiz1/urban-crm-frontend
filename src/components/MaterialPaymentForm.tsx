@@ -9,13 +9,15 @@ import {
     Truck,
     Hash,
     FileText,
-    User
+    User,
+    FileSpreadsheet
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
+import { MaterialExcelImportModal } from './MaterialExcelImportModal';
 import { createMaterialPayment, fetchProjectsForMaterial } from '../services/materialPaymentApi';
 import { validateMaterialPaymentForm, hasMaterialPaymentErrors, formatPKRCurrency } from '../utils/materialPaymentValidation';
 import { MaterialPaymentFormData, MaterialPaymentFormErrors, MaterialPaymentNotificationState, MaterialProjectOption } from '../types/materialPayment';
@@ -24,6 +26,7 @@ export const MaterialPaymentForm: React.FC = () => {
     const [projects, setProjects] = useState<MaterialProjectOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [notification, setNotification] = useState<MaterialPaymentNotificationState>({
         show: false,
         type: 'success',
@@ -155,9 +158,26 @@ export const MaterialPaymentForm: React.FC = () => {
             />
 
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Material Payment</h1>
-                <p className="text-sm text-gray-500 mt-1">Record payments for materials, supplies, and equipment purchases</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add Material Payment</h1>
+                    <p className="text-sm text-gray-500 mt-1">Record single or bulk Excel material payments for project work</p>
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                        if (!formData.project) {
+                            showNotification('error', 'Please select a Project first before importing Excel material payments.');
+                            return;
+                        }
+                        setIsImportModalOpen(true);
+                    }}
+                    className="flex items-center space-x-2 border-amber-600 text-amber-700 hover:bg-amber-50 self-start sm:self-auto"
+                >
+                    <FileSpreadsheet className="w-4 h-4 text-amber-600" />
+                    <span>Import from Excel / CSV</span>
+                </Button>
             </div>
 
             {/* Form Card */}
@@ -185,11 +205,18 @@ export const MaterialPaymentForm: React.FC = () => {
                                         disabled={loadingData}
                                     />
                                     {selectedProject && (
-                                        <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                            <p className="text-sm text-blue-800">
-                                                <strong>Status:</strong> {selectedProject.status} |
-                                                <strong> Code:</strong> {selectedProject.projectCode}
+                                        <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-center justify-between">
+                                            <p className="text-sm text-amber-900">
+                                                <strong>Selected Project:</strong> {selectedProject.name}
                                             </p>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                onClick={() => setIsImportModalOpen(true)}
+                                                className="bg-amber-600 hover:bg-amber-700 text-white"
+                                            >
+                                                Upload Material Excel Sheet
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -339,6 +366,17 @@ export const MaterialPaymentForm: React.FC = () => {
                 message={notification.message}
                 onClose={() => setNotification(prev => ({ ...prev, show: false }))}
             />
+
+            {selectedProject && (
+                <MaterialExcelImportModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => setIsImportModalOpen(false)}
+                    project={{ id: selectedProject._id, name: selectedProject.name }}
+                    onSuccess={(count) => {
+                        showNotification('success', `Successfully imported ${count} material payments from Excel!`);
+                    }}
+                />
+            )}
         </div>
     );
 };

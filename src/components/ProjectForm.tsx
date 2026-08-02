@@ -72,7 +72,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         totalCoverageArea: project?.totalCoverageArea?.toString() || '',
         totalCost: project?.totalCost?.toString() || '',
         labouRate: project?.labouRate?.toString() || '',
-        totalLabourCost: project?.totalLabourCost?.toString() || '',
         startDate: formatDateForInput(project?.startDate),
         estimatedDuration: formatDateForInput(project?.estimatedDuration),
         drawings: normalizeStringIds(project?.drawings),
@@ -100,7 +99,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 totalCoverageArea: project.totalCoverageArea?.toString() || '',
                 totalCost: project.totalCost?.toString() || '',
                 labouRate: project.labouRate?.toString() || '',
-                totalLabourCost: project.totalLabourCost?.toString() || '',
                 startDate: formatDateForInput(project.startDate),
                 estimatedDuration: formatDateForInput(project.estimatedDuration),
                 drawings: normalizeStringIds(project.drawings),
@@ -129,7 +127,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             const area = parseFloat(formData.totalCoverageArea);
             if (!isNaN(rate) && !isNaN(area)) {
                 const total = calculateTotalLabourCost(rate, area);
-                setFormData(prev => ({ ...prev, totalLabourCost: total.toString() }));
+                setFormData(prev => ({ ...prev, totalCost: total.toString() }));
             }
         }
     }, [formData.labouRate, formData.totalCoverageArea, formData.projectType]);
@@ -242,7 +240,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                     totalCoverageArea: '',
                     totalCost: '',
                     labouRate: '',
-                    totalLabourCost: '',
                     startDate: '',
                     estimatedDuration: '',
                     contractors: [''],
@@ -271,7 +268,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             totalCoverageArea: '',
             totalCost: '',
             labouRate: '',
-            totalLabourCost: '',
             startDate: '',
             estimatedDuration: '',
             drawings: [''],
@@ -289,6 +285,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
     const isWithMaterial = formData.projectType === 'withMaterial';
     const isLabourRate = formData.projectType === 'labourRate';
+
+    const additionsTotal = (project?.additions || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+    const formEffectiveTotalCost = parseFloat(formData.totalCost || '0') || 0;
+    const formBaseProjectCost = Math.max(0, formEffectiveTotalCost - additionsTotal);
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
@@ -319,31 +319,28 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                         <div className="space-y-8">
                             {/* Basic Information */}
                             <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                        <Building className="w-4 h-4 text-indigo-600" />
-                                    </div>
-                                    <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                                    <Building className="w-5 h-5 text-indigo-600" />
+                                    Basic Information
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Input
                                         label="Project Name"
                                         value={formData.name}
                                         onChange={handleInputChange('name')}
                                         error={errors.name}
-                                        placeholder="Enter project name"
+                                        placeholder="e.g., Al-Rehman Heights"
                                         required
                                     />
 
                                     <Select
                                         label="Customer"
-                                        options={clientOptions}
                                         value={formData.customer}
                                         onChange={handleInputChange('customer')}
+                                        options={clientOptions}
                                         error={errors.customer}
+                                        placeholder={loadingData ? "Loading customers..." : "Select customer"}
                                         required
-                                        placeholder={loadingData ? "Loading clients..." : "Select a client"}
                                         disabled={loadingData}
                                     />
 
@@ -352,67 +349,66 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         value={formData.location}
                                         onChange={handleInputChange('location')}
                                         error={errors.location}
-                                        placeholder="Enter project location"
+                                        placeholder="e.g., Gulberg III, Lahore"
                                         required
                                     />
 
                                     <Select
                                         label="Project Category"
-                                        options={PROJECT_CATEGORIES}
                                         value={formData.projectCategory}
                                         onChange={handleInputChange('projectCategory')}
+                                        options={[
+                                            { value: 'residential', label: 'Residential' },
+                                            { value: 'commercial', label: 'Commercial' },
+                                            { value: 'industrial', label: 'Industrial' },
+                                            { value: 'infrastructure', label: 'Infrastructure' },
+                                            { value: 'other', label: 'Other' }
+                                        ]}
                                         error={errors.projectCategory}
-                                        placeholder="Select project category"
+                                        placeholder="Select category"
                                         required
                                     />
 
                                     <Select
                                         label="Project Type"
-                                        options={PROJECT_TYPES}
                                         value={formData.projectType}
                                         onChange={handleInputChange('projectType')}
+                                        options={[
+                                            { value: 'withMaterial', label: 'With Material' },
+                                            { value: 'labourRate', label: 'Labour Rate' }
+                                        ]}
                                         error={errors.projectType}
-                                        placeholder="Select project type"
+                                        placeholder="Select type"
                                         required
-                                    />
-
-                                    <Select
-                                        label="Status"
-                                        options={PROJECT_STATUSES}
-                                        value={formData.status}
-                                        onChange={handleInputChange('status')}
-                                        placeholder="Select status"
                                     />
                                 </div>
                             </div>
 
-                            {/* Project Calculations */}
+                            {/* Cost & Area Calculations */}
                             <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                        <Calculator className="w-4 h-4 text-green-600" />
-                                    </div>
-                                    <h3 className="text-lg font-medium text-gray-900">Project Calculations</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                                    <Calculator className="w-5 h-5 text-indigo-600" />
+                                    Cost & Area Calculations
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Input
-                                        label="Total Area (sq ft)"
-                                        type="number"
-                                        value={formData.totalArea}
-                                        onChange={handleInputChange('totalArea')}
-                                        error={errors.totalArea}
-                                        placeholder="Enter total area"
-                                        step="0.01"
-                                    />
-
-                                    <Input
-                                        label="Total Coverage Area (sq ft)"
+                                        label="Total Coverage Area (Sq Ft)"
                                         type="number"
                                         value={formData.totalCoverageArea}
                                         onChange={handleInputChange('totalCoverageArea')}
                                         error={errors.totalCoverageArea}
-                                        placeholder="Enter coverage area"
+                                        placeholder="e.g., 2400"
+                                        step="0.01"
+                                    />
+
+                                    <Input
+                                        label="Total Area (Plot Size in Sq Ft)"
+                                        type="number"
+                                        value={formData.totalArea}
+                                        onChange={handleInputChange('totalArea')}
+                                        error={errors.totalArea}
+                                        placeholder="e.g., 4500"
                                         step="0.01"
                                     />
                                 </div>
@@ -455,20 +451,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         {project?.additions && project.additions.length > 0 && (
                                             <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-2 text-sm">
                                                 <div className="flex items-center justify-between font-medium text-amber-900">
-                                                    <span>Base Cost:</span>
-                                                    <span>{formatPKRCurrency(formData.totalCost || '0')}</span>
+                                                    <span>Base Project Cost:</span>
+                                                    <span>{formatPKRCurrency(formBaseProjectCost.toString())}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between font-medium text-amber-700">
                                                     <span>Recorded Additions ({project.additions.length}):</span>
-                                                    <span>+{formatPKRCurrency(project.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                                                    <span>+{formatPKRCurrency(additionsTotal.toString())}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between font-bold text-emerald-800 pt-2 border-t border-amber-200 text-base">
                                                     <span>Effective Final Total Cost:</span>
-                                                    <span>
-                                                        {formatPKRCurrency(
-                                                            ((parseFloat(formData.totalCost || '0') || 0) + project.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
-                                                        )}
-                                                    </span>
+                                                    <span>{formatPKRCurrency(formEffectiveTotalCost.toString())}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -492,18 +484,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
                                             <div>
                                                 <Input
-                                                    label="Total Labour Cost (PKR)"
+                                                    label="Total Cost (PKR)"
                                                     type="number"
-                                                    value={formData.totalLabourCost}
-                                                    onChange={handleInputChange('totalLabourCost')}
+                                                    value={formData.totalCost}
+                                                    onChange={handleInputChange('totalCost')}
                                                     placeholder="Auto-calculated"
                                                     disabled
                                                     className="bg-gray-50"
                                                 />
-                                                {formData.totalLabourCost && !isNaN(parseFloat(formData.totalLabourCost)) && (
+                                                {formData.totalCost && !isNaN(parseFloat(formData.totalCost)) && (
                                                     <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
                                                         <p className="text-sm text-green-800 font-medium">
-                                                            Base Labour Cost: {formatPKRCurrency(formData.totalLabourCost)}
+                                                            Calculated Total Cost: {formatPKRCurrency(formData.totalCost)}
                                                         </p>
                                                     </div>
                                                 )}
@@ -512,20 +504,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         {project?.additions && project.additions.length > 0 && (
                                             <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-2 text-sm">
                                                 <div className="flex items-center justify-between font-medium text-amber-900">
-                                                    <span>Base Labour Cost:</span>
-                                                    <span>{formatPKRCurrency(formData.totalLabourCost || '0')}</span>
+                                                    <span>Base Project Cost:</span>
+                                                    <span>{formatPKRCurrency(formBaseProjectCost.toString())}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between font-medium text-amber-700">
                                                     <span>Recorded Additions ({project.additions.length}):</span>
-                                                    <span>+{formatPKRCurrency(project.additions.reduce((sum, item) => sum + (item.amount || 0), 0).toString())}</span>
+                                                    <span>+{formatPKRCurrency(additionsTotal.toString())}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between font-bold text-emerald-800 pt-2 border-t border-amber-200 text-base">
                                                     <span>Effective Final Total Cost:</span>
-                                                    <span>
-                                                        {formatPKRCurrency(
-                                                            ((parseFloat(formData.totalLabourCost || '0') || 0) + project.additions.reduce((sum, item) => sum + (item.amount || 0), 0)).toString()
-                                                        )}
-                                                    </span>
+                                                    <span>{formatPKRCurrency(formEffectiveTotalCost.toString())}</span>
                                                 </div>
                                             </div>
                                         )}

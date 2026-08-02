@@ -34,3 +34,25 @@ export const fetchProjectsForProjectPayment = async (): Promise<ProjectPaymentPr
     throw new Error('Failed to load projects');
   }
 };
+
+export interface BulkProjectPaymentItem {
+  amount: number;
+  date: string;
+  workDescription?: string;
+  type?: 'credit' | 'debit';
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export const bulkImportProjectPayments = async (data: {
+  project: string;
+  payments: BulkProjectPaymentItem[];
+}): Promise<{ message: string; count: number }> => {
+  try {
+    const response = await apiClient.post('/api/payment/bulk-import-project', data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to bulk import project payments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to bulk import project payments.');
+  }
+};

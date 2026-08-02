@@ -18,7 +18,6 @@ export const createProject = async (data: ProjectFormData): Promise<void> => {
       totalCoverageArea: data.totalCoverageArea ? parseFloat(data.totalCoverageArea) : undefined,
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
-      totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
       contractors: data.contractors ? data.contractors.map(normalizeId).filter(id => id !== '') : undefined,
     };
 
@@ -79,7 +78,6 @@ export const updateProject = async (id: string, data: Partial<ProjectFormData>):
       totalCoverageArea: data.totalCoverageArea ? parseFloat(data.totalCoverageArea) : undefined,
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
-      totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
       contractors: data.contractors ? data.contractors.map(normalizeId).filter(id => id !== '') : undefined,
     };
 

@@ -26,3 +26,25 @@ export const fetchProjectsForMaterial = async (): Promise<MaterialProjectOption[
     throw new Error('Failed to load projects');
   }
 };
+
+export interface BulkMaterialItem {
+  materialDetail?: string;
+  materialProvider?: string;
+  MaterialQuantity?: number;
+  MaterialRate?: number;
+  totalAmount?: number;
+  date: string;
+}
+
+export const bulkImportMaterialPayments = async (data: {
+  project: string;
+  materials: BulkMaterialItem[];
+}): Promise<{ message: string; count: number }> => {
+  try {
+    const response = await apiClient.post('/api/material/bulk-import', data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to bulk import material payments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to bulk import material payments.');
+  }
+};

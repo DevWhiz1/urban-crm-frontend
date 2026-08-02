@@ -145,12 +145,8 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
     };
 
     const getProjectCost = (project: Project) => {
-        const totalAdditions = (project.additions || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-        if (project.projectType === 'withMaterial' && project.totalCost !== undefined) {
-            return formatPKRCurrency((project.totalCost + totalAdditions).toString());
-        }
-        if (project.projectType === 'labourRate' && project.totalLabourCost !== undefined) {
-            return formatPKRCurrency((project.totalLabourCost + totalAdditions).toString());
+        if (project.totalCost !== undefined && project.totalCost !== null) {
+            return formatPKRCurrency(project.totalCost.toString());
         }
         return 'Not calculated';
     };

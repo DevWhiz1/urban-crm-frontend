@@ -74,14 +74,12 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         return proj.additions.reduce((sum, item) => sum + (item.amount || 0), 0);
     };
 
-    const getBaseCost = (proj: Project) => {
-        if (proj.projectType === 'withMaterial') return proj.totalCost || 0;
-        if (proj.projectType === 'labourRate') return proj.totalLabourCost || 0;
-        return 0;
+    const getRevisedCost = (proj: Project) => {
+        return proj.totalCost || 0;
     };
 
-    const getRevisedCost = (proj: Project) => {
-        return getBaseCost(proj) + getTotalAdditions(proj);
+    const getBaseCost = (proj: Project) => {
+        return Math.max(0, getRevisedCost(proj) - getTotalAdditions(proj));
     };
 
     const formatAddedBy = (addedBy?: string): string => {
@@ -163,11 +161,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     };
 
     const getProjectCost = (project: Project) => {
-        if (project.projectType === 'withMaterial' && project.totalCost) {
+        if (project.totalCost !== undefined && project.totalCost !== null) {
             return formatPKRCurrency(project.totalCost.toString());
-        }
-        if (project.projectType === 'labourRate' && project.totalLabourCost) {
-            return formatPKRCurrency(project.totalLabourCost.toString());
         }
         return 'Not calculated';
     };
@@ -552,7 +547,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                         {projectContracts.map((contract) => {
                                             const contractor = typeof contract.contractor === 'object' ? contract.contractor : null;
                                             const totalAdditions = (contract.additions || []).reduce((sum, a) => sum + (a.amount || 0), 0);
-                                            const revisedTotal = contract.totalAmount + totalAdditions;
+                                            const revisedTotal = contract.totalAmount || 0;
                                             return (
                                                 <div key={contract._id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                                                     <div className="flex items-center justify-between mb-3">
