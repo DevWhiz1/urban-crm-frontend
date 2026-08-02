@@ -147,38 +147,34 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                <Breadcrumbs />
+        <div className="max-w-7xl mx-auto space-y-6">
+            <Breadcrumbs />
 
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">All Contractors</h1>
-                        <p className="text-gray-600">Manage contractor information and details</p>
-                    </div>
-                    <Button
-                        onClick={onAddContractor}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add New Contractor
-                    </Button>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">All Contractors</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage contractor profiles, types, and assignment details</p>
                 </div>
+                <Button
+                    onClick={onAddContractor}
+                    variant="primary"
+                    size="md"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Contractor
+                </Button>
+            </div>
 
-                {/* Search */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+            {/* Search Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
@@ -395,14 +391,13 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                         </div>
                     </div>
                 )}
-            </div>
 
-            <Notification
-                show={notification.show}
-                type={notification.type}
-                message={notification.message}
-                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-            />
-        </div>
+                <Notification
+                    show={notification.show}
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
+            </div>
     );
 };

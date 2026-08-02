@@ -139,38 +139,34 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                <Breadcrumbs />
+        <div className="max-w-7xl mx-auto space-y-6">
+            <Breadcrumbs />
 
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Contracts</h1>
-                        <p className="text-gray-600">Manage contracts between projects and contractors</p>
-                    </div>
-                    <Button
-                        onClick={onAddContract}
-                        className="bg-orange-600 hover:bg-orange-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add New Contract
-                    </Button>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Project Contracts</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage contracts between projects and contractors</p>
                 </div>
+                <Button
+                    onClick={onAddContract}
+                    variant="primary"
+                    size="md"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Contract
+                </Button>
+            </div>
 
-                {/* Search */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+            {/* Search Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
@@ -393,14 +389,13 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                         </div>
                     </div>
                 )}
-            </div>
 
-            <Notification
-                show={notification.show}
-                type={notification.type}
-                message={notification.message}
-                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-            />
-        </div>
+                <Notification
+                    show={notification.show}
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
+            </div>
     );
 };

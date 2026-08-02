@@ -156,32 +156,31 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                    </div>
-                </div>
+            <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                <Breadcrumbs />
+        <div className="max-w-7xl mx-auto space-y-6">
+            <Breadcrumbs />
 
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
-                        <Building className="w-8 h-8 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">All Projects</h1>
-                    <p className="text-gray-600">Manage and monitor all your construction projects</p>
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">All Projects</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage and monitor all your construction projects</p>
                 </div>
+                {isAdmin && (
+                    <Button to="/dashboard/projects/add" variant="primary" size="md">
+                        <Plus className="w-4 h-4 mr-2" /> Create Project
+                    </Button>
+                )}
+            </div>
 
-                {/* Filters and Search */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+            {/* Filters and Search */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="lg:col-span-2">
                             <div className="relative">
@@ -438,14 +437,13 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                         </div>
                     </div>
                 )}
-            </div>
 
-            <Notification
-                show={notification.show}
-                type={notification.type}
-                message={notification.message}
-                onClose={() => setNotification(prev => ({ ...prev, show: false }))}
-            />
-        </div>
+                <Notification
+                    show={notification.show}
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
+            </div>
     );
 };

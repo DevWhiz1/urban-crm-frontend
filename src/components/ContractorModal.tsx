@@ -4,15 +4,14 @@ import {
     Wrench,
     Building,
     User,
+    Users,
     Phone,
-    Mail,
     MapPin,
     Star,
     CheckCircle,
     XCircle,
     Banknote,
-    CreditCard,
-    Calendar
+    CreditCard
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -24,7 +23,9 @@ import {
     updateContractor,
     fetchUsersForContractor
 } from '../services/contractorApi';
-import { Contractor, ContractorFormData } from '../types/contractor';
+import { CONTRACTOR_TYPES, PAYMENT_TERMS } from '../constants/contractor';
+import { validateForm, hasErrors } from '../utils/validation';
+import { Contractor, ContractorFormData, User as ContractorUser } from '../types/contractor';
 
 interface ContractorModalProps {
     isOpen: boolean;
@@ -41,7 +42,7 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
     contractor,
     mode
 }) => {
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<ContractorUser[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [notification, setNotification] = useState({
@@ -50,37 +51,26 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         message: ''
     });
 
-    const [formData, setFormData] = useState<ContractorFormData>({
-        user: contractor?.user?._id || contractor?.user || '',
-        companyName: contractor?.companyName || '',
-        contractorType: contractor?.contractorType || '',
-        paymentTerms: contractor?.paymentTerms || '',
-        bankDetails: contractor?.bankDetails || '',
-        address: contractor?.address || '',
-        phoneNumber: contractor?.phoneNumber || ''
+    const getInitialFormData = (c?: Contractor): ContractorFormData => ({
+        user: typeof c?.user === 'object' ? c.user._id : (c?.user || ''),
+        companyName: c?.companyName || '',
+        contractorType: c?.contractorType || '',
+        paymentTerms: c?.paymentTerms || '',
+        bankDetails: c?.bankDetails || c?.accountNumber || '',
+        address: c?.address || (typeof c?.user === 'object' ? c.user.address : '') || '',
+        phoneNumber: c?.phoneNumber || (typeof c?.user === 'object' ? c.user.phoneNumber : '') || ''
     });
 
+    const [formData, setFormData] = useState<ContractorFormData>(getInitialFormData(contractor));
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (isOpen) {
             loadInitialData();
+            setFormData(getInitialFormData(contractor));
+            setErrors({});
         }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (contractor && (mode === 'edit' || mode === 'view')) {
-            setFormData({
-                user: contractor.user?._id || contractor.user || '',
-                companyName: contractor.companyName || '',
-                contractorType: contractor.contractorType || '',
-                paymentTerms: contractor.paymentTerms || '',
-                bankDetails: contractor.bankDetails || '',
-                address: contractor.address || '',
-                phoneNumber: contractor.phoneNumber || ''
-            });
-        }
-    }, [contractor, mode]);
+    }, [isOpen, contractor, mode]);
 
     const loadInitialData = async () => {
         try {
@@ -104,7 +94,6 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         const value = e.target.value;
         setFormData(prev => ({ ...prev, [field]: value }));
 
-        // Clear error when user starts typing
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: undefined }));
         }
@@ -113,18 +102,18 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation
-        const newErrors: Record<string, string> = {};
-        if (!formData.user) newErrors.user = 'User is required';
-        if (!formData.companyName) newErrors.companyName = 'Company name is required';
-        if (!formData.contractorType) newErrors.contractorType = 'Contractor type is required';
-        if (!formData.paymentTerms) newErrors.paymentTerms = 'Payment terms are required';
-        if (!formData.address) newErrors.address = 'Address is required';
-        if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+        // Perform validation
+        const validationErrors = validateForm(formData) as Record<string, string>;
 
-        setErrors(newErrors);
+        // Additional field validations for consistency
+        if (!formData.user) validationErrors.user = 'User selection is required';
+        if (!formData.companyName) validationErrors.companyName = 'Company name is required';
+        if (!formData.contractorType) validationErrors.contractorType = 'Contractor type is required';
+        if (!formData.paymentTerms) validationErrors.paymentTerms = 'Payment terms are required';
 
-        if (Object.keys(newErrors).length > 0) {
+        setErrors(validationErrors);
+
+        if (hasErrors(validationErrors)) {
             showNotification('error', 'Please fix the errors below before submitting.');
             return;
         }
@@ -132,24 +121,21 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         try {
             setLoading(true);
 
+            // Pass both bankDetails and accountNumber for compatibility
+            const payload = {
+                ...formData,
+                accountNumber: formData.bankDetails
+            };
+
             if (mode === 'edit' && contractor) {
-                const updatedContractor = await updateContractor(contractor._id, formData);
+                const updatedContractor = await updateContractor(contractor._id, payload);
                 showNotification('success', 'Contractor updated successfully!');
                 onSave(updatedContractor);
             } else {
-                await createContractor(formData);
+                await createContractor(payload as any);
                 showNotification('success', 'Contractor created successfully!');
-                // Reset form for add mode
-                setFormData({
-                    user: '',
-                    companyName: '',
-                    contractorType: '',
-                    paymentTerms: '',
-                    bankDetails: '',
-                    address: '',
-                    phoneNumber: ''
-                });
-                onSave({} as Contractor); // Trigger parent to refresh list
+                setFormData(getInitialFormData());
+                onSave({} as Contractor);
             }
         } catch (error) {
             showNotification('error', `Failed to ${mode === 'edit' ? 'update' : 'create'} contractor. Please try again.`);
@@ -159,15 +145,7 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
     };
 
     const handleClose = () => {
-        setFormData({
-            user: '',
-            companyName: '',
-            contractorType: '',
-            paymentTerms: '',
-            bankDetails: '',
-            address: '',
-            phoneNumber: ''
-        });
+        setFormData(getInitialFormData());
         setErrors({});
         onClose();
     };
@@ -176,6 +154,20 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         value: user._id,
         label: `${user.userName} (${user.email})`
     }));
+
+    const contractorTypeOptions = [
+        ...CONTRACTOR_TYPES.map(type => ({ value: type, label: type })),
+        ...(formData.contractorType && !CONTRACTOR_TYPES.includes(formData.contractorType as any)
+            ? [{ value: formData.contractorType, label: formData.contractorType }]
+            : [])
+    ];
+
+    const paymentTermOptions = [
+        ...PAYMENT_TERMS.map(term => ({ value: term, label: term })),
+        ...(formData.paymentTerms && !PAYMENT_TERMS.includes(formData.paymentTerms as any)
+            ? [{ value: formData.paymentTerms, label: formData.paymentTerms }]
+            : [])
+    ];
 
     const selectedUser = users.find(u => u._id === formData.user);
 
@@ -213,7 +205,7 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 max-h-96 overflow-y-auto">
+                    <div className="p-6 max-h-[75vh] overflow-y-auto">
                         {mode === 'view' ? (
                             // View Mode
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -228,7 +220,7 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Company Name:</span>
-                                                <span className="text-sm text-gray-900">{contractor?.companyName || 'N/A'}</span>
+                                                <span className="text-sm text-gray-900 font-medium">{contractor?.companyName || 'N/A'}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Contractor Type:</span>
@@ -269,11 +261,11 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Phone:</span>
-                                                <span className="text-sm text-gray-900">{contractor?.phoneNumber || 'N/A'}</span>
+                                                <span className="text-sm text-gray-900">{contractor?.phoneNumber || (typeof contractor?.user === 'object' ? contractor.user.phoneNumber : '') || 'N/A'}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Address:</span>
-                                                <span className="text-sm text-gray-900">{contractor?.address || 'N/A'}</span>
+                                                <span className="text-sm text-gray-900">{contractor?.address || (typeof contractor?.user === 'object' ? contractor.user.address : '') || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -321,22 +313,26 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                                 <span className="text-sm text-gray-900">{contractor?.paymentTerms || 'N/A'}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium text-gray-500">Account Number:</span>
-                                                <span className="text-sm text-gray-900">{contractor?.accountNumber || 'N/A'}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium text-gray-500">Bank Details:</span>
-                                                <span className="text-sm text-gray-900">{contractor?.bankDetails || 'N/A'}</span>
+                                                <span className="text-sm font-medium text-gray-500">Bank / Account Details:</span>
+                                                <span className="text-sm text-gray-900">{contractor?.bankDetails || contractor?.accountNumber || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            // Add/Edit Mode
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div>
+                            // Add/Edit Mode Form matching ContractorForm layout & fields
+                            <form onSubmit={handleSubmit} className="space-y-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {/* User Assignment */}
+                                    <div className="lg:col-span-2">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <Users className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">User Assignment</h3>
+                                        </div>
+
                                         <Select
                                             label="Select User"
                                             options={userOptions}
@@ -345,88 +341,109 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                             error={errors.user}
                                             required
                                             placeholder={loadingData ? "Loading users..." : "Choose a user"}
-                                            disabled={loadingData || mode === 'view'}
+                                            disabled={loadingData}
                                         />
                                         {selectedUser && (
-                                            <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                                 <p className="text-sm text-blue-800">
-                                                    <strong>Email:</strong> {selectedUser.email} |
+                                                    <strong>Email:</strong> {selectedUser.email} | 
                                                     <strong> Status:</strong> {selectedUser.status}
                                                 </p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <Input
-                                        label="Company Name"
-                                        value={formData.companyName}
-                                        onChange={handleInputChange('companyName')}
-                                        error={errors.companyName}
-                                        placeholder="Enter company name"
-                                        required
-                                        disabled={mode === 'view'}
-                                    />
-
-                                    <Input
-                                        label="Contractor Type"
-                                        value={formData.contractorType}
-                                        onChange={handleInputChange('contractorType')}
-                                        error={errors.contractorType}
-                                        placeholder="Enter contractor type"
-                                        required
-                                        disabled={mode === 'view'}
-                                    />
-
-                                    <Input
-                                        label="Phone Number"
-                                        value={formData.phoneNumber}
-                                        onChange={handleInputChange('phoneNumber')}
-                                        error={errors.phoneNumber}
-                                        placeholder="Enter phone number"
-                                        required
-                                        disabled={mode === 'view'}
-                                    />
-
-                                    <Input
-                                        label="Payment Terms"
-                                        value={formData.paymentTerms}
-                                        onChange={handleInputChange('paymentTerms')}
-                                        error={errors.paymentTerms}
-                                        placeholder="Enter payment terms"
-                                        required
-                                        disabled={mode === 'view'}
-                                    />
-
-                                    <Input
-                                        label="Account Number"
-                                        value={contractor?.accountNumber || ''}
-                                        onChange={() => { }} // Read-only for now
-                                        placeholder="Account number"
-                                        disabled={true}
-                                    />
-
+                                    {/* Company Details */}
                                     <div className="lg:col-span-2">
-                                        <Textarea
-                                            label="Address"
-                                            value={formData.address}
-                                            onChange={handleInputChange('address')}
-                                            error={errors.address}
-                                            placeholder="Enter address"
-                                            rows={3}
-                                            required
-                                            disabled={mode === 'view'}
-                                        />
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <Building className="w-4 h-4 text-green-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Company Details</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <Input
+                                                label="Company Name"
+                                                value={formData.companyName}
+                                                onChange={handleInputChange('companyName')}
+                                                error={errors.companyName}
+                                                placeholder="Enter company name"
+                                                required
+                                            />
+
+                                            <Select
+                                                label="Contractor Type"
+                                                options={contractorTypeOptions}
+                                                value={formData.contractorType}
+                                                onChange={handleInputChange('contractorType')}
+                                                error={errors.contractorType}
+                                                placeholder="Select contractor type"
+                                                required
+                                            />
+                                        </div>
                                     </div>
 
+                                    {/* Payment & Contact */}
                                     <div className="lg:col-span-2">
-                                        <Textarea
-                                            label="Bank Details"
-                                            value={formData.bankDetails}
-                                            onChange={handleInputChange('bankDetails')}
-                                            placeholder="Enter bank details"
-                                            rows={2}
-                                            disabled={mode === 'view'}
-                                        />
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                <CreditCard className="w-4 h-4 text-purple-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Payment & Contact</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <Select
+                                                label="Payment Terms"
+                                                options={paymentTermOptions}
+                                                value={formData.paymentTerms}
+                                                onChange={handleInputChange('paymentTerms')}
+                                                error={errors.paymentTerms}
+                                                placeholder="Select payment terms"
+                                                required
+                                            />
+
+                                            <Input
+                                                label="Phone Number"
+                                                type="tel"
+                                                value={formData.phoneNumber}
+                                                onChange={handleInputChange('phoneNumber')}
+                                                error={errors.phoneNumber}
+                                                placeholder="+1 (555) 123-4567"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Additional Information */}
+                                    <div className="lg:col-span-2">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                <MapPin className="w-4 h-4 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Additional Information</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <Input
+                                                label="Bank Details"
+                                                value={formData.bankDetails}
+                                                onChange={handleInputChange('bankDetails')}
+                                                error={errors.bankDetails}
+                                                placeholder="Account number, routing details, etc."
+                                            />
+
+                                            <div className="lg:row-span-1">
+                                                <Textarea
+                                                    label="Address"
+                                                    value={formData.address}
+                                                    onChange={handleInputChange('address')}
+                                                    error={errors.address}
+                                                    placeholder="Enter complete address"
+                                                    rows={3}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </form>
@@ -451,17 +468,6 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                 {mode === 'edit' ? 'Update Contractor' : 'Create Contractor'}
                             </Button>
                         )}
-                        {mode === 'view' && (
-                            <Button
-                                onClick={() => {
-                                    onClose();
-                                    // Trigger edit mode in parent
-                                }}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                Edit Contractor
-                            </Button>
-                        )}
                     </div>
                 </div>
             </div>
@@ -475,3 +481,4 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         </div>
     );
 };
+

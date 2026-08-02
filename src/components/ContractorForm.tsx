@@ -132,33 +132,24 @@ export const ContractorForm: React.FC = () => {
     }));
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8 px-4">
-            <div className="max-w-4xl mx-auto">
-                <Breadcrumbs
-                    items={[
-                        { label: 'Dashboard', path: '/dashboard' },
-                        { label: 'Contractors', path: '/dashboard/contractors' },
-                        { label: 'Add New Contractor' }
-                    ]}
-                />
+        <div className="max-w-4xl mx-auto space-y-6">
+            <Breadcrumbs
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Contractors', path: '/dashboard/contractors' },
+                    { label: 'Add New Contractor' }
+                ]}
+            />
 
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                        <Building className="w-8 h-8 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Contractor</h1>
-                    <p className="text-gray-600">Create a comprehensive contractor profile with all necessary details</p>
-                </div>
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New Contractor</h1>
+                <p className="text-sm text-gray-500 mt-1">Create a comprehensive contractor profile with assignment details</p>
+            </div>
 
-                {/* Form Card */}
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                    <div className="bg-blue-600 px-8 py-6">
-                        <h2 className="text-xl font-semibold text-white">Contractor Information</h2>
-                        <p className="text-blue-100 mt-1">Fill in the details below to create a new contractor profile</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="p-8">
+            {/* Form Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* User Selection */}
                             <div className="lg:col-span-2">
@@ -293,46 +284,6 @@ export const ContractorForm: React.FC = () => {
                             </Button>
                         </div>
                     </form>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                    <div className="bg-white rounded-xl p-6 border border-gray-200">
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Users className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                                <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-6 border border-gray-200">
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                <Wrench className="w-5 h-5 text-green-600" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Contractor Types</p>
-                                <p className="text-2xl font-bold text-gray-900">{CONTRACTOR_TYPES.length}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-6 border border-gray-200">
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <CreditCard className="w-5 h-5 text-purple-600" />
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Payment Options</p>
-                                <p className="text-2xl font-bold text-gray-900">{PAYMENT_TERMS.length}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <Notification

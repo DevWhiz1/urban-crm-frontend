@@ -21,6 +21,7 @@ import {
   fetchContractorsForContract
 } from '../services/projectContractApi';
 import { validateProjectContractForm, hasProjectContractErrors, formatPKRCurrency } from '../utils/projectContractValidation';
+import { formatDateForInput } from '../utils/projectValidation';
 import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption, ProjectContract } from '../types/projectContract';
 
 interface ProjectContractModalProps {
@@ -49,12 +50,12 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
   });
 
   const [formData, setFormData] = useState<ProjectContractFormData>({
-    project: contract?.project?._id || contract?.project || '',
-    contractor: contract?.contractor?._id || contract?.contractor || '',
+    project: typeof contract?.project === 'object' ? (contract.project._id || '') : (contract?.project || ''),
+    contractor: typeof contract?.contractor === 'object' ? (contract.contractor._id || '') : (contract?.contractor || ''),
     contractType: contract?.contractType || '',
     totalAmount: contract?.totalAmount?.toString() || '',
-    startDate: contract?.startDate || '',
-    endDate: contract?.endDate || '',
+    startDate: formatDateForInput(contract?.startDate),
+    endDate: formatDateForInput(contract?.endDate),
     Description: contract?.Description || ''
   });
 
@@ -69,12 +70,12 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
   useEffect(() => {
     if (contract && mode === 'edit') {
       setFormData({
-        project: contract.project?._id || contract.project || '',
-        contractor: contract.contractor?._id || contract.contractor || '',
+        project: typeof contract.project === 'object' ? (contract.project._id || '') : (contract.project || ''),
+        contractor: typeof contract.contractor === 'object' ? (contract.contractor._id || '') : (contract.contractor || ''),
         contractType: contract.contractType || '',
         totalAmount: contract.totalAmount?.toString() || '',
-        startDate: contract.startDate || '',
-        endDate: contract.endDate || '',
+        startDate: formatDateForInput(contract.startDate),
+        endDate: formatDateForInput(contract.endDate),
         Description: contract.Description || ''
       });
     }

@@ -1,17 +1,25 @@
 import apiClient from './apiClient';
 import { ProjectFormData, Client, Contractor, Project } from '../types/project';
 
+const normalizeId = (id: any): string => {
+  if (!id) return '';
+  if (typeof id === 'string') return id.trim();
+  if (typeof id === 'object') return (id._id || id.id || '').toString().trim();
+  return String(id).trim();
+};
+
 export const createProject = async (data: ProjectFormData): Promise<void> => {
   try {
     const projectData = {
       ...data,
+      customer: normalizeId(data.customer),
       ratePerSquareFoot: data.ratePerSquareFoot ? parseFloat(data.ratePerSquareFoot) : undefined,
       totalArea: data.totalArea ? parseFloat(data.totalArea) : undefined,
       totalCoverageArea: data.totalCoverageArea ? parseFloat(data.totalCoverageArea) : undefined,
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
       totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
-      contractors: data.contractors.filter(id => id.trim() !== ''),
+      contractors: (data.contractors || []).map(normalizeId).filter(id => id !== ''),
     };
 
     await apiClient.post('/api/project/create-project', projectData);
@@ -65,13 +73,14 @@ export const updateProject = async (id: string, data: Partial<ProjectFormData>):
   try {
     const projectData = {
       ...data,
+      customer: data.customer ? normalizeId(data.customer) : undefined,
       ratePerSquareFoot: data.ratePerSquareFoot ? parseFloat(data.ratePerSquareFoot) : undefined,
       totalArea: data.totalArea ? parseFloat(data.totalArea) : undefined,
       totalCoverageArea: data.totalCoverageArea ? parseFloat(data.totalCoverageArea) : undefined,
       totalCost: data.totalCost ? parseFloat(data.totalCost) : undefined,
       labouRate: data.labouRate ? parseFloat(data.labouRate) : undefined,
       totalLabourCost: data.totalLabourCost ? parseFloat(data.totalLabourCost) : undefined,
-      contractors: data.contractors?.filter(id => id.trim() !== '') || [],
+      contractors: data.contractors ? data.contractors.map(normalizeId).filter(id => id !== '') : undefined,
     };
 
     const response = await apiClient.put(`/api/project/update-project/${id}`, projectData);

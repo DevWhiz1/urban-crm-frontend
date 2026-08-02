@@ -102,3 +102,22 @@ export const formatPKRCurrency = (amount: string): string => {
     minimumFractionDigits: 2
   }).format(num);
 };
+
+export const formatDateForInput = (dateString?: string): string => {
+  if (!dateString) return '';
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  try {
+    const d = new Date(dateString);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    return '';
+  }
+  return dateString;
+};
