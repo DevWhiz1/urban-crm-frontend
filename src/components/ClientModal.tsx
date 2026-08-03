@@ -51,11 +51,11 @@ export const ClientModal: React.FC<ClientModalProps> = ({
     });
 
     const getInitialFormData = (c?: Client): ClientFormData => ({
-        user: typeof c?.user === 'object' ? c.user._id : (c?.user || ''),
+        user: c?.user && typeof c.user === 'object' ? c.user._id : (typeof c?.user === 'string' ? c.user : ''),
         paymentTerms: c?.paymentTerms || '',
         bankDetails: c?.bankDetails || '',
-        address: c?.address || (typeof c?.user === 'object' ? c.user.address : '') || '',
-        phoneNumber: c?.phoneNumber || (typeof c?.user === 'object' ? c.user.phoneNumber : '') || ''
+        address: c?.address || (c?.user && typeof c.user === 'object' ? c.user.address : '') || '',
+        phoneNumber: c?.phoneNumber || (c?.user && typeof c.user === 'object' ? c.user.phoneNumber : '') || ''
     });
 
     const [formData, setFormData] = useState<ClientFormData>(getInitialFormData(client));

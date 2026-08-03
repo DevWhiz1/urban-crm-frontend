@@ -19,7 +19,9 @@ import {
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { fetchAllClients, deleteClient } from '../services/clientApi';
+import { updateUser } from '../services/userApi';
 import { Client } from '../types/client';
 
 interface ClientsListProps {
@@ -42,6 +44,8 @@ export const ClientsList: React.FC<ClientsListProps> = ({
         type: 'success' as 'success' | 'error',
         message: ''
     });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
     useEffect(() => {
         loadClients();
@@ -68,8 +72,8 @@ export const ClientsList: React.FC<ClientsListProps> = ({
 
         if (searchTerm) {
             filtered = filtered.filter(client => {
-                const userName = typeof client.user === 'object' ? client.user.userName : '';
-                const email = typeof client.user === 'object' ? client.user.email : '';
+                const userName = client.user && typeof client.user === 'object' ? client.user.userName : '';
+                const email = client.user && typeof client.user === 'object' ? client.user.email : '';
                 const phoneNumber = client.phoneNumber || '';
                 const address = client.address || '';
 
@@ -85,18 +89,9 @@ export const ClientsList: React.FC<ClientsListProps> = ({
         setFilteredClients(filtered);
     };
 
-    const handleDeleteClient = async (clientId: string, userName: string) => {
-        if (!window.confirm(`Are you sure you want to delete "${userName}"? This action cannot be undone.`)) {
-            return;
-        }
-
-        try {
-            await deleteClient(clientId);
-            setClients(prev => prev.filter(c => c._id !== clientId));
-            showNotification('success', 'Client deleted successfully');
-        } catch (error) {
-            showNotification('error', 'Failed to delete client. Please try again.');
-        }
+    const handleDeleteClient = (client: Client) => {
+        setClientToDelete(client);
+        setIsDeleteModalOpen(true);
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -116,23 +111,23 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     };
 
     const getUserName = (user: Client['user']) => {
-        return typeof user === 'object' ? user.userName : 'Unknown User';
+        return user && typeof user === 'object' ? user.userName : 'Unknown User';
     };
 
     const getUserEmail = (user: Client['user']) => {
-        return typeof user === 'object' ? user.email : 'N/A';
+        return user && typeof user === 'object' ? user.email : 'N/A';
     };
 
     const getUserPhone = (user: Client['user']) => {
-        return typeof user === 'object' ? user.phoneNumber : 'N/A';
+        return user && typeof user === 'object' ? user.phoneNumber : 'N/A';
     };
 
     const getUserAddress = (user: Client['user']) => {
-        return typeof user === 'object' ? user.address : 'N/A';
+        return user && typeof user === 'object' ? user.address : 'N/A';
     };
 
     const getUserStatus = (user: Client['user']) => {
-        return typeof user === 'object' ? user.status : 'Unknown';
+        return user && typeof user === 'object' ? user.status : 'Unknown';
     };
 
     if (loading) {
@@ -272,9 +267,9 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="space-y-1">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.isActive)}`}>
-                                                        {getStatusIcon(client.isActive)}
-                                                        {client.isActive ? 'Active' : 'Inactive'}
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(getUserStatus(client.user) === 'Active')}`}>
+                                                        {getStatusIcon(getUserStatus(client.user) === 'Active')}
+                                                        {getUserStatus(client.user) === 'Active' ? 'Active' : 'Inactive'}
                                                     </span>
                                                     <div className="text-xs text-gray-500">
                                                         User: {getUserStatus(client.user)}
@@ -302,10 +297,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleDeleteClient(
-                                                            client._id,
-                                                            getUserName(client.user)
-                                                        )}
+                                                        onClick={() => handleDeleteClient(client)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -343,7 +335,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Active</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {clients.filter(c => c.isActive).length}
+                                        {clients.filter(c => getUserStatus(c.user) === 'Active').length}
                                     </p>
                                 </div>
                             </div>
@@ -357,7 +349,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Inactive</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {clients.filter(c => !c.isActive).length}
+                                        {clients.filter(c => getUserStatus(c.user) !== 'Active').length}
                                     </p>
                                 </div>
                             </div>
@@ -385,6 +377,25 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                     message={notification.message}
                     onClose={() => setNotification(prev => ({ ...prev, show: false }))}
                 />
-            </div>
+                <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => { setIsDeleteModalOpen(false); setClientToDelete(null); }}
+                itemName={clientToDelete?.user && typeof clientToDelete.user === 'object' ? clientToDelete.user.userName : 'Unknown'}
+                itemType="Client"
+                isInactive={clientToDelete?.user && typeof clientToDelete.user === 'object' ? clientToDelete.user.status === 'InActive' : false}
+                onConfirmDeactivate={async () => {
+                    if (!clientToDelete || typeof clientToDelete.user !== 'object') return;
+                    await updateUser(clientToDelete.user._id, { status: 'InActive' });
+                    setNotification({ show: true, type: 'success', message: 'Client deactivated successfully' });
+                    loadClients();
+                }}
+                onConfirmDelete={async () => {
+                    if (!clientToDelete) return;
+                    await deleteClient(clientToDelete._id);
+                    setClients(prev => prev.filter(c => c._id !== clientToDelete._id));
+                    setNotification({ show: true, type: 'success', message: 'Client permanently deleted' });
+                }}
+            />
+        </div>
     );
 };

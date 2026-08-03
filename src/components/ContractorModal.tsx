@@ -52,13 +52,13 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
     });
 
     const getInitialFormData = (c?: Contractor): ContractorFormData => ({
-        user: typeof c?.user === 'object' ? c.user._id : (c?.user || ''),
+        user: c?.user && typeof c.user === 'object' ? c.user._id : (typeof c?.user === 'string' ? c.user : ''),
         companyName: c?.companyName || '',
         contractorType: c?.contractorType || '',
         paymentTerms: c?.paymentTerms || '',
         bankDetails: c?.bankDetails || c?.accountNumber || '',
-        address: c?.address || (typeof c?.user === 'object' ? c.user.address : '') || '',
-        phoneNumber: c?.phoneNumber || (typeof c?.user === 'object' ? c.user.phoneNumber : '') || ''
+        address: c?.address || (c?.user && typeof c.user === 'object' ? c.user.address : '') || '',
+        phoneNumber: c?.phoneNumber || (c?.user && typeof c.user === 'object' ? c.user.phoneNumber : '') || ''
     });
 
     const [formData, setFormData] = useState<ContractorFormData>(getInitialFormData(contractor));

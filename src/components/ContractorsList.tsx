@@ -19,7 +19,9 @@ import {
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { fetchAllContractors, deleteContractor } from '../services/contractorApi';
+import { updateUser } from '../services/userApi';
 import { Contractor } from '../types/contractor';
 
 interface ContractorsListProps {
@@ -42,6 +44,8 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
         type: 'success' as 'success' | 'error',
         message: ''
     });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [contractorToDelete, setContractorToDelete] = useState<Contractor | null>(null);
 
     useEffect(() => {
         loadContractors();
@@ -70,8 +74,8 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
             filtered = filtered.filter(contractor => {
                 const companyName = contractor.companyName || '';
                 const contractorType = contractor.contractorType || '';
-                const userName = typeof contractor.user === 'object' ? contractor.user.userName : '';
-                const email = typeof contractor.user === 'object' ? contractor.user.email : '';
+                const userName = contractor.user && typeof contractor.user === 'object' ? contractor.user.userName : '';
+                const email = contractor.user && typeof contractor.user === 'object' ? contractor.user.email : '';
 
                 return (
                     companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,18 +89,9 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
         setFilteredContractors(filtered);
     };
 
-    const handleDeleteContractor = async (contractorId: string, companyName: string) => {
-        if (!window.confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
-            return;
-        }
-
-        try {
-            await deleteContractor(contractorId);
-            setContractors(prev => prev.filter(c => c._id !== contractorId));
-            showNotification('success', 'Contractor deleted successfully');
-        } catch (error) {
-            showNotification('error', 'Failed to delete contractor. Please try again.');
-        }
+    const handleDeleteContractor = (contractor: Contractor) => {
+        setContractorToDelete(contractor);
+        setIsDeleteModalOpen(true);
     };
 
     const showNotification = (type: 'success' | 'error', message: string) => {
@@ -116,23 +111,23 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
     };
 
     const getUserName = (user: Contractor['user']) => {
-        return typeof user === 'object' ? user.userName : 'Unknown User';
+        return user && typeof user === 'object' ? user.userName : 'Unknown User';
     };
 
     const getUserEmail = (user: Contractor['user']) => {
-        return typeof user === 'object' ? user.email : 'N/A';
+        return user && typeof user === 'object' ? user.email : 'N/A';
     };
 
     const getUserPhone = (user: Contractor['user']) => {
-        return typeof user === 'object' ? user.phoneNumber : 'N/A';
+        return user && typeof user === 'object' ? user.phoneNumber : 'N/A';
     };
 
     const getUserAddress = (user: Contractor['user']) => {
-        return typeof user === 'object' ? user.address : 'N/A';
+        return user && typeof user === 'object' ? user.address : 'N/A';
     };
 
     const getUserStatus = (user: Contractor['user']) => {
-        return typeof user === 'object' ? user.status : 'Unknown';
+        return user && typeof user === 'object' ? user.status : 'Unknown';
     };
 
     const renderStars = (rating: number) => {
@@ -282,9 +277,9 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="space-y-1">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contractor.isActive)}`}>
-                                                        {getStatusIcon(contractor.isActive)}
-                                                        {contractor.isActive ? 'Active' : 'Inactive'}
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(getUserStatus(contractor.user) === 'Active')}`}>
+                                                        {getStatusIcon(getUserStatus(contractor.user) === 'Active')}
+                                                        {getUserStatus(contractor.user) === 'Active' ? 'Active' : 'Inactive'}
                                                     </span>
                                                     <div className="text-xs text-gray-500">
                                                         User: {getUserStatus(contractor.user)}
@@ -312,10 +307,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleDeleteContractor(
-                                                            contractor._id,
-                                                            contractor.companyName || 'Unknown Company'
-                                                        )}
+                                                        onClick={() => handleDeleteContractor(contractor)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -353,7 +345,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Active</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {contractors.filter(c => c.isActive).length}
+                                        {contractors.filter(c => getUserStatus(c.user) === 'Active').length}
                                     </p>
                                 </div>
                             </div>
@@ -367,7 +359,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Inactive</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {contractors.filter(c => !c.isActive).length}
+                                        {contractors.filter(c => getUserStatus(c.user) !== 'Active').length}
                                     </p>
                                 </div>
                             </div>
@@ -398,6 +390,25 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                     message={notification.message}
                     onClose={() => setNotification(prev => ({ ...prev, show: false }))}
                 />
-            </div>
+                <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => { setIsDeleteModalOpen(false); setContractorToDelete(null); }}
+                itemName={contractorToDelete?.companyName || 'Unknown'}
+                itemType="Contractor"
+                isInactive={contractorToDelete?.user && typeof contractorToDelete.user === 'object' ? contractorToDelete.user.status === 'InActive' : false}
+                onConfirmDeactivate={async () => {
+                    if (!contractorToDelete || typeof contractorToDelete.user !== 'object') return;
+                    await updateUser(contractorToDelete.user._id, { status: 'InActive' });
+                    setNotification({ show: true, type: 'success', message: 'Contractor deactivated successfully' });
+                    loadContractors();
+                }}
+                onConfirmDelete={async () => {
+                    if (!contractorToDelete) return;
+                    await deleteContractor(contractorToDelete._id);
+                    setContractors(prev => prev.filter(c => c._id !== contractorToDelete._id));
+                    setNotification({ show: true, type: 'success', message: 'Contractor permanently deleted' });
+                }}
+            />
+        </div>
     );
 };

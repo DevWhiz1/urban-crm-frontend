@@ -5,6 +5,7 @@ import { Notification } from '../ui/Notification';
 import { Button } from '../ui/Button';
 import { getAllUsers, updateUser, deleteUser } from '../../services/userApi';
 import { EditUserModal } from './EditUserModal';
+import { DeleteConfirmationModal } from '../ui/DeleteConfirmationModal';
 
 interface UserType {
     _id: string;
@@ -32,10 +33,8 @@ export const UsersList: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     
-    const [deletePhase, setDeletePhase] = useState(0); 
-    // 0: none, 1: deactivate confirm 1, 2: deactivate confirm 2, 3: permanent delete confirm 1, 4: permanent delete confirm 2
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const [sortKey, setSortKey] = useState<keyof UserType>('createdAt');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -220,23 +219,13 @@ export const UsersList: React.FC = () => {
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            {user.status === 'InActive' ? (
-                                                <button 
-                                                    onClick={() => { setUserToDelete(user); setDeletePhase(3); }}
-                                                    className="p-1 text-red-700 hover:bg-red-100 rounded transition-colors font-bold flex items-center justify-center"
-                                                    title="Permanently Delete User"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => { setUserToDelete(user); setDeletePhase(1); }}
-                                                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                    title="Deactivate User"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                            <button 
+                                                onClick={() => { setUserToDelete(user); setIsDeleteModalOpen(true); }}
+                                                className={`p-1 rounded transition-colors font-bold flex items-center justify-center ${user.status === 'InActive' ? 'text-red-700 hover:bg-red-100' : 'text-red-600 hover:bg-red-50'}`}
+                                                title={user.status === 'InActive' ? "Permanently Delete User" : "Deactivate User"}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -291,68 +280,25 @@ export const UsersList: React.FC = () => {
                 user={selectedUser}
             />
 
-            {/* Delete/Deactivate Confirmation Modal */}
-            {deletePhase > 0 && userToDelete && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setDeletePhase(0)}></div>
-                        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden border border-gray-200 shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
-                            <div className="p-6">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${deletePhase === 1 || deletePhase === 3 ? 'bg-orange-100' : 'bg-red-100'}`}>
-                                        <AlertTriangle className={`w-6 h-6 ${deletePhase === 1 || deletePhase === 3 ? 'text-orange-600' : 'text-red-600'}`} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            {deletePhase === 1 ? 'Deactivate User?' : 
-                                             deletePhase === 2 ? 'Are you absolutely sure?' :
-                                             deletePhase === 3 ? 'Permanently Delete User?' :
-                                             'WARNING: Permanent Action'}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            {deletePhase === 1 ? `Are you sure you want to deactivate ${userToDelete.userName}? They will no longer be able to access the system.` : 
-                                             deletePhase === 2 ? `This action will mark ${userToDelete.userName} as Inactive.` :
-                                             deletePhase === 3 ? `Are you sure you want to PERMANENTLY delete ${userToDelete.userName} from the database?` :
-                                             `This action CANNOT BE UNDONE. ${userToDelete.userName} will be completely wiped from the system.`}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="mt-6 flex justify-end gap-3">
-                                    <Button variant="outline" onClick={() => setDeletePhase(0)} disabled={isDeleting}>
-                                        Cancel
-                                    </Button>
-                                    {deletePhase === 1 || deletePhase === 3 ? (
-                                        <Button className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => setDeletePhase(deletePhase + 1)}>
-                                            Yes, proceed
-                                        </Button>
-                                    ) : (
-                                        <Button className="bg-red-600 hover:bg-red-700 text-white" loading={isDeleting} onClick={async () => {
-                                            try {
-                                                setIsDeleting(true);
-                                                if (deletePhase === 4) {
-                                                    await deleteUser(userToDelete._id);
-                                                    setNotification({ show: true, type: 'success', message: 'User permanently deleted' });
-                                                } else {
-                                                    await updateUser(userToDelete._id, { status: 'InActive' });
-                                                    setNotification({ show: true, type: 'success', message: 'User deactivated successfully' });
-                                                }
-                                                setDeletePhase(0);
-                                                loadUsers();
-                                            } catch(err) {
-                                                setNotification({ show: true, type: 'error', message: 'Failed to perform action' });
-                                            } finally {
-                                                setIsDeleting(false);
-                                            }
-                                        }}>
-                                            {deletePhase === 4 ? 'Yes, Delete Permanently' : 'Yes, Deactivate'}
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => { setIsDeleteModalOpen(false); setUserToDelete(null); }}
+                itemName={userToDelete?.userName || ''}
+                itemType="User"
+                isInactive={userToDelete?.status === 'InActive'}
+                onConfirmDeactivate={async () => {
+                    if (!userToDelete) return;
+                    await updateUser(userToDelete._id, { status: 'InActive' });
+                    setNotification({ show: true, type: 'success', message: 'User deactivated successfully' });
+                    loadUsers();
+                }}
+                onConfirmDelete={async () => {
+                    if (!userToDelete) return;
+                    await deleteUser(userToDelete._id);
+                    setNotification({ show: true, type: 'success', message: 'User permanently deleted' });
+                    loadUsers();
+                }}
+            />
         </div>
     </div>
 );
