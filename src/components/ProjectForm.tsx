@@ -61,6 +61,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         return ids.length ? ids : [''];
     };
 
+    const [showOptionalFields, setShowOptionalFields] = useState(false);
+
     const [formData, setFormData] = useState<ProjectFormData>({
         name: project?.name || '',
         customer: typeof project?.customer === 'object' ? (project.customer._id || '') : (project?.customer || ''),
@@ -77,7 +79,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         drawings: normalizeStringIds(project?.drawings),
         contracts: normalizeStringIds(project?.contracts),
         description: project?.description || '',
-        status: project?.status || 'planning'
+        status: project?.status || 'planning',
+        progress: project?.progress !== undefined ? project?.progress.toString() : '0'
     });
 
     const [errors, setErrors] = useState<ProjectFormErrors>({});
@@ -104,7 +107,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 drawings: normalizeStringIds(project.drawings),
                 contracts: normalizeStringIds(project.contracts),
                 description: project.description || '',
-                status: project.status || 'planning'
+                status: project.status || 'planning',
+                progress: project.progress !== undefined ? project.progress.toString() : '0'
             });
         }
     }, [project]);
@@ -246,7 +250,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                     drawings: [''],
                     contracts: [''],
                     description: '',
-                    status: 'planning'
+                    status: 'planning',
+                    progress: '0'
                 });
             }
         } catch (error) {
@@ -273,7 +278,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             drawings: [''],
             contracts: [''],
             description: '',
-            status: 'planning'
+            status: 'planning',
+            progress: '0'
         });
         setErrors({});
     };
@@ -381,6 +387,22 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         placeholder="Select type"
                                         required
                                     />
+                                    <Select
+                                        label="Phase (Status)"
+                                        value={formData.status}
+                                        onChange={handleInputChange('status')}
+                                        options={[
+                                            { value: 'planning', label: 'Planning' },
+                                            { value: 'pending', label: 'Pending' },
+                                            { value: 'ongoing', label: 'Ongoing' },
+                                            { value: 'completed', label: 'Completed' },
+                                            { value: 'on_hold', label: 'On Hold' },
+                                            { value: 'cancelled', label: 'Cancelled' }
+                                        ]}
+                                        error={errors.status}
+                                        placeholder="Select phase"
+                                        required
+                                    />
                                 </div>
                             </div>
 
@@ -393,7 +415,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Input
-                                        label="Total Coverage Area (Sq Ft)"
+                                        label="Total Coverage Area (Sq Ft) - Calculation is based on this"
                                         type="number"
                                         value={formData.totalCoverageArea}
                                         onChange={handleInputChange('totalCoverageArea')}
@@ -546,129 +568,157 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                         onChange={handleInputChange('estimatedDuration')}
                                         error={errors.estimatedDuration}
                                     />
+
+                                    {mode === 'edit' && (
+                                        <Input
+                                            label="Progress (%)"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={formData.progress}
+                                            onChange={handleInputChange('progress')}
+                                            error={errors.progress}
+                                            placeholder="e.g., 50"
+                                        />
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Documents */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                        <File className="w-4 h-4 text-orange-600" />
-                                    </div>
-                                    <h3 className="text-lg font-medium text-gray-900">Project Documents</h3>
-                                </div>
+                            <div className="flex justify-center mt-6 border-t border-gray-200 pt-6">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowOptionalFields(!showOptionalFields)}
+                                    className="w-full sm:w-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                                >
+                                    {showOptionalFields ? 'Hide Optional Fields (Documents & Details)' : 'Add Optional Fields (Documents & Details)'}
+                                </Button>
+                            </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    {/* Drawings */}
+                            {showOptionalFields && (
+                                <>
+                                    {/* Documents */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            <LinkIcon className="w-4 h-4 inline mr-2" />
-                                            Drawing URLs
-                                        </label>
-                                        <div className="space-y-3">
-                                            {formData.drawings.map((drawing, index) => (
-                                                <div key={index} className="flex items-center gap-3">
-                                                    <div className="flex-1">
-                                                        <Input
-                                                            label=""
-                                                            value={drawing}
-                                                            onChange={(e) => handleDrawingChange(index, e.target.value)}
-                                                            placeholder="https://example.com/drawing.pdf"
-                                                        />
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {index === formData.drawings.length - 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={addDrawing}
-                                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                        {formData.drawings.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeDrawing(index)}
-                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            >
-                                                                <Minus className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                                <File className="w-4 h-4 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Project Documents</h3>
                                         </div>
-                                        {errors.drawings && (
-                                            <p className="text-red-600 text-sm mt-2">{errors.drawings}</p>
-                                        )}
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                            {/* Drawings */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                                    <LinkIcon className="w-4 h-4 inline mr-2" />
+                                                    Drawing URLs
+                                                </label>
+                                                <div className="space-y-3">
+                                                    {formData.drawings.map((drawing, index) => (
+                                                        <div key={index} className="flex items-center gap-3">
+                                                            <div className="flex-1">
+                                                                <Input
+                                                                    label=""
+                                                                    value={drawing}
+                                                                    onChange={(e) => handleDrawingChange(index, e.target.value)}
+                                                                    placeholder="https://example.com/drawing.pdf"
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                {index === formData.drawings.length - 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={addDrawing}
+                                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                                {formData.drawings.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeDrawing(index)}
+                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {errors.drawings && (
+                                                    <p className="text-red-600 text-sm mt-2">{errors.drawings}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Contracts */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                                    <LinkIcon className="w-4 h-4 inline mr-2" />
+                                                    Contract URLs
+                                                </label>
+                                                <div className="space-y-3">
+                                                    {formData.contracts.map((contract, index) => (
+                                                        <div key={index} className="flex items-center gap-3">
+                                                            <div className="flex-1">
+                                                                <Input
+                                                                    label=""
+                                                                    value={contract}
+                                                                    onChange={(e) => handleContractChange(index, e.target.value)}
+                                                                    placeholder="https://example.com/contract.pdf"
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                {index === formData.contracts.length - 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={addContract}
+                                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                                {formData.contracts.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeContract(index)}
+                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    >
+                                                                        <Minus className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {errors.contracts && (
+                                                    <p className="text-red-600 text-sm mt-2">{errors.contracts}</p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* Contracts */}
+                                    {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            <LinkIcon className="w-4 h-4 inline mr-2" />
-                                            Contract URLs
-                                        </label>
-                                        <div className="space-y-3">
-                                            {formData.contracts.map((contract, index) => (
-                                                <div key={index} className="flex items-center gap-3">
-                                                    <div className="flex-1">
-                                                        <Input
-                                                            label=""
-                                                            value={contract}
-                                                            onChange={(e) => handleContractChange(index, e.target.value)}
-                                                            placeholder="https://example.com/contract.pdf"
-                                                        />
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        {index === formData.contracts.length - 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={addContract}
-                                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                        {formData.contracts.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeContract(index)}
-                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            >
-                                                                <Minus className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <FileText className="w-4 h-4 text-gray-600" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Additional Details</h3>
                                         </div>
-                                        {errors.contracts && (
-                                            <p className="text-red-600 text-sm mt-2">{errors.contracts}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Description */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <FileText className="w-4 h-4 text-gray-600" />
+                                        <Textarea
+                                            label="Project Description"
+                                            value={formData.description}
+                                            onChange={handleInputChange('description')}
+                                            error={errors.description}
+                                            placeholder="Enter project description, requirements, and any additional notes..."
+                                            rows={4}
+                                        />
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900">Additional Details</h3>
-                                </div>
-
-                                <Textarea
-                                    label="Project Description"
-                                    value={formData.description}
-                                    onChange={handleInputChange('description')}
-                                    error={errors.description}
-                                    placeholder="Enter project description, requirements, and any additional notes..."
-                                    rows={4}
-                                />
-                            </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Action Buttons */}

@@ -5,7 +5,7 @@ export interface ProjectPayment {
   paymentAmount: number;
   paymentDate: string;
   paymentStatus: 'pending' | 'paid' | 'verified' | 'disputed' | 'rejected';
-  paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'upi' | 'digital_wallet';
+  paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'upi' | 'digital_wallet' | 'online';
   transactionId?: string;
   receiptPhoto?: string;
   notes?: string;

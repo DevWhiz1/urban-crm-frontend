@@ -18,9 +18,6 @@ export const validateProjectPaymentForm = (data: ProjectPaymentFormData): Projec
     errors.paymentAmount = 'Please enter a valid amount greater than 0';
   }
 
-  if (!data.paymentMethod.trim()) {
-    errors.paymentMethod = 'Payment method is required';
-  }
 
   if (!data.paymentDate.trim()) {
     errors.paymentDate = 'Payment date is required';
@@ -28,10 +25,7 @@ export const validateProjectPaymentForm = (data: ProjectPaymentFormData): Projec
 
 
 
-  // Transaction ID validation for non-cash payments
-  if (data.paymentMethod && data.paymentMethod !== 'cash' && !data.transactionId.trim()) {
-    errors.transactionId = 'Transaction ID is required for non-cash payments';
-  }
+
 
   // Receipt photo URL validation
   if (data.receiptPhoto.trim() && !isValidUrl(data.receiptPhoto.trim())) {

@@ -5,7 +5,7 @@ export interface Payment {
   contract?: string;
   date: string;
   amount: number;
-  paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'upi' | 'digital_wallet';
+  paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'upi' | 'digital_wallet' | 'online';
   transactionId?: string;
   workDescription?: string;
   status: 'pending' | 'paid' | 'verified' | 'disputed' | 'rejected';

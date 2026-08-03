@@ -41,7 +41,7 @@ export const ProjectPaymentForm: React.FC = () => {
         paymentAmount: '',
         paymentDate: new Date().toISOString().split('T')[0],
         paymentStatus: 'paid',
-        paymentMethod: '',
+        paymentMethod: 'online',
         transactionId: '',
         receiptPhoto: '',
         notes: ''
@@ -107,7 +107,7 @@ export const ProjectPaymentForm: React.FC = () => {
                 paymentAmount: '',
                 paymentDate: new Date().toISOString().split('T')[0],
                 paymentStatus: 'paid',
-                paymentMethod: '',
+                paymentMethod: 'online',
                 transactionId: '',
                 receiptPhoto: '',
                 notes: ''
@@ -128,7 +128,7 @@ export const ProjectPaymentForm: React.FC = () => {
             paymentAmount: '',
             paymentDate: new Date().toISOString().split('T')[0],
             paymentStatus: 'paid',
-            paymentMethod: '',
+            paymentMethod: 'online',
             transactionId: '',
             receiptPhoto: '',
             notes: ''
@@ -142,7 +142,6 @@ export const ProjectPaymentForm: React.FC = () => {
     }));
 
     const selectedProject = projects.find(p => p._id === formData.project);
-    const requiresTransactionId = formData.paymentMethod && formData.paymentMethod !== 'cash';
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -316,17 +315,15 @@ export const ProjectPaymentForm: React.FC = () => {
                                         value={formData.paymentMethod}
                                         onChange={handleInputChange('paymentMethod')}
                                         error={errors.paymentMethod}
-                                        required
                                         placeholder="Select payment method"
                                     />
 
                                     <Input
-                                        label={`Transaction ID ${requiresTransactionId ? '*' : '(Optional)'}`}
+                                        label="Transaction ID (Optional)"
                                         value={formData.transactionId}
                                         onChange={handleInputChange('transactionId')}
                                         error={errors.transactionId}
                                         placeholder="Enter transaction/reference ID"
-                                        required={requiresTransactionId}
                                     />
                                 </div>
                             </div>

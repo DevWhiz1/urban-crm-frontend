@@ -3,7 +3,8 @@ export const PAYMENT_METHODS = [
   { value: 'check', label: 'Check' },
   { value: 'bank_transfer', label: 'Bank Transfer' },
   { value: 'upi', label: 'UPI' },
-  { value: 'digital_wallet', label: 'Digital Wallet' }
+  { value: 'digital_wallet', label: 'Digital Wallet' },
+  { value: 'online', label: 'Online' }
 ] as const;
 
 export const PAYMENT_STATUSES = [

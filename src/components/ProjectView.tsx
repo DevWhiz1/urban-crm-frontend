@@ -469,7 +469,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                         )}
 
                         {/* Documents */}
-                        {(project.drawings && project.drawings.length > 0) || (project.contracts && project.contracts.length > 0) ? (
+                        {((project.drawings && project.drawings.filter(d => d.trim() !== '').length > 0) || (project.contracts && project.contracts.filter(c => c.trim() !== '').length > 0)) ? (
                             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                                 <div className="bg-orange-600 px-6 py-4">
                                     <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -479,14 +479,14 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                 </div>
                                 <div className="p-6">
                                     <div className="space-y-6">
-                                        {project.drawings && project.drawings.length > 0 && (
+                                        {project.drawings && project.drawings.filter(d => d.trim() !== '').length > 0 && (
                                             <div>
                                                 <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
                                                     <LinkIcon className="w-4 h-4" />
                                                     Drawings
                                                 </h3>
                                                 <div className="space-y-2">
-                                                    {project.drawings.map((drawing, index) => (
+                                                    {project.drawings.filter(d => d.trim() !== '').map((drawing, index) => (
                                                         <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                                             <FileText className="w-4 h-4 text-gray-400" />
                                                             <a
@@ -504,14 +504,14 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                             </div>
                                         )}
 
-                                        {project.contracts && project.contracts.length > 0 && (
+                                        {project.contracts && project.contracts.filter(c => c.trim() !== '').length > 0 && (
                                             <div>
                                                 <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
                                                     <LinkIcon className="w-4 h-4" />
                                                     Contracts
                                                 </h3>
                                                 <div className="space-y-2">
-                                                    {project.contracts.map((contract, index) => (
+                                                    {project.contracts.filter(c => c.trim() !== '').map((contract, index) => (
                                                         <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                                             <FileText className="w-4 h-4 text-gray-400" />
                                                             <a

@@ -70,7 +70,7 @@ export const PaymentForm: React.FC = () => {
     contract: '',
     date: new Date().toISOString().split('T')[0], // Today's date
     amount: '',
-    paymentMethod: '',
+    paymentMethod: 'online',
     transactionId: '',
     workDescription: '',
     status: 'paid',
@@ -215,7 +215,7 @@ export const PaymentForm: React.FC = () => {
   const selectedProject = projects.find(p => p._id === formData.project);
   const selectedContractor = contractors.find(c => c._id === formData.contractor);
   const selectedContract = filteredContracts.find(c => c._id === formData.contract);
-  const requiresTransactionId = formData.paymentMethod && formData.paymentMethod !== 'cash';
+
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -474,17 +474,15 @@ export const PaymentForm: React.FC = () => {
                     value={formData.paymentMethod}
                     onChange={handleInputChange('paymentMethod')}
                     error={errors.paymentMethod}
-                    required
                     placeholder="Select payment method"
                   />
 
                   <Input
-                    label={`Transaction ID ${requiresTransactionId ? '*' : '(Optional)'}`}
+                    label="Transaction ID (Optional)"
                     value={formData.transactionId}
                     onChange={handleInputChange('transactionId')}
                     error={errors.transactionId}
                     placeholder="Enter transaction/reference ID"
-                    required={requiresTransactionId}
                   />
                 </div>
               </div>

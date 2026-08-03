@@ -1,9 +1,9 @@
 import apiClient from './apiClient';
-import { 
-  PaymentFormData, 
-  PaymentProjectOption, 
-  PaymentContractorOption, 
-  PaymentContractOption 
+import {
+  PaymentFormData,
+  PaymentProjectOption,
+  PaymentContractorOption,
+  PaymentContractOption
 } from '../types/payment';
 
 export const createPayment = async (data: PaymentFormData): Promise<void> => {
@@ -12,7 +12,7 @@ export const createPayment = async (data: PaymentFormData): Promise<void> => {
     if (!userString) {
       throw new Error('User not authenticated');
     }
-    
+
     const user = JSON.parse(userString);
     const paymentData = {
       ...data,
@@ -63,12 +63,12 @@ export const fetchContractsForPayment = async (): Promise<PaymentContractOption[
 };
 
 export const getFilteredContracts = (
-  contracts: PaymentContractOption[], 
-  projectId: string, 
+  contracts: PaymentContractOption[],
+  projectId: string,
   contractorId: string
 ): PaymentContractOption[] => {
-  return contracts.filter(contract => 
-    contract.project._id === projectId && 
+  return contracts.filter(contract =>
+    contract.project._id === projectId &&
     contract.contractor._id === contractorId
   );
 };
