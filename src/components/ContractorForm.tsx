@@ -6,7 +6,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { fetchUsers, createContractor } from '../services/api';
+import { fetchUsersForContractor, createContractor } from '../services/contractorApi';
 import { CONTRACTOR_TYPES, PAYMENT_TERMS } from '../constants/contractor';
 import { validateForm, hasErrors } from '../utils/validation';
 import { User, ContractorFormData, FormErrors, NotificationState } from '../types/contractor';
@@ -40,7 +40,7 @@ export const ContractorForm: React.FC = () => {
     const loadUsers = async () => {
         try {
             setLoadingUsers(true);
-            const userData = await fetchUsers();
+            const userData = await fetchUsersForContractor();
             setUsers(userData);
 
             if (userData.length === 0) {

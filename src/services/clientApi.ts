@@ -14,7 +14,8 @@ export const createClient = async (data: ClientFormData): Promise<void> => {
 export const fetchUsersForClient = async (): Promise<User[]> => {
   try {
     const response = await apiClient.get('/api/user/get-all-users');
-    return response.data.data || [];
+    const users = response.data.data || [];
+    return users.filter((u: User) => u.role === 'Client');
   } catch (error) {
     console.error('Failed to fetch users:', error);
     throw new Error('Failed to load users');

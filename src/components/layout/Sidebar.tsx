@@ -35,16 +35,16 @@ const allMenuItems: MenuItem[] = [
     label: 'Dashboard',
     icon: Home,
     path: '/dashboard',
-    roles: ['Admin', 'Contractor', 'User']
+    roles: ['Admin', 'Contractor', 'Client']
   },
   {
     id: 'projects',
     label: 'Projects',
     icon: FileText,
-    roles: ['Admin', 'Contractor', 'User'],
+    roles: ['Admin', 'Contractor', 'Client'],
     children: [
       { id: 'add-project', label: 'Add Project', icon: Plus, path: '/dashboard/projects/add', roles: ['Admin'] },
-      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects', roles: ['Admin', 'Contractor', 'User'] }
+      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects', roles: ['Admin', 'Contractor', 'Client'] }
     ]
   },
   {
@@ -61,10 +61,10 @@ const allMenuItems: MenuItem[] = [
     id: 'payments',
     label: 'Payments',
     icon: CreditCard,
-    roles: ['Admin', 'Contractor', 'User'],
+    roles: ['Admin', 'Contractor', 'Client'],
     children: [
       { id: 'add-payment', label: 'Record Payment', icon: Plus, path: '/dashboard/payments/add', roles: ['Admin'] },
-      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments', roles: ['Admin', 'Contractor', 'User'] },
+      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments', roles: ['Admin', 'Contractor', 'Client'] },
       { id: 'list-contarctor-payments', label: 'All Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor', roles: ['Admin', 'Contractor'] }
     ]
   },
@@ -74,7 +74,6 @@ const allMenuItems: MenuItem[] = [
     icon: Wrench,
     roles: ['Admin'],
     children: [
-      { id: 'add-contractor', label: 'Add Contractor', icon: Plus, path: '/dashboard/contractors/add', roles: ['Admin'] },
       { id: 'list-contractors', label: 'All Contractors', icon: List, path: '/dashboard/contractors', roles: ['Admin'] }
     ]
   },
@@ -84,7 +83,6 @@ const allMenuItems: MenuItem[] = [
     icon: UserCheck,
     roles: ['Admin'],
     children: [
-      { id: 'add-client', label: 'Add Client', icon: Plus, path: '/dashboard/clients/add', roles: ['Admin'] },
       { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] }
     ]
   },
@@ -122,7 +120,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const userRole = user?.role || 'User';
+  const userRole = user?.role || 'Client';
 
   const [expandedItems, setExpandedItems] = useState<string[]>(['projects', 'project-contracts', 'payments', 'contractors', 'clients']);
 

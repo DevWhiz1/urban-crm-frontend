@@ -52,7 +52,8 @@ export const deleteContractor = async (id: string): Promise<void> => {
 export const fetchUsersForContractor = async (): Promise<User[]> => {
   try {
     const response = await apiClient.get('/api/user/get-all-users');
-    return response.data.data || [];
+    const users = response.data.data || [];
+    return users.filter((u: User) => u.role === 'Contractor');
   } catch (error) {
     console.error('Failed to fetch users:', error);
     throw new Error('Failed to load users');
