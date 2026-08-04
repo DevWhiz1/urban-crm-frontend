@@ -17,7 +17,9 @@ import {
   UserCheck,
   X,
   Handshake,
-  CreditCard
+  CreditCard,
+  Briefcase,
+  Receipt
 } from 'lucide-react';
 
 interface MenuItem {
@@ -84,6 +86,26 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
     children: [
       { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] }
+    ]
+  },
+  {
+    id: 'employees',
+    label: 'Employees',
+    icon: Briefcase,
+    roles: ['Admin'],
+    children: [
+      { id: 'add-employee', label: 'Add Employee', icon: Plus, path: '/dashboard/employees/add', roles: ['Admin'] },
+      { id: 'list-employees', label: 'All Employees', icon: List, path: '/dashboard/employees', roles: ['Admin'] }
+    ]
+  },
+  {
+    id: 'expenses',
+    label: 'Expenses',
+    icon: Receipt,
+    roles: ['Admin'],
+    children: [
+      { id: 'add-expense', label: 'Add Expense', icon: Plus, path: '/dashboard/expenses/add', roles: ['Admin'] },
+      { id: 'list-expenses', label: 'All Expenses', icon: List, path: '/dashboard/expenses', roles: ['Admin'] }
     ]
   },
   {

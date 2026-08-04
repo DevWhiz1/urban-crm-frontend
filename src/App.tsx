@@ -23,6 +23,11 @@ import { ProjectPaymentSummary } from './components/ProjectPaymentSummary';
 import { ProjectContractPayments } from './components/ProjectContractPayments';
 import { AddUser } from './components/users/AddUser';
 import { UsersList } from './components/users/UsersList';
+import EmployeesManagement from './components/employees/EmployeesManagement';
+import EmployeeForm from './components/employees/EmployeeForm';
+import EmployeeView from './components/employees/EmployeeView';
+import ExpensesManagement from './components/expenses/ExpensesManagement';
+import ExpenseForm from './components/expenses/ExpenseForm';
 
 function App() {
   return (
@@ -56,6 +61,13 @@ function App() {
             <Route path="payments" element={<ProjectPaymentSummary />} />
             <Route path="users" element={<UsersList />} />
             <Route path="users/add" element={<AddUser />} />
+            <Route path="employees" element={<EmployeesManagement />} />
+            <Route path="employees/add" element={<EmployeeForm />} />
+            <Route path="employees/edit/:id" element={<EmployeeForm />} />
+            <Route path="employees/view/:id" element={<EmployeeView />} />
+            <Route path="expenses" element={<ExpensesManagement />} />
+            <Route path="expenses/add" element={<ExpenseForm />} />
+            <Route path="expenses/edit/:id" element={<ExpenseForm />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-gray-600 mt-2">Application settings will be implemented here.</p></div>} />
           </Route>
