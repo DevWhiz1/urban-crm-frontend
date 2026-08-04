@@ -35,6 +35,7 @@ export interface ProjectContract {
   Description: string;
   createdAt?: string;
   updatedAt?: string;
+  isActive?: boolean;
 }
 
 export interface ProjectContractFormData {
@@ -45,6 +46,7 @@ export interface ProjectContractFormData {
   startDate: string;
   endDate: string;
   Description: string;
+  isActive?: boolean;
 }
 
 export interface ProjectContractFormErrors {

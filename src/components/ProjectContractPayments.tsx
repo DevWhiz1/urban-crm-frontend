@@ -24,7 +24,10 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
-    RotateCcw
+    RotateCcw,
+    CheckCircle,
+    Edit,
+    Trash2
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -34,7 +37,10 @@ import {
     fetchProjectContracts,
     fetchContractPaymentSummary
 } from '../services/contractPaymentApi';
+import { updatePayment, deletePayment } from '../services/paymentApi';
 import { formatPKRCurrency } from '../utils/paymentValidation';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
+import { PaymentEditModal } from './PaymentEditModal';
 
 interface Project {
     _id: string;
@@ -104,6 +110,13 @@ export const ProjectContractPayments: React.FC = () => {
     const [contracts, setContracts] = useState<ProjectContract[]>([]);
     const [selectedContract, setSelectedContract] = useState<ContractPaymentSummary | null>(null);
     const [selectedPaymentDetail, setSelectedPaymentDetail] = useState<ContractPayment | null>(null);
+    const [editingPayment, setEditingPayment] = useState<ContractPayment | null>(null);
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        paymentId: '',
+        paymentName: '',
+        isInactive: false
+    });
     const [zoomImage, setZoomImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [loadingProjects, setLoadingProjects] = useState(true);
@@ -207,6 +220,84 @@ export const ProjectContractPayments: React.FC = () => {
     const handleBackToContracts = () => {
         setSelectedContract(null);
         resetPaymentFilters();
+    };
+
+    const handleInitiateDelete = (payment: ContractPayment) => {
+        setDeleteModal({
+            isOpen: true,
+            paymentId: payment._id,
+            paymentName: `Payment of ${formatPKRCurrency(payment.amount.toString())}`,
+            isInactive: payment.isActive === false
+        });
+    };
+
+    const handleConfirmDeactivatePayment = async () => {
+        try {
+            await updatePayment(deleteModal.paymentId, { isActive: false });
+            if (selectedContract) {
+                setSelectedContract(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        payments: prev.payments.map(p => p._id === deleteModal.paymentId ? { ...p, isActive: false } : p)
+                    };
+                });
+            }
+            showNotification('success', 'Payment deactivated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to deactivate payment.');
+            throw error;
+        }
+    };
+
+    const handleActivatePayment = async (payment: ContractPayment) => {
+        try {
+            await updatePayment(payment._id, { isActive: true });
+            if (selectedContract) {
+                setSelectedContract(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        payments: prev.payments.map(p => p._id === payment._id ? { ...p, isActive: true } : p)
+                    };
+                });
+            }
+            showNotification('success', 'Payment activated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to activate payment.');
+        }
+    };
+
+    const handleConfirmDeletePayment = async () => {
+        try {
+            await deletePayment(deleteModal.paymentId);
+            if (selectedContract) {
+                setSelectedContract(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        payments: prev.payments.filter(p => p._id !== deleteModal.paymentId)
+                    };
+                });
+            }
+            showNotification('success', 'Payment deleted successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to delete payment.');
+            throw error;
+        }
+    };
+
+    const handlePaymentUpdated = (updatedPayment: any) => {
+        if (selectedContract) {
+            setSelectedContract(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    payments: prev.payments.map(p => p._id === updatedPayment._id ? { ...p, ...updatedPayment } : p)
+                };
+            });
+        }
+        showNotification('success', 'Payment updated successfully');
     };
 
     // Filter & Sort Contractor Payments
@@ -640,10 +731,42 @@ export const ProjectContractPayments: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setSelectedPaymentDetail(payment);
                                                                 }}
-                                                                className="px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors flex items-center gap-1"
+                                                                className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                                                title="View Details"
                                                             >
-                                                                <Eye className="w-3.5 h-3.5" />
-                                                                Details
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingPayment(payment);
+                                                                }}
+                                                                className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                                                                title="Edit Payment"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            {payment.isActive === false && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleActivatePayment(payment);
+                                                                    }}
+                                                                    className="p-1.5 text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
+                                                                    title="Activate Payment"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleInitiateDelete(payment);
+                                                                }}
+                                                                className="p-1.5 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                                                                title={payment.isActive === false ? "Permanently Delete" : "Deactivate"}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         </div>
                                                     </td>
@@ -869,6 +992,23 @@ export const ProjectContractPayments: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    <PaymentEditModal
+                        isOpen={!!editingPayment}
+                        onClose={() => setEditingPayment(null)}
+                        payment={editingPayment as any}
+                        onSuccess={handlePaymentUpdated}
+                    />
+
+                    <DeleteConfirmationModal
+                        isOpen={deleteModal.isOpen}
+                        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                        onConfirmDeactivate={handleConfirmDeactivatePayment}
+                        onConfirmDelete={handleConfirmDeletePayment}
+                        itemName={deleteModal.paymentName}
+                        itemType="Payment"
+                        isInactive={deleteModal.isInactive}
+                    />
 
                     <Notification
                         show={notification.show}

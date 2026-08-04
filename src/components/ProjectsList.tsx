@@ -21,10 +21,11 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Notification } from './ui/Notification';
-import { fetchAllProjects, deleteProject } from '../services/projectApi';
+import { fetchAllProjects, deleteProject, updateProject } from '../services/projectApi';
 import { Project } from '../types/project';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { formatPKRCurrency } from '../utils/projectValidation';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 
 interface ProjectsListProps {
     onViewProject: (project: Project) => void;
@@ -45,6 +46,12 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
         show: false,
         type: 'success' as 'success' | 'error',
         message: ''
+    });
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        projectId: '',
+        projectName: '',
+        isInactive: false
     });
 
     useEffect(() => {
@@ -93,17 +100,48 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
         setFilteredProjects(filtered);
     };
 
-    const handleDeleteProject = async (projectId: string, projectName: string) => {
-        if (!window.confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
-            return;
-        }
+    const handleInitiateDelete = (project: Project) => {
+        setDeleteModal({
+            isOpen: true,
+            projectId: project._id,
+            projectName: project.name,
+            isInactive: project.isActive === false
+        });
+    };
 
+    const handleConfirmDeactivate = async () => {
         try {
-            await deleteProject(projectId);
-            setProjects(prev => prev.filter(p => p._id !== projectId));
+            await updateProject(deleteModal.projectId, { isActive: false });
+            setProjects(prev => prev.map(p => 
+                p._id === deleteModal.projectId ? { ...p, isActive: false } : p
+            ));
+            showNotification('success', 'Project deactivated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to deactivate project. Please try again.');
+            throw error;
+        }
+    };
+
+    const handleActivateProject = async (project: Project) => {
+        try {
+            await updateProject(project._id, { isActive: true });
+            setProjects(prev => prev.map(p => 
+                p._id === project._id ? { ...p, isActive: true } : p
+            ));
+            showNotification('success', 'Project activated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to activate project. Please try again.');
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        try {
+            await deleteProject(deleteModal.projectId);
+            setProjects(prev => prev.filter(p => p._id !== deleteModal.projectId));
             showNotification('success', 'Project deleted successfully');
         } catch (error) {
             showNotification('error', 'Failed to delete project. Please try again.');
+            throw error;
         }
     };
 
@@ -262,10 +300,17 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                             <p className="text-sm text-gray-600 font-mono">{project.projectCode}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                                                {getStatusIcon(project.status)}
-                                                {project.status.replace('_', ' ').toUpperCase()}
-                                            </span>
+                                            {project.isActive === false ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-red-600 bg-red-100">
+                                                    <XCircle className="w-4 h-4" />
+                                                    INACTIVE
+                                                </span>
+                                            ) : (
+                                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                                                    {getStatusIcon(project.status)}
+                                                    {project.status.replace('_', ' ').toUpperCase()}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
@@ -353,32 +398,46 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => onViewProject(project)}
-                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2"
+                                                title="View Project"
                                             >
-                                                <Eye className="w-4 h-4 mr-1" />
-                                                View
+                                                <Eye className="w-4 h-4" />
                                             </Button>
                                             {isAdmin && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => onEditProject(project)}
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 p-2"
+                                                    title="Edit Project"
                                                 >
-                                                    <Edit className="w-4 h-4 mr-1" />
-                                                    Edit
+                                                    <Edit className="w-4 h-4" />
                                                 </Button>
                                             )}
                                         </div>
                                         {isAdmin && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleDeleteProject(project._id, project.name)}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                {project.isActive === false && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleActivateProject(project)}
+                                                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                        title="Activate Project"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleInitiateDelete(project)}
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    title={project.isActive === false ? "Permanently Delete" : "Deactivate"}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -451,6 +510,16 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                     type={notification.type}
                     message={notification.message}
                     onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
+
+                <DeleteConfirmationModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                    onConfirmDeactivate={handleConfirmDeactivate}
+                    onConfirmDelete={handleConfirmDelete}
+                    itemName={deleteModal.projectName}
+                    itemType="Project"
+                    isInactive={deleteModal.isInactive}
                 />
             </div>
     );

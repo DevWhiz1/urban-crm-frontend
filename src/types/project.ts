@@ -30,6 +30,7 @@ export interface Project {
   drawings?: string[];
   contracts?: string[];
   invoices?: string[];
+  isActive?: boolean;
 }
 
 export interface ProjectFormData {
@@ -50,6 +51,7 @@ export interface ProjectFormData {
   contracts: string[];
   description: string;
   status: string;
+  isActive?: boolean;
 }
 
 export interface ProjectFormErrors {

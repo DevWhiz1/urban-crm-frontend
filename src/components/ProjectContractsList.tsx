@@ -17,10 +17,11 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Notification } from './ui/Notification';
-import { fetchAllProjectContracts, deleteProjectContract } from '../services/projectContractApi';
+import { fetchAllProjectContracts, deleteProjectContract, updateProjectContract } from '../services/projectContractApi';
 import { ProjectContract } from '../types/projectContract';
 import { formatPKRCurrency } from '../utils/projectContractValidation';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
+import { Notification } from './ui/Notification';
 
 interface ProjectContractsListProps {
     onViewContract: (contract: ProjectContract) => void;
@@ -41,6 +42,12 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
         show: false,
         type: 'success' as 'success' | 'error',
         message: ''
+    });
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        contractId: '',
+        contractName: '',
+        isInactive: false
     });
 
     useEffect(() => {
@@ -83,17 +90,50 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
         setFilteredContracts(filtered);
     };
 
-    const handleDeleteContract = async (contractId: string, projectName: string, contractorName: string) => {
-        if (!window.confirm(`Are you sure you want to delete the contract between "${projectName}" and "${contractorName}"? This action cannot be undone.`)) {
-            return;
-        }
+    const handleInitiateDelete = (contract: ProjectContract) => {
+        const projectName = getProjectName(contract.project);
+        const contractorName = getContractorName(contract.contractor);
+        setDeleteModal({
+            isOpen: true,
+            contractId: contract._id,
+            contractName: `${projectName} - ${contractorName}`,
+            isInactive: contract.isActive === false
+        });
+    };
 
+    const handleConfirmDeactivate = async () => {
         try {
-            await deleteProjectContract(contractId);
-            setContracts(prev => prev.filter(c => c._id !== contractId));
+            await updateProjectContract(deleteModal.contractId, { isActive: false });
+            setContracts(prev => prev.map(c => 
+                c._id === deleteModal.contractId ? { ...c, isActive: false } : c
+            ));
+            showNotification('success', 'Project contract deactivated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to deactivate project contract. Please try again.');
+            throw error;
+        }
+    };
+
+    const handleActivateContract = async (contract: ProjectContract) => {
+        try {
+            await updateProjectContract(contract._id, { isActive: true });
+            setContracts(prev => prev.map(c => 
+                c._id === contract._id ? { ...c, isActive: true } : c
+            ));
+            showNotification('success', 'Contract activated successfully');
+        } catch (error) {
+            showNotification('error', 'Failed to activate contract. Please try again.');
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        try {
+            await deleteProjectContract(deleteModal.contractId);
+            setContracts(prev => prev.filter(c => c._id !== deleteModal.contractId));
             showNotification('success', 'Project contract deleted successfully');
         } catch (error) {
             showNotification('error', 'Failed to delete project contract. Please try again.');
+            throw error;
         }
     };
 
@@ -300,10 +340,17 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contract.isTerminated)}`}>
-                                                    {getStatusIcon(contract.isTerminated)}
-                                                    {contract.isTerminated ? 'Terminated' : 'Active'}
-                                                </span>
+                                                {contract.isActive === false ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-red-600 bg-red-100 mb-1 block w-fit">
+                                                        <XCircle className="w-4 h-4" />
+                                                        INACTIVE
+                                                    </span>
+                                                ) : (
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contract.isTerminated)}`}>
+                                                        {getStatusIcon(contract.isTerminated)}
+                                                        {contract.isTerminated ? 'Terminated' : 'Active'}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex items-center gap-2">
@@ -312,6 +359,7 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                                         size="sm"
                                                         onClick={() => onViewContract(contract)}
                                                         className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        title="View Contract"
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
@@ -320,18 +368,27 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                                         size="sm"
                                                         onClick={() => onEditContract(contract)}
                                                         className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                        title="Edit Contract"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </Button>
+                                                    {contract.isActive === false && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleActivateContract(contract)}
+                                                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                            title="Activate Contract"
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleDeleteContract(
-                                                            contract._id,
-                                                            getProjectName(contract.project),
-                                                            getContractorName(contract.contractor)
-                                                        )}
+                                                        onClick={() => handleInitiateDelete(contract)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        title={contract.isActive === false ? "Permanently Delete" : "Deactivate"}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
@@ -409,6 +466,16 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                     type={notification.type}
                     message={notification.message}
                     onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                />
+
+                <DeleteConfirmationModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                    onConfirmDeactivate={handleConfirmDeactivate}
+                    onConfirmDelete={handleConfirmDelete}
+                    itemName={deleteModal.contractName}
+                    itemType="Project Contract"
+                    isInactive={deleteModal.isInactive}
                 />
             </div>
     );

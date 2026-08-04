@@ -96,3 +96,25 @@ export const bulkImportPayments = async (data: {
     throw new Error(error.response?.data?.message || 'Failed to bulk import payments. Please try again.');
   }
 };
+
+export const updatePayment = async (id: string, data: Partial<PaymentFormData>): Promise<void> => {
+  try {
+    const paymentData = {
+      ...data,
+      amount: data.amount ? parseFloat(data.amount.toString()) : undefined,
+    };
+    await apiClient.put(`/api/payment/update-payment/${id}`, paymentData);
+  } catch (error) {
+    console.error('Failed to update payment:', error);
+    throw new Error('Failed to update payment. Please try again.');
+  }
+};
+
+export const deletePayment = async (id: string): Promise<void> => {
+  try {
+    await apiClient.delete(`/api/payment/delete-payment/${id}`);
+  } catch (error) {
+    console.error('Failed to delete payment:', error);
+    throw new Error('Failed to delete payment. Please try again.');
+  }
+};
