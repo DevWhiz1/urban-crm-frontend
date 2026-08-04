@@ -7,7 +7,7 @@ import {
   CheckCircle,
   AlertTriangle,
   FileText,
-  DollarSign,
+  Banknote,
   Calendar,
   Loader2
 } from 'lucide-react';

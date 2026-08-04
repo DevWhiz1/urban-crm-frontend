@@ -5,7 +5,7 @@ import {
     Building,
     Calculator,
     Calendar,
-    DollarSign,
+    Banknote,
     Truck,
     Hash,
     FileText,

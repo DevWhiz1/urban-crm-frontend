@@ -6,7 +6,7 @@ import {
     TrendingUp,
     AlertCircle,
     Clock,
-    DollarSign,
+    Banknote,
     Building,
     UserCheck,
     Activity,
@@ -17,7 +17,6 @@ import {
     Eye,
     Star,
     CreditCard,
-    Banknote,
     Target
 } from 'lucide-react';
 import { fetchDashboardStats, DashboardStats } from '../../services/dashboardApi';
@@ -116,7 +115,7 @@ export const Dashboard: React.FC = () => {
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                <DollarSign className="w-6 h-6 text-green-600" />
+                                <Banknote className="w-6 h-6 text-green-600" />
                             </div>
                         </div>
                     </div>
@@ -145,8 +144,8 @@ export const Dashboard: React.FC = () => {
                                 <p className="text-sm font-medium text-gray-600 mb-1">Active Contractors</p>
                                 <p className="text-3xl font-bold text-gray-900">{stats.contractors.active}</p>
                                 <p className="text-sm text-orange-600 flex items-center mt-1">
-                                    <Star className="w-4 h-4 mr-1" />
-                                    {stats.contractors.averageRating}/5 Avg Rating
+                                    <Wrench className="w-4 h-4 mr-1" />
+                                    {stats.contractors.total} Total
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
@@ -256,10 +255,6 @@ export const Dashboard: React.FC = () => {
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-600">Active</span>
                                 <span className="font-semibold text-green-600">{stats.contractors.active}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600">Average Rating</span>
-                                <span className="font-semibold text-orange-600">{stats.contractors.averageRating}/5</span>
                             </div>
                             <div className="border-t pt-4">
                                 <div className="flex justify-between items-center">

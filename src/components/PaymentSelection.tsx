@@ -7,7 +7,7 @@ import {
   Package,
   Building,
   ArrowRight,
-  DollarSign,
+  Banknote,
   Users,
   Truck
 } from 'lucide-react';

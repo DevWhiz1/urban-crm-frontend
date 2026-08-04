@@ -4,7 +4,7 @@ import {
     TrendingDown,
     BarChart3,
     Calendar,
-    DollarSign,
+    Banknote,
     CreditCard,
     ArrowUpRight,
     ArrowDownRight
@@ -152,7 +152,7 @@ export const PaymentAnalytics: React.FC<PaymentAnalyticsProps> = ({ className = 
                                 {formatCurrency(analytics.summary.netAmount)}
                             </p>
                         </div>
-                        <DollarSign className="w-8 h-8 text-blue-600" />
+                        <Banknote className="w-8 h-8 text-blue-600" />
                     </div>
                 </div>
 

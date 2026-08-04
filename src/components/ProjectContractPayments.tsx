@@ -4,7 +4,7 @@ import {
     Building,
     Building2,
     Handshake,
-    DollarSign,
+    Banknote,
     TrendingUp,
     TrendingDown,
     Eye,
@@ -539,7 +539,7 @@ export const ProjectContractPayments: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Remaining Balance</span>
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedContract.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                                    <DollarSign className="w-4 h-4" />
+                                    <Banknote className="w-4 h-4" />
                                 </div>
                             </div>
                             <div className="mt-2">

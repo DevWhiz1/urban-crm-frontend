@@ -6,7 +6,7 @@ import {
   User,
   FileText,
   Calendar,
-  DollarSign,
+  Banknote,
   Edit3
 } from 'lucide-react';
 import { Button } from './ui/Button';

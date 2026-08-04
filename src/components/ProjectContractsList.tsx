@@ -8,7 +8,7 @@ import {
     Edit,
     Trash2,
     Calendar,
-    DollarSign,
+    Banknote,
     Building,
     User,
     AlertCircle,
@@ -312,7 +312,7 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                                      return (
                                                          <div>
                                                              <div className="flex items-center text-sm font-semibold text-gray-900">
-                                                                 <DollarSign className="w-4 h-4 text-emerald-600 mr-0.5" />
+                                                                 <Banknote className="w-4 h-4 text-emerald-600 mr-0.5" />
                                                                  {formatPKRCurrency(revisedAmount.toString())}
                                                              </div>
                                                              {totalAdditions > 0 ? (
@@ -448,7 +448,7 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                         <div className="bg-white rounded-xl p-6 border border-gray-200">
                             <div className="flex items-center">
                                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <DollarSign className="w-5 h-5 text-blue-600" />
+                                    <Banknote className="w-5 h-5 text-blue-600" />
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Total Value</p>

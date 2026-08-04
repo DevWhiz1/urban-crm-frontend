@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  DollarSign, 
+  Banknote, 
   TrendingUp, 
   TrendingDown,
   Building,

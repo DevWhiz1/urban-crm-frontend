@@ -6,11 +6,10 @@ import {
   User,
   FileText,
   Calendar,
-  DollarSign,
+  Banknote,
   MapPin,
   Phone,
   Mail,
-  Banknote,
   CheckCircle,
   XCircle,
   Clock,
@@ -285,7 +284,7 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
                     <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                       <span className="text-sm font-semibold text-gray-900">Revised Total Amount:</span>
                       <span className="text-base font-bold text-emerald-700 flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
+                        <Banknote className="w-4 h-4" />
                         {formatPKRCurrency(getRevisedContractAmount(contract).toString())}
                       </span>
                     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import {
     Building2,
-    DollarSign,
+    Banknote,
     TrendingUp,
     TrendingDown,
     Eye,
@@ -631,7 +631,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Net Balance</span>
                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center border ${selectedProject.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                                    <DollarSign className="w-4 h-4" />
+                                    <Banknote className="w-4 h-4" />
                                 </div>
                             </div>
                             <div className="mt-2">

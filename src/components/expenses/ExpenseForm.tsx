@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { Receipt, DollarSign, Building2, User, Paperclip, Upload, Trash2 } from 'lucide-react';
+import { Receipt, Banknote, Building2, User, Paperclip, Upload, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -287,7 +287,7 @@ export const ExpenseForm: React.FC = () => {
                         <div className="lg:col-span-2 border-t border-gray-100 pt-8">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <DollarSign className="w-4 h-4 text-green-600" />
+                                    <Banknote className="w-4 h-4 text-green-600" />
                                 </div>
                                 <h3 className="text-lg font-medium text-gray-900">Payment & Vendor Info</h3>
                             </div>

@@ -4,7 +4,7 @@ import {
     Building,
     MapPin,
     Calendar,
-    DollarSign,
+    Banknote,
     Users,
     Edit,
     Trash2,
@@ -304,7 +304,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                 <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-indigo-700 font-medium">Total Cost</span>
-                                        <DollarSign className="w-5 h-5 text-indigo-600" />
+                                        <Banknote className="w-5 h-5 text-indigo-600" />
                                     </div>
                                     <p className="text-2xl font-bold text-gray-900 mt-1">{getProjectCost(project)}</p>
                                 </div>
@@ -449,7 +449,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <DollarSign className="w-6 h-6 text-indigo-600" />
+                                    <Banknote className="w-6 h-6 text-indigo-600" />
                                     Financial Breakdown
                                 </h2>
                                 <Button

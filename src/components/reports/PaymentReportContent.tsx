@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   CreditCard, 
-  DollarSign, 
+  Banknote, 
   CheckCircle, 
   Clock, 
   AlertTriangle,
@@ -91,7 +91,7 @@ export const PaymentReportContent: React.FC<PaymentReportContentProps> = ({ data
               <p className="text-sm font-medium text-blue-600">Total Amount</p>
               <p className="text-2xl font-bold text-blue-900">{formatCurrency(data.summary.totalAmount)}</p>
             </div>
-            <DollarSign className="w-8 h-8 text-blue-600" />
+            <Banknote className="w-8 h-8 text-blue-600" />
           </div>
         </div>
         

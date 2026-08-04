@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import {
     Building,
-    DollarSign,
+    Banknote,
     Calendar,
     CreditCard,
     FileText,
@@ -222,7 +222,7 @@ export const ProjectPaymentForm: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <DollarSign className="w-4 h-4 text-blue-600" />
+                                        <Banknote className="w-4 h-4 text-blue-600" />
                                     </div>
                                     <h3 className="text-lg font-medium text-gray-900">Payment Details</h3>
                                 </div>

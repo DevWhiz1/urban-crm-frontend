@@ -9,7 +9,7 @@ import {
   Wrench,
   CreditCard,
   Building,
-  DollarSign,
+  Banknote,
   RefreshCw
 } from 'lucide-react';
 import { Button } from './ui/Button';
@@ -110,7 +110,7 @@ export const Reports: React.FC = () => {
     { id: 'contractors', name: 'Contractor Reports', icon: Wrench, color: 'orange' },
     { id: 'clients', name: 'Client Reports', icon: Users, color: 'purple' },
     { id: 'payments', name: 'Payment Reports', icon: CreditCard, color: 'green' },
-    { id: 'financial', name: 'Financial Summary', icon: DollarSign, color: 'emerald' }
+    { id: 'financial', name: 'Financial Summary', icon: Banknote, color: 'emerald' }
   ];
 
   return (
@@ -279,7 +279,7 @@ const ProjectReportContent: React.FC<{ data: ProjectReport }> = ({ data }) => {
               <p className="text-sm font-medium text-green-600">Total Revenue</p>
               <p className="text-2xl font-bold text-green-900">{formatCurrency(data.summary.totalRevenue)}</p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-600" />
+            <Banknote className="w-8 h-8 text-green-600" />
           </div>
         </div>
         <div className="bg-purple-50 rounded-xl p-4">

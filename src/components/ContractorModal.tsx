@@ -234,21 +234,6 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                                     {contractor?.isActive ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
-                                            {contractor?.rating && (
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium text-gray-500">Rating:</span>
-                                                    <div className="flex items-center">
-                                                        {Array.from({ length: 5 }, (_, i) => (
-                                                            <Star
-                                                                key={i}
-                                                                className={`w-4 h-4 ${i < contractor.rating! ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                                                    }`}
-                                                            />
-                                                        ))}
-                                                        <span className="ml-1 text-sm text-gray-600">({contractor.rating}/5)</span>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 

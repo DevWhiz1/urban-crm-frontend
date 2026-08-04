@@ -7,7 +7,7 @@ import {
     Users,
     Calculator,
     Calendar,
-    DollarSign,
+    Banknote,
     Wrench,
     UserCheck,
     Plus,

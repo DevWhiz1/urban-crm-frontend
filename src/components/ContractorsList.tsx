@@ -130,15 +130,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
         return user && typeof user === 'object' ? user.status : 'Unknown';
     };
 
-    const renderStars = (rating: number) => {
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                    }`}
-            />
-        ));
-    };
+
 
     if (loading) {
         return (
@@ -215,7 +207,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                             Contact Info
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type & Rating
+                                            Type
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
@@ -265,14 +257,6 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                     <div className="text-sm text-gray-900 capitalize">
                                                         {contractor.contractorType || 'N/A'}
                                                     </div>
-                                                    {contractor.rating && (
-                                                        <div className="flex items-center">
-                                                            {renderStars(contractor.rating)}
-                                                            <span className="ml-1 text-xs text-gray-500">
-                                                                ({contractor.rating}/5)
-                                                            </span>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -365,22 +349,6 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 border border-gray-200">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                    <Star className="w-5 h-5 text-yellow-600" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">Avg Rating</p>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {contractors.filter(c => c.rating).length > 0
-                                            ? (contractors.reduce((sum, c) => sum + (c.rating || 0), 0) / contractors.filter(c => c.rating).length).toFixed(1)
-                                            : 'N/A'
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 )}
 
