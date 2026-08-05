@@ -7,6 +7,13 @@ export interface ProjectReport {
     averageProjectValue: number;
     statusBreakdown: Record<string, number>;
     categoryBreakdown: Record<string, number>;
+    totalExpenses: number;
+    totalCredit: number;
+    materialCosts: number;
+    contractorCosts: number;
+    otherExpenses: number;
+    pendingAmount: number;
+    netVolume: number;
   };
   projects: Array<{
     _id: string;
@@ -18,6 +25,13 @@ export interface ProjectReport {
     createdAt: string;
     customer: any;
     contractors: any[];
+    totalExpenses?: number;
+    totalCredit?: number;
+    materialCosts?: number;
+    contractorCosts?: number;
+    otherExpenses?: number;
+    pendingAmount?: number;
+    netVolume?: number;
   }>;
 }
 
@@ -112,12 +126,17 @@ export interface ReportFilters {
   minRating?: number;
   isActive?: boolean;
   paymentType?: string;
+  projectIds?: string[];
 }
 
 // Get project reports
 export const getProjectReports = async (filters: ReportFilters = {}): Promise<ProjectReport> => {
   try {
-    const response = await apiClient.get('/api/reports/projects', { params: filters });
+    const params: any = { ...filters };
+    if (params.projectIds && Array.isArray(params.projectIds)) {
+      params.projectIds = params.projectIds.join(',');
+    }
+    const response = await apiClient.get('/api/reports/projects', { params });
     return response.data.data;
   } catch (error) {
     console.error('Failed to fetch project reports:', error);

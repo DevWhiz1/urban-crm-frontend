@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   error?: string;
   required?: boolean;
 }
@@ -30,11 +30,13 @@ export const Input: React.FC<InputProps> = ({
   }
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+    <div className={label ? "space-y-2" : ""}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
       <input
         type={type}
         value={formattedValue}

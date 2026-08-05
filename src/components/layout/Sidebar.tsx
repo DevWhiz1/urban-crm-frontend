@@ -136,15 +136,18 @@ const allMenuItems: MenuItem[] = [
 
 interface SidebarProps {
   isOpen: boolean;
+  isDesktopExpanded?: boolean;
   onToggle: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isDesktopExpanded = true, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
   const userRole = user?.role || 'Client';
 
   const [expandedItems, setExpandedItems] = useState<string[]>(['projects', 'project-contracts', 'payments', 'contractors', 'clients']);
+  const [isHovered, setIsHovered] = useState(false);
+  const isExpanded = isDesktopExpanded || isHovered;
 
   const filterMenuByRole = (items: MenuItem[]): MenuItem[] => {
     return items
@@ -177,7 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
 
   const renderMenuItem = (item: MenuItem, level = 0) => {
     const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems.includes(item.id);
+    const isItemExpanded = expandedItems.includes(item.id);
     const isItemActive = item.path ? isActive(item.path) : false;
     const isParentItemActive = hasChildren ? isParentActive(item.children!) : false;
 
@@ -185,26 +188,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       return (
         <div key={item.id} className="mb-1">
           <button
-            onClick={() => toggleExpanded(item.id)}
-            className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 ${
+            onClick={() => {
+              toggleExpanded(item.id);
+            }}
+            className={`w-full flex items-center ${isExpanded ? 'justify-between px-4' : 'justify-center px-0'} py-3 text-left rounded-lg transition-all duration-200 ${
               isParentItemActive
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
+            title={!isExpanded ? item.label : undefined}
           >
-            <div className="flex items-center">
-              <item.icon className={`w-5 h-5 mr-3 ${isParentItemActive ? 'text-blue-600' : 'text-gray-500'}`} />
-              <span className="font-medium">{item.label}</span>
+            <div className={`flex items-center ${isExpanded ? '' : 'justify-center w-full'}`}>
+              <item.icon className={`w-5 h-5 flex-shrink-0 ${isExpanded ? 'mr-3' : ''} ${isParentItemActive ? 'text-blue-600' : 'text-gray-500'}`} />
+              {isExpanded && <span className="font-medium whitespace-nowrap">{item.label}</span>}
             </div>
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+            {isExpanded && (
+              isItemExpanded ? (
+                <ChevronDown className="w-4 h-4 flex-shrink-0 text-gray-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 flex-shrink-0 text-gray-400" />
+              )
             )}
           </button>
           
-          {isExpanded && (
-            <div className="ml-4 mt-2 space-y-1 border-l-2 border-gray-100 pl-4">
+          {isExpanded && isItemExpanded && (
+            <div className="ml-4 mt-2 space-y-1 border-l-2 border-gray-100 pl-4 overflow-hidden">
               {item.children!.map(child => renderMenuItem(child, level + 1))}
             </div>
           )}
@@ -221,14 +229,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
             onToggle();
           }
         }}
-        className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 mb-1 ${
+        title={!isExpanded ? item.label : undefined}
+        className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-0'} py-3 rounded-lg transition-all duration-200 mb-1 ${
           isItemActive
             ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
             : 'text-gray-700 hover:bg-gray-50'
-        } ${level > 0 ? 'text-sm' : ''}`}
+        } ${level > 0 && isExpanded ? 'text-sm' : ''}`}
       >
-        <item.icon className={`w-5 h-5 mr-3 ${isItemActive ? 'text-blue-600' : 'text-gray-500'}`} />
-        <span className="font-medium">{item.label}</span>
+        <item.icon className={`w-5 h-5 flex-shrink-0 ${isExpanded ? 'mr-3' : ''} ${isItemActive ? 'text-blue-600' : 'text-gray-500'}`} />
+        {isExpanded && <span className="font-medium whitespace-nowrap">{item.label}</span>}
       </Link>
     );
   };
@@ -244,11 +253,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       )}
 
       {/* Sidebar */}
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 h-full flex flex-col
-        transform transition-transform duration-300 ease-in-out lg:transform-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <div 
+        className={`
+        fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 h-full flex flex-col
+        transition-all duration-300 ease-in-out lg:transform-none
+        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
+        ${isExpanded ? 'lg:w-64' : 'lg:w-20'}
+      `}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Mobile Close Button */}
         <div className="lg:hidden flex justify-end p-4">
           <button
@@ -260,18 +274,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         </div>
 
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Urban Design" className="w-10 h-10 object-contain" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight">Urban Design</h1>
-              <p className="text-xs text-gray-500">{userRole} Portal</p>
-            </div>
+        <div className={`p-4 border-b border-gray-200 flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} h-16`}>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <img src="/logo.png" alt="Urban Design" className="w-8 h-8 flex-shrink-0 object-contain" />
+            {isExpanded && (
+              <div className="whitespace-nowrap transition-opacity duration-300">
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">Urban Design</h1>
+                <p className="text-xs text-gray-500">{userRole} Portal</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className={`flex-1 overflow-y-auto overflow-x-hidden ${isExpanded ? 'p-4' : 'p-2'}`}>
           <div className="space-y-1">
             {visibleMenuItems.map(item => renderMenuItem(item))}
           </div>
