@@ -134,6 +134,8 @@ export const ProjectContractPayments: React.FC = () => {
     const [methodFilter, setMethodFilter] = useState('ALL');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [sortBy, setSortBy] = useState('date_desc');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
@@ -163,7 +165,7 @@ export const ProjectContractPayments: React.FC = () => {
     // Reset pagination on filter or contract change
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedContract, typeFilter, methodFilter, statusFilter, sortBy]);
+    }, [selectedContract, typeFilter, methodFilter, statusFilter, sortBy, startDate, endDate]);
 
     const loadProjects = async () => {
         try {
@@ -219,6 +221,8 @@ export const ProjectContractPayments: React.FC = () => {
             if (typeFilter !== 'ALL') params.type = typeFilter;
             if (methodFilter !== 'ALL') params.method = methodFilter;
             if (statusFilter !== 'ALL') params.status = statusFilter;
+            if (startDate) params.startDate = startDate;
+            if (endDate) params.endDate = endDate;
             if (sortBy !== 'date_desc') params.sort = sortBy;
 
             const projectId = selectedContract.contract.project?._id || (selectedContract.contract as any).project;
@@ -249,6 +253,8 @@ export const ProjectContractPayments: React.FC = () => {
         setMethodFilter('ALL');
         setStatusFilter('ALL');
         setSortBy('date_desc');
+        setStartDate('');
+        setEndDate('');
         setCurrentPage(1);
     };
 
@@ -487,77 +493,75 @@ export const ProjectContractPayments: React.FC = () => {
                                 onClick={handlePrintPDF}
                                 className="flex items-center text-xs"
                             >
-                                <Printer className="w-3.5 h-3.5 mr-1.5" />
-                                Print Statement
+                                <Printer className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Print Statement</span>
                             </Button>
                         </div>
                     </div>
 
                     {/* Summary Stats Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Contract Amount</span>
-                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contract Amount</span>
+                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center border border-blue-100">
                                     <Handshake className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-lg font-bold text-slate-900 truncate" title={formatPKRCurrency(selectedContract.totalAmount.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-slate-900 break-words leading-tight">
                                     {formatPKRCurrency(selectedContract.totalAmount.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">Agreed Contract Value</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Agreed Contract Value</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Payments Paid</span>
-                                <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center border border-amber-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Payments Paid</span>
+                                <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center border border-amber-100">
                                     <ArrowUpRight className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-lg font-bold text-amber-600 truncate" title={formatPKRCurrency(selectedContract.totalPayments.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-amber-600 break-words leading-tight">
                                     {formatPKRCurrency(selectedContract.totalPayments.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">Outflow Paid to Contractor</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Outflow Paid to Contractor</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Remaining Balance</span>
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedContract.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Remaining Balance</span>
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${selectedContract.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                                     <Banknote className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className={`text-lg font-bold truncate ${selectedContract.net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} title={formatPKRCurrency(selectedContract.net.toString())}>
+                            <div>
+                                <p className={`text-lg sm:text-xl font-bold break-words leading-tight ${selectedContract.net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                     {formatPKRCurrency(selectedContract.net.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">Contract Net Payable</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Contract Net Payable</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Transactions</span>
-                                <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center border border-purple-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Transactions</span>
+                                <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100">
                                     <CreditCard className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-lg font-bold text-slate-900">{selectedContract.totalPaymentCount}</p>
-                                <span className="text-[10px] text-slate-400 font-medium">Recorded Vouchers</span>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-slate-900 break-words leading-tight">{selectedContract.totalPaymentCount}</p>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Recorded Vouchers</span>
                             </div>
                         </div>
                     </div>
 
-
-
                     {/* Payments Statement Table Container */}
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                         {/* Header & Counter */}
                         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -574,31 +578,50 @@ export const ProjectContractPayments: React.FC = () => {
 
                         {/* Filter & Search Toolbar */}
                         <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div className="flex flex-col lg:flex-row flex-wrap items-center gap-3">
                                 {/* Search Input */}
-                                <div className="relative col-span-1 sm:col-span-2">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <div className="relative w-full lg:w-64">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="text"
                                         value={paymentSearchTerm}
                                         onChange={(e) => setPaymentSearchTerm(e.target.value)}
-                                        placeholder="Search notes, created by, ref ID, amount..."
-                                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800 placeholder-slate-400"
+                                        placeholder="Search notes, ref ID..."
+                                        className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800 placeholder-slate-400"
                                     />
                                     {paymentSearchTerm && (
                                         <button onClick={() => setPaymentSearchTerm('')} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                            <X className="w-3.5 h-3.5" />
+                                            <X className="w-4 h-4" />
                                         </button>
                                     )}
+                                </div>
+
+                                {/* Date Filters */}
+                                <div className="flex items-center gap-2 w-full lg:w-auto">
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-1/2 lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        title="Start Date"
+                                    />
+                                    <span className="text-slate-400">to</span>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-1/2 lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        title="End Date"
+                                    />
                                 </div>
 
                                 {/* Type Filter */}
                                 <select
                                     value={typeFilter}
                                     onChange={(e) => setTypeFilter(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                    className="w-full lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                 >
-                                    <option value="ALL">All Types (Debit/Credit)</option>
+                                    <option value="ALL">All Types</option>
                                     <option value="debit">DEBIT (Outflow)</option>
                                     <option value="credit">CREDIT (Inflow)</option>
                                 </select>
@@ -607,9 +630,9 @@ export const ProjectContractPayments: React.FC = () => {
                                 <select
                                     value={methodFilter}
                                     onChange={(e) => setMethodFilter(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                    className="w-full lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                 >
-                                    <option value="ALL">All Payment Methods</option>
+                                    <option value="ALL">All Methods</option>
                                     <option value="cash">Cash</option>
                                     <option value="bank_transfer">Bank Transfer</option>
                                     <option value="cheque">Cheque</option>
@@ -620,7 +643,7 @@ export const ProjectContractPayments: React.FC = () => {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                    className="w-full lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                 >
                                     <option value="ALL">All Statuses</option>
                                     <option value="completed">Completed</option>
@@ -631,7 +654,7 @@ export const ProjectContractPayments: React.FC = () => {
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                    className="w-full lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                 >
                                     <option value="date_desc">Sort: Newest First</option>
                                     <option value="date_asc">Sort: Oldest First</option>
@@ -641,7 +664,7 @@ export const ProjectContractPayments: React.FC = () => {
                             </div>
 
                             {hasActivePaymentFilters && (
-                                <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center justify-between pt-2">
                                     <span className="text-[11px] text-blue-700 font-medium flex items-center gap-1">
                                         <Filter className="w-3 h-3" /> Active Filters
                                     </span>
@@ -656,7 +679,7 @@ export const ProjectContractPayments: React.FC = () => {
                         </div>
 
                         {/* Statement Table View */}
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto w-full">
                             {loadingData ? (
                                 <div className="p-12 flex justify-center">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -668,7 +691,7 @@ export const ProjectContractPayments: React.FC = () => {
                                     <p className="text-xs text-slate-400 mt-1">Try clearing your search or filters</p>
                                 </div>
                             ) : (
-                                <table className="w-full text-left border-collapse">
+                                <table className="w-full text-left border-collapse min-w-[900px]">
                                     <thead>
                                         <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                                             <th className="py-3 px-4">Payment ID</th>

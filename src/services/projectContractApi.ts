@@ -28,9 +28,7 @@ export const fetchProjects = async (): Promise<ProjectOption[]> => {
 
 export const fetchContractorsForContract = async (projectId?: string): Promise<ContractorOption[]> => {
   try {
-    const url = projectId 
-      ? `/api/project/get-project-contractors/${projectId}` 
-      : '/api/contractor/get-all-contractors?basic=true';
+    const url = '/api/contractor/get-all-contractors?basic=true';
     const response = await apiClient.get(url);
     return response.data.data || [];
   } catch (error) {

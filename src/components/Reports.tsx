@@ -209,116 +209,120 @@ export const Reports: React.FC = () => {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="p-3 bg-gray-50/50 flex flex-wrap items-center gap-3 rounded-b-lg">
-          <div className="flex items-center text-sm font-medium text-gray-500 mr-2">
+        <div className="p-3 bg-gray-50/50 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 rounded-b-lg">
+          <div className="flex items-center text-sm font-medium text-gray-500 mb-1 sm:mb-0">
             <Filter className="w-4 h-4 mr-1.5" />
             Filters
           </div>
           
-          <div className="w-36">
-            <Input
-              type="date"
-              value={filters.startDate || ''}
-              onChange={handleFilterChange('startDate')}
-              className="h-8 text-sm !py-1 !px-2"
-            />
-          </div>
-          <span className="text-gray-400 text-sm">to</span>
-          <div className="w-36">
-            <Input
-              type="date"
-              value={filters.endDate || ''}
-              onChange={handleFilterChange('endDate')}
-              className="h-8 text-sm !py-1 !px-2"
-            />
-          </div>
-
-          {activeReport === 'projects' && (
-            <>
-              <div className="w-36">
-                <Select
-                  options={[
-                    { value: '', label: 'All Statuses' },
-                    { value: 'planning', label: 'Planning' },
-                    { value: 'pending', label: 'Pending' },
-                    { value: 'ongoing', label: 'Ongoing' },
-                    { value: 'completed', label: 'Completed' },
-                    { value: 'on_hold', label: 'On Hold' },
-                    { value: 'cancelled', label: 'Cancelled' }
-                  ]}
-                  value={filters.status || ''}
-                  onChange={handleFilterChange('status')}
-                  className="h-8 text-sm !py-1 !px-2"
-                />
-              </div>
-
-              {/* Custom Multi-Select for Projects */}
-              <div className="w-48 relative" ref={projectDropdownRef}>
-                <div 
-                  className="w-full px-3 bg-white border border-gray-300 rounded-md shadow-sm cursor-pointer flex justify-between items-center text-sm focus:outline-none hover:bg-gray-50 h-8"
-                  onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-                >
-                  <span className="truncate text-gray-700">
-                    {filters.projectIds?.length === 0 || !filters.projectIds 
-                      ? 'All Projects' 
-                      : `${filters.projectIds.length} Selected`}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
-                </div>
-                
-                {isProjectDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                    <div className="p-1.5 border-b border-gray-100">
-                      <button
-                        onClick={toggleAllProjects}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-800 w-full text-left px-2 py-1 rounded hover:bg-blue-50"
-                      >
-                        {filters.projectIds?.length === projectList.length ? 'Deselect All' : 'Select All'}
-                      </button>
-                    </div>
-                    {projectList.map(project => (
-                      <div 
-                        key={project._id}
-                        className="flex items-center px-2.5 py-1.5 hover:bg-gray-50 cursor-pointer text-sm"
-                        onClick={() => toggleProjectSelection(project._id)}
-                      >
-                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center mr-2 ${filters.projectIds?.includes(project._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
-                          {filters.projectIds?.includes(project._id) && <Check className="w-2.5 h-2.5 text-white" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-gray-700 truncate">{project.name}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {projectList.length === 0 && (
-                      <div className="p-3 text-sm text-gray-500 text-center">No projects found</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {activeReport === 'contractors' && (
-            <div className="w-40">
-              <Select
-                options={[
-                  { value: '', label: 'All Types' },
-                  { value: 'greyStructure', label: 'Grey Structure' },
-                  { value: 'finishing', label: 'Finishing' },
-                  { value: 'interior', label: 'Interior' },
-                  { value: 'exterior', label: 'Exterior' }
-                ]}
-                value={filters.contractorType || ''}
-                onChange={handleFilterChange('contractorType')}
-                className="h-8 text-sm !py-1 !px-2"
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-36">
+              <Input
+                type="date"
+                value={filters.startDate || ''}
+                onChange={handleFilterChange('startDate')}
+                className="h-8 text-sm !py-1 !px-2 w-full"
               />
             </div>
-          )}
+            <span className="hidden sm:inline text-gray-400 text-sm">to</span>
+            <div className="w-full sm:w-36">
+              <Input
+                type="date"
+                value={filters.endDate || ''}
+                onChange={handleFilterChange('endDate')}
+                className="h-8 text-sm !py-1 !px-2 w-full"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-2 sm:gap-3 w-full sm:w-auto flex-1">
+            {activeReport === 'projects' && (
+              <>
+                <div className="w-full lg:w-36">
+                  <Select
+                    options={[
+                      { value: '', label: 'All Statuses' },
+                      { value: 'planning', label: 'Planning' },
+                      { value: 'pending', label: 'Pending' },
+                      { value: 'ongoing', label: 'Ongoing' },
+                      { value: 'completed', label: 'Completed' },
+                      { value: 'on_hold', label: 'On Hold' },
+                      { value: 'cancelled', label: 'Cancelled' }
+                    ]}
+                    value={filters.status || ''}
+                    onChange={handleFilterChange('status')}
+                    className="h-8 text-sm !py-1 !px-2 w-full"
+                  />
+                </div>
+
+                {/* Custom Multi-Select for Projects */}
+                <div className="w-full lg:w-48 relative" ref={projectDropdownRef}>
+                  <div 
+                    className="w-full px-3 bg-white border border-gray-300 rounded-md shadow-sm cursor-pointer flex justify-between items-center text-sm focus:outline-none hover:bg-gray-50 h-8"
+                    onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                  >
+                    <span className="truncate text-gray-700">
+                      {filters.projectIds?.length === 0 || !filters.projectIds 
+                        ? 'All Projects' 
+                        : `${filters.projectIds.length} Selected`}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </div>
+                  
+                  {isProjectDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                      <div className="p-1.5 border-b border-gray-100">
+                        <button
+                          onClick={toggleAllProjects}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-800 w-full text-left px-2 py-1 rounded hover:bg-blue-50"
+                        >
+                          {filters.projectIds?.length === projectList.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                      {projectList.map(project => (
+                        <div 
+                          key={project._id}
+                          className="flex items-center px-2.5 py-1.5 hover:bg-gray-50 cursor-pointer text-sm"
+                          onClick={() => toggleProjectSelection(project._id)}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center mr-2 flex-shrink-0 ${filters.projectIds?.includes(project._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                            {filters.projectIds?.includes(project._id) && <Check className="w-2.5 h-2.5 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-700 truncate">{project.name}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {projectList.length === 0 && (
+                        <div className="p-3 text-sm text-gray-500 text-center">No projects found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {activeReport === 'contractors' && (
+              <div className="w-full sm:w-40">
+                <Select
+                  options={[
+                    { value: '', label: 'All Types' },
+                    { value: 'greyStructure', label: 'Grey Structure' },
+                    { value: 'finishing', label: 'Finishing' },
+                    { value: 'interior', label: 'Interior' },
+                    { value: 'exterior', label: 'Exterior' }
+                  ]}
+                  value={filters.contractorType || ''}
+                  onChange={handleFilterChange('contractorType')}
+                  className="h-8 text-sm !py-1 !px-2 w-full"
+                />
+              </div>
+            )}
+          </div>
 
           {/* Apply Filters Button */}
-          <div className="ml-auto flex items-center space-x-2">
-            <Button onClick={loadReport} loading={loading} variant="primary" size="sm" className="h-8 text-xs px-4">
+          <div className="mt-1 sm:mt-0 lg:ml-auto w-full sm:w-auto">
+            <Button onClick={loadReport} loading={loading} variant="primary" size="sm" className="h-8 text-xs px-4 w-full justify-center">
               Apply Filters
             </Button>
           </div>

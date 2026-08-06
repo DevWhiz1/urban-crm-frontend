@@ -50,49 +50,27 @@ export const ProjectContractForm: React.FC = () => {
         loadInitialData();
     }, []);
 
-    useEffect(() => {
-        if (formData.project) {
-            loadContractors(formData.project);
-        } else {
-            setContractors([]);
-            setFormData(prev => ({ ...prev, contractor: '' }));
-        }
-    }, [formData.project]);
+
 
     const loadInitialData = async () => {
         try {
             setLoadingData(true);
-            const projectsData = await fetchProjects();
+            const [projectsData, contractorsData] = await Promise.all([
+                fetchProjects(),
+                fetchContractorsForContract()
+            ]);
+            
             setProjects(projectsData);
+            setContractors(contractorsData);
 
             if (projectsData.length === 0) {
                 showNotification('error', 'No projects found. Please create projects first.');
             }
-        } catch (error) {
-            showNotification('error', 'Failed to load projects. Please refresh the page.');
-        } finally {
-            setLoadingData(false);
-        }
-    };
-
-    const loadContractors = async (projectId: string) => {
-        try {
-            setLoadingData(true);
-            const contractorsData = await fetchContractorsForContract(projectId);
-            setContractors(contractorsData);
-            
             if (contractorsData.length === 0) {
-                // If the user already had a contractor selected but it's no longer valid
-                setFormData(prev => ({ ...prev, contractor: '' }));
-            } else {
-                // Check if currently selected contractor is still in the list
-                const stillExists = contractorsData.some(c => c._id === formData.contractor);
-                if (!stillExists) {
-                    setFormData(prev => ({ ...prev, contractor: '' }));
-                }
+                showNotification('error', 'No contractors found. Please add contractors first.');
             }
         } catch (error) {
-            showNotification('error', 'Failed to load contractors for this project.');
+            showNotification('error', 'Failed to load data. Please refresh the page.');
         } finally {
             setLoadingData(false);
         }

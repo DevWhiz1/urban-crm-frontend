@@ -34,6 +34,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import { fetchAllProjects, fetchProjectPaymentSummary, getPaginatedProjectPayments, getPaginatedProjectMaterials } from '../services/projectSummaryApi';
+import { fetchContractorsForContract } from '../services/projectContractApi';
 import { updatePayment, deletePayment } from '../services/paymentApi';
 import { deleteMaterialPayment } from '../services/materialPaymentApi';
 import { formatPKRCurrency } from '../utils/paymentValidation';
@@ -114,6 +115,7 @@ export const ProjectPaymentSummary: React.FC = () => {
     const [selectedProject, setSelectedProject] = useState<PaymentSummary | null>(null);
     const [payments, setPayments] = useState<Payment[]>([]);
     const [materials, setMaterials] = useState<Material[]>([]);
+    const [contractors, setContractors] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(false);
     const [loadingProjects, setLoadingProjects] = useState(true);
@@ -144,6 +146,9 @@ export const ProjectPaymentSummary: React.FC = () => {
     const [materialTransactionTypeFilter, setMaterialTransactionTypeFilter] = useState('ALL');
     const [methodFilter, setMethodFilter] = useState('ALL');
     const [sortBy, setSortBy] = useState('date_desc');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
 
     // Pagination States
     const [currentPage, setCurrentPage] = useState(1);
@@ -159,7 +164,17 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     useEffect(() => {
         loadProjects();
+        loadContractors();
     }, []);
+
+    const loadContractors = async () => {
+        try {
+            const data = await fetchContractorsForContract();
+            setContractors(data);
+        } catch (error) {
+            console.error('Failed to load contractors', error);
+        }
+    };
 
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -173,7 +188,7 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, selectedProject]);
+    }, [activeTab, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, startDate, endDate, selectedProject]);
 
     const loadProjects = async () => {
         try {
@@ -211,6 +226,9 @@ export const ProjectPaymentSummary: React.FC = () => {
             if (activeTab === 'payments') {
                 if (typeFilter !== 'ALL') params.type = typeFilter;
                 if (methodFilter !== 'ALL') params.method = methodFilter;
+                if (contractorFilter !== 'ALL' && contractorFilter !== '') params.contractor = contractorFilter;
+                if (startDate) params.startDate = startDate;
+                if (endDate) params.endDate = endDate;
                 if (sortBy !== 'date_desc') params.sort = sortBy;
                 const { data, pagination } = await getPaginatedProjectPayments(selectedProject.projectId, params);
                 setPayments(data);
@@ -220,6 +238,9 @@ export const ProjectPaymentSummary: React.FC = () => {
                 }
             } else {
                 if (materialTransactionTypeFilter !== 'ALL') params.type = materialTransactionTypeFilter;
+                if (providerFilter !== 'ALL' && providerFilter !== '') params.provider = providerFilter;
+                if (startDate) params.startDate = startDate;
+                if (endDate) params.endDate = endDate;
                 if (sortBy !== 'date_desc') params.sort = sortBy;
                 const { data, pagination } = await getPaginatedProjectMaterials(selectedProject.projectId, params);
                 setMaterials(data);
@@ -250,6 +271,8 @@ export const ProjectPaymentSummary: React.FC = () => {
         setMaterialTransactionTypeFilter('ALL');
         setMethodFilter('ALL');
         setSortBy('date_desc');
+        setStartDate('');
+        setEndDate('');
         setCurrentPage(1);
     };
 
@@ -506,137 +529,141 @@ export const ProjectPaymentSummary: React.FC = () => {
                     {/* Header Banner */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-bold text-slate-900 tracking-tight">{selectedProject.projectName}</h1>
-                                <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                            <div className="flex items-center gap-3 mb-1">
+                                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{selectedProject.projectName}</h1>
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
                                     {selectedProject.projectType || 'Construction'}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500 mt-0.5">Financial Breakdown & Single-Line Statements</p>
+                            <p className="text-sm text-slate-500">Financial Breakdown & Single-Line Statements</p>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleBackToProjects}
-                                className="flex items-center text-slate-700 border-slate-300 hover:bg-slate-50 text-xs"
+                                className="flex items-center text-slate-700 border-slate-300 hover:bg-slate-50 text-sm font-medium"
                             >
-                                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
-                                All Projects
+                                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">All Projects</span>
                             </Button>
 
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handlePrintPDF('payments')}
-                                className="flex items-center text-xs"
+                                className="flex items-center text-sm font-medium"
                             >
-                                <Printer className="w-3.5 h-3.5 mr-1.5" />
-                                Print Payments
+                                <Printer className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Print Payments</span>
                             </Button>
 
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handlePrintPDF('materials')}
-                                className="flex items-center text-xs"
+                                className="flex items-center text-sm font-medium"
                             >
-                                <Printer className="w-3.5 h-3.5 mr-1.5" />
-                                Print Materials
+                                <Printer className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Print Materials</span>
                             </Button>
                         </div>
                     </div>
 
                     {/* Summary Stats Cards (Compact 5-Column Grid) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         {/* Project Cost */}
-                        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Project Cost</span>
-                                <div className="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Project Cost</span>
+                                <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center border border-blue-100">
                                     <Building2 className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-base sm:text-lg font-bold text-slate-900 truncate" title={formatPKRCurrency(selectedProject.projectCost.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-slate-900 break-words leading-tight">
                                     {formatPKRCurrency(selectedProject.projectCost.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">Total Contract Value</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Total Contract Value</span>
                             </div>
                         </div>
 
                         {/* Total Received */}
-                        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Received</span>
-                                <div className="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center border border-emerald-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Received</span>
+                                <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100">
                                     <ArrowDownLeft className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-base sm:text-lg font-bold text-emerald-600 truncate" title={formatPKRCurrency(selectedProject.totalPaymentReceived.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-emerald-600 break-words leading-tight">
                                     {formatPKRCurrency(selectedProject.totalPaymentReceived.toString())}
                                 </p>
-                                <span className="text-[10px] text-emerald-600/80 font-medium">Client Payments</span>
+                                <span className="text-xs text-emerald-600/80 font-medium mt-1 inline-block">Client Payments</span>
                             </div>
                         </div>
 
                         {/* Total Debits (Contractor) */}
-                        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Contractor Debits</span>
-                                <div className="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center border border-amber-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contractor Debits</span>
+                                <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center border border-amber-100">
                                     <ArrowUpRight className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-base sm:text-lg font-bold text-amber-600 truncate" title={formatPKRCurrency(selectedProject.totalDebits.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-amber-600 break-words leading-tight">
                                     {formatPKRCurrency(selectedProject.totalDebits.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.totalPaymentCount} Payments Paid</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">{selectedProject.totalPaymentCount} Payments Paid</span>
                             </div>
                         </div>
 
                         {/* Material Payments (Teal Color Palette) */}
-                        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Net Material Cost</span>
-                                <div className="w-7 h-7 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center border border-teal-100">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Material Cost</span>
+                                <div className="w-8 h-8 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center border border-teal-100">
                                     <PackageCheck className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className="text-base sm:text-lg font-bold text-teal-600 truncate" title={formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}>
+                            <div>
+                                <p className="text-lg sm:text-xl font-bold text-teal-600 break-words leading-tight">
                                     {formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.totalMaterialCount} Purchases Logged</span>
-                                <div className="text-[10px] text-slate-500 font-medium flex gap-1">
-                                    <span className="text-teal-600" title="Purchase Cost">P: {formatPKRCurrency(selectedProject.materialPurchaseCost?.toString() || '0')}</span> | 
-                                    <span className="text-rose-600" title="Returned Amount">R: {formatPKRCurrency(selectedProject.materialReturnAmount?.toString() || '0')}</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block mb-2">{selectedProject.totalMaterialCount} Purchases Logged</span>
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="inline-flex items-center px-2 py-1 rounded bg-teal-50 text-teal-700 text-[10px] font-bold border border-teal-100" title="Purchase Cost">
+                                        P: {formatPKRCurrency(selectedProject.materialPurchaseCost?.toString() || '0')}
+                                    </span>
+                                    <span className="inline-flex items-center px-2 py-1 rounded bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-100" title="Returned Amount">
+                                        R: {formatPKRCurrency(selectedProject.materialReturnAmount?.toString() || '0')}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Net Amount */}
-                        <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Net Balance</span>
-                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center border ${selectedProject.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Balance</span>
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${selectedProject.net >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                                     <Banknote className="w-4 h-4" />
                                 </div>
                             </div>
-                            <div className="mt-2">
-                                <p className={`text-base sm:text-lg font-bold truncate ${selectedProject.net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} title={formatPKRCurrency(selectedProject.net.toString())}>
+                            <div>
+                                <p className={`text-lg sm:text-xl font-bold break-words leading-tight ${selectedProject.net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                     {formatPKRCurrency(selectedProject.net.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">Received vs Outflow</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Received vs Outflow</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Main Table Container */}
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                         {/* Tabs Header */}
                         <div className="border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 pt-4 bg-slate-50/50 gap-4">
                             <nav className="flex space-x-6">
@@ -671,31 +698,64 @@ export const ProjectPaymentSummary: React.FC = () => {
 
                         {/* Filter Toolbar */}
                         <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div className="flex flex-col lg:flex-row flex-wrap items-center gap-3">
                                 {/* Search Input */}
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <div className="relative w-full lg:w-64">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="text"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder={activeTab === 'payments' ? "Search contractor, notes, amount..." : "Search material, provider..."}
-                                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800 placeholder-slate-400"
+                                        placeholder={activeTab === 'payments' ? "Search payments..." : "Search material..."}
+                                        className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800 placeholder-slate-400"
                                     />
                                     {searchTerm && (
                                         <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                            <X className="w-3.5 h-3.5" />
+                                            <X className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
 
+                                {/* Date Filters */}
+                                <div className="flex items-center gap-2 w-full lg:w-auto">
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-1/2 lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        title="Start Date"
+                                    />
+                                    <span className="text-slate-400">to</span>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-1/2 lg:w-auto px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        title="End Date"
+                                    />
+                                </div>
+
                                 {activeTab === 'payments' ? (
                                     <>
+                                        {/* Contractor Filter */}
+                                        <select
+                                            value={contractorFilter}
+                                            onChange={(e) => setContractorFilter(e.target.value)}
+                                            className="w-full lg:w-48 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        >
+                                            <option value="ALL">All Contractors</option>
+                                            {contractors.map((c) => (
+                                                <option key={c._id} value={c._id}>
+                                                    {c.companyName}
+                                                </option>
+                                            ))}
+                                        </select>
+
                                         {/* Type Filter */}
                                         <select
                                             value={typeFilter}
                                             onChange={(e) => setTypeFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                            className="w-full lg:w-48 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                         >
                                             <option value="ALL">All Payment Types</option>
                                             <option value="debit">DEBIT (Outflow)</option>
@@ -704,7 +764,17 @@ export const ProjectPaymentSummary: React.FC = () => {
                                     </>
                                 ) : (
                                     <>
+                                        {/* Provider Filter */}
+                                        <input
+                                            type="text"
+                                            value={providerFilter === 'ALL' ? '' : providerFilter}
+                                            onChange={(e) => setProviderFilter(e.target.value || 'ALL')}
+                                            placeholder="Filter by Provider"
+                                            className="w-full lg:w-48 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        />
+
                                         {/* Type Filter */}
+
                                         <select
                                             value={materialTransactionTypeFilter}
                                             onChange={(e) => setMaterialTransactionTypeFilter(e.target.value)}
@@ -725,20 +795,21 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                             </div>
                         ) : activeTab === 'payments' ? (
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                                        <th className="py-3 px-4">Payment ID</th>
-                                        <th className="py-3 px-4">Date</th>
-                                        <th className="py-3 px-4">Contractor</th>
-                                        <th className="py-3 px-4">Type</th>
-                                        <th className="py-3 px-4 text-right">Amount</th>
-                                        <th className="py-3 px-4">Method & Status</th>
-                                        <th className="py-3 px-4">Description / Notes</th>
-                                        <th className="py-3 px-4">Created By</th>
-                                        <th className="py-3 px-4 text-center">Action</th>
-                                    </tr>
-                                </thead>
+                            <div className="overflow-x-auto w-full">
+                                <table className="w-full text-left border-collapse min-w-[900px]">
+                                    <thead>
+                                        <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                            <th className="py-3 px-4">Payment ID</th>
+                                            <th className="py-3 px-4">Date</th>
+                                            <th className="py-3 px-4">Contractor</th>
+                                            <th className="py-3 px-4">Type</th>
+                                            <th className="py-3 px-4 text-right">Amount</th>
+                                            <th className="py-3 px-4">Method & Status</th>
+                                            <th className="py-3 px-4">Description / Notes</th>
+                                            <th className="py-3 px-4">Created By</th>
+                                            <th className="py-3 px-4 text-center">Action</th>
+                                        </tr>
+                                    </thead>
                                 <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
                                     {paginatedPayments.map((payment) => {
                                         const isDebit = payment.type === 'debit';
@@ -859,19 +930,21 @@ export const ProjectPaymentSummary: React.FC = () => {
                                     })}
                                 </tbody>
                             </table>
+                        </div>
                         ) : (
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                                        <th className="py-3 px-4">Date</th>
-                                        <th className="py-3 px-4">Material Detail</th>
-                                        <th className="py-3 px-4">Provider</th>
-                                        <th className="py-3 px-4">Quantity & Rate</th>
-                                        <th className="py-3 px-4 text-right">Total Amount</th>
-                                        <th className="py-3 px-4">Created By</th>
-                                        <th className="py-3 px-4 text-center">Action</th>
-                                    </tr>
-                                </thead>
+                            <div className="overflow-x-auto w-full">
+                                <table className="w-full text-left border-collapse min-w-[900px]">
+                                    <thead>
+                                        <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                            <th className="py-3 px-4">Date</th>
+                                            <th className="py-3 px-4">Material Detail</th>
+                                            <th className="py-3 px-4">Provider</th>
+                                            <th className="py-3 px-4">Quantity & Rate</th>
+                                            <th className="py-3 px-4 text-right">Total Amount</th>
+                                            <th className="py-3 px-4">Created By</th>
+                                            <th className="py-3 px-4 text-center">Action</th>
+                                        </tr>
+                                    </thead>
                                 <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
                                     {paginatedMaterials.map((material) => (
                                         <tr
@@ -955,6 +1028,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         )}
 
                         {/* Pagination Bar */}
