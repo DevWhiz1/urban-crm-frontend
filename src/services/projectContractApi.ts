@@ -18,7 +18,7 @@ export const createProjectContract = async (data: ProjectContractFormData): Prom
 
 export const fetchProjects = async (): Promise<ProjectOption[]> => {
   try {
-    const response = await apiClient.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects?basic=true');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -26,9 +26,12 @@ export const fetchProjects = async (): Promise<ProjectOption[]> => {
   }
 };
 
-export const fetchContractorsForContract = async (): Promise<ContractorOption[]> => {
+export const fetchContractorsForContract = async (projectId?: string): Promise<ContractorOption[]> => {
   try {
-    const response = await apiClient.get('/api/contractor/get-all-contractors');
+    const url = projectId 
+      ? `/api/project/get-project-contractors/${projectId}` 
+      : '/api/contractor/get-all-contractors?basic=true';
+    const response = await apiClient.get(url);
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch contractors:', error);

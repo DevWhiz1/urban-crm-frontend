@@ -21,7 +21,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Notification } from './ui/Notification';
-import { fetchAllProjects, deleteProject, updateProject } from '../services/projectApi';
+import { getProjectsPaginated, deleteProject, updateProject } from '../services/projectApi';
 import { Project } from '../types/project';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { formatPKRCurrency } from '../utils/projectValidation';
@@ -39,9 +39,14 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
     const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 9; // Grid of 3 columns looks better with 9 or 12 items
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -55,49 +60,38 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
     });
 
     useEffect(() => {
-        loadProjects();
-    }, []);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
-        filterProjects();
-    }, [projects, searchTerm, statusFilter, categoryFilter, typeFilter]);
+        loadProjects();
+    }, [page, debouncedSearch, statusFilter, categoryFilter, typeFilter]);
 
     const loadProjects = async () => {
         try {
             setLoading(true);
-            const projectsData = await fetchAllProjects();
-            setProjects(projectsData);
+            const params: any = { page, limit: pageSize };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (statusFilter) params.status = statusFilter;
+            if (categoryFilter) params.category = categoryFilter;
+            if (typeFilter) params.type = typeFilter;
+
+            const { data, pagination } = await getProjectsPaginated(params);
+            setFilteredProjects(data);
+            setProjects(data); // Using filteredProjects as main display
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load projects. Please try again.');
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterProjects = () => {
-        let filtered = [...projects];
-
-        if (searchTerm) {
-            filtered = filtered.filter(project =>
-                project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                project.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                project.projectCode.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        if (statusFilter) {
-            filtered = filtered.filter(project => project.status === statusFilter);
-        }
-
-        if (categoryFilter) {
-            filtered = filtered.filter(project => project.projectCategory === categoryFilter);
-        }
-
-        if (typeFilter) {
-            filtered = filtered.filter(project => project.projectType === typeFilter);
-        }
-
-        setFilteredProjects(filtered);
     };
 
     const handleInitiateDelete = (project: Project) => {
@@ -242,7 +236,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                 ...PROJECT_STATUSES
                             ]}
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                         />
 
                         <Select
@@ -252,7 +246,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                 ...PROJECT_CATEGORIES
                             ]}
                             value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
                         />
 
                         <Select
@@ -262,7 +256,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                 ...PROJECT_TYPES
                             ]}
                             value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
+                            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
                         />
                     </div>
                 </div>
@@ -278,7 +272,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                 : "No projects match your current filters. Try adjusting your search criteria."
                             }
                         </p>
-                        {projects.length === 0 && (
+                        {totalCount === 0 && (
                             <Button
                                 onClick={() => window.location.href = '/dashboard/projects/add'}
                                 className="bg-indigo-600 hover:bg-indigo-700"
@@ -443,6 +437,48 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalCount > 0 && (
+                    <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4 text-sm bg-white p-4 rounded-xl border border-gray-200">
+                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} projects</p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(1)}
+                            >
+                                First
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                            >
+                                Prev
+                            </Button>
+                            <span className="px-2 font-medium">Page {page} / {totalPages}</span>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(totalPages)}
+                            >
+                                Last
+                            </Button>
+                        </div>
                     </div>
                 )}
 

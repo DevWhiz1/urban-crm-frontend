@@ -50,25 +50,49 @@ export const ProjectContractForm: React.FC = () => {
         loadInitialData();
     }, []);
 
+    useEffect(() => {
+        if (formData.project) {
+            loadContractors(formData.project);
+        } else {
+            setContractors([]);
+            setFormData(prev => ({ ...prev, contractor: '' }));
+        }
+    }, [formData.project]);
+
     const loadInitialData = async () => {
         try {
             setLoadingData(true);
-            const [projectsData, contractorsData] = await Promise.all([
-                fetchProjects(),
-                fetchContractorsForContract()
-            ]);
-
+            const projectsData = await fetchProjects();
             setProjects(projectsData);
-            setContractors(contractorsData);
 
             if (projectsData.length === 0) {
                 showNotification('error', 'No projects found. Please create projects first.');
             }
+        } catch (error) {
+            showNotification('error', 'Failed to load projects. Please refresh the page.');
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    const loadContractors = async (projectId: string) => {
+        try {
+            setLoadingData(true);
+            const contractorsData = await fetchContractorsForContract(projectId);
+            setContractors(contractorsData);
+            
             if (contractorsData.length === 0) {
-                showNotification('error', 'No contractors found. Please add contractors first.');
+                // If the user already had a contractor selected but it's no longer valid
+                setFormData(prev => ({ ...prev, contractor: '' }));
+            } else {
+                // Check if currently selected contractor is still in the list
+                const stillExists = contractorsData.some(c => c._id === formData.contractor);
+                if (!stillExists) {
+                    setFormData(prev => ({ ...prev, contractor: '' }));
+                }
             }
         } catch (error) {
-            showNotification('error', 'Failed to load data. Please refresh the page.');
+            showNotification('error', 'Failed to load contractors for this project.');
         } finally {
             setLoadingData(false);
         }
@@ -209,8 +233,16 @@ export const ProjectContractForm: React.FC = () => {
                                             onChange={handleInputChange('contractor')}
                                             error={errors.contractor}
                                             required
-                                            placeholder={loadingData ? "Loading contractors..." : "Choose a contractor"}
-                                            disabled={loadingData}
+                                            placeholder={
+                                                !formData.project 
+                                                    ? "Please select a project first" 
+                                                    : loadingData 
+                                                        ? "Loading contractors..." 
+                                                        : contractors.length === 0 
+                                                            ? "No contractors found for this project" 
+                                                            : "Choose a contractor"
+                                            }
+                                            disabled={loadingData || !formData.project || contractors.length === 0}
                                         />
                                         {selectedContractor && (
                                             <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">

@@ -21,7 +21,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
-import { createProject, updateProject, fetchClients } from '../services/projectApi';
+import { createProject, updateProject, fetchBasicClients } from '../services/projectApi';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { validateProjectForm, hasProjectErrors, calculateTotalCost, calculateTotalLabourCost, formatPKRCurrency, formatDateForInput } from '../utils/projectValidation';
 import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Project } from '../types/project';
@@ -139,7 +139,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     const loadInitialData = async () => {
         try {
             setLoadingData(true);
-            const clientsData = await fetchClients();
+            const clientsData = await fetchBasicClients();
 
             setClients(clientsData);
 

@@ -27,6 +27,7 @@ export const UsersList: React.FC = () => {
         message: ''
     });
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
     
@@ -39,13 +40,42 @@ export const UsersList: React.FC = () => {
     const [sortKey, setSortKey] = useState<keyof UserType>('createdAt');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const pageSize = 10;
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [search]);
 
     const loadUsers = async () => {
         setLoading(true);
         try {
-            const data = await getAllUsers();
-            setUsers(data);
+            const params: any = { page, limit: pageSize };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (roleFilter !== 'All') params.role = roleFilter;
+            if (statusFilter !== 'All') params.status = statusFilter;
+            
+            const { data, pagination } = await getAllUsers(params);
+            
+            // local sorting since backend doesn't support dynamic sort yet, or we can just sort the current page
+            const sortedData = [...data].sort((a, b) => {
+                const av = a[sortKey] || '';
+                const bv = b[sortKey] || '';
+                if (av === bv) return 0;
+                if (sortDir === 'asc') return av > bv ? 1 : -1;
+                return av < bv ? 1 : -1;
+            });
+
+            setUsers(sortedData);
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
         } catch (error: any) {
             setNotification({
                 show: true,
@@ -59,37 +89,7 @@ export const UsersList: React.FC = () => {
 
     useEffect(() => {
         loadUsers();
-    }, []);
-
-    const filtered = useMemo(() => {
-        const term = search.toLowerCase();
-        return users.filter(u => {
-            const matchesSearch = u.userName.toLowerCase().includes(term) ||
-                u.email.toLowerCase().includes(term) ||
-                u.role.toLowerCase().includes(term) ||
-                u.status.toLowerCase().includes(term);
-            const matchesRole = roleFilter === 'All' || u.role === roleFilter;
-            const matchesStatus = statusFilter === 'All' || u.status === statusFilter;
-            return matchesSearch && matchesRole && matchesStatus;
-        });
-    }, [users, search, roleFilter, statusFilter]);
-
-    const sorted = useMemo(() => {
-        return [...filtered].sort((a, b) => {
-            const av = a[sortKey] || '';
-            const bv = b[sortKey] || '';
-            if (av === bv) return 0;
-            if (sortDir === 'asc') return av > bv ? 1 : -1;
-            return av < bv ? 1 : -1;
-        });
-    }, [filtered, sortKey, sortDir]);
-
-    const paginated = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return sorted.slice(start, start + pageSize);
-    }, [sorted, page]);
-
-    const totalPages = Math.ceil(sorted.length / pageSize) || 1;
+    }, [page, debouncedSearch, roleFilter, statusFilter, sortKey, sortDir]);
 
     const toggleSort = (key: keyof UserType) => {
         if (sortKey === key) {
@@ -136,7 +136,7 @@ export const UsersList: React.FC = () => {
                         <input
                             type="text"
                             value={search}
-                            onChange={e => { setSearch(e.target.value); setPage(1); }}
+                            onChange={e => setSearch(e.target.value)}
                             placeholder="Search users by name, email or role..."
                             className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
@@ -181,12 +181,12 @@ export const UsersList: React.FC = () => {
                             <tr>
                                 <td colSpan={6} className="py-8 text-center text-gray-500">Loading users...</td>
                             </tr>
-                        ) : paginated.length === 0 ? (
+                        ) : users.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className="py-8 text-center text-gray-500">No users found.</td>
                             </tr>
                         ) : (
-                            paginated.map(user => (
+                            users.map(user => (
                                 <tr key={user._id} className="border-t hover:bg-blue-50/50 transition">
                                     <td className="py-2.5 px-4 font-medium">{user.userName}</td>
                                     <td className="py-2.5 px-4">{user.email}</td>
@@ -235,7 +235,7 @@ export const UsersList: React.FC = () => {
                 </table>
             </div>
             <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4 text-sm">
-                <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sorted.length)} of {sorted.length} users</p>
+                <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} users</p>
                 <div className="flex items-center gap-2">
                     <Button
                         size="sm"

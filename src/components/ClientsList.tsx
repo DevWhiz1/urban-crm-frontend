@@ -20,7 +20,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
-import { fetchAllClients, deleteClient } from '../services/clientApi';
+import { getClientsPaginated, deleteClient } from '../services/clientApi';
 import { updateUser } from '../services/userApi';
 import { Client } from '../types/client';
 
@@ -39,6 +39,11 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     const [filteredClients, setFilteredClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 10;
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -48,45 +53,35 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
     useEffect(() => {
-        loadClients();
-    }, []);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
-        filterClients();
-    }, [clients, searchTerm]);
+        loadClients();
+    }, [page, debouncedSearch]);
 
     const loadClients = async () => {
         try {
             setLoading(true);
-            const clientsData = await fetchAllClients();
-            setClients(clientsData);
+            const params: any = { page, limit: pageSize };
+            if (debouncedSearch) params.search = debouncedSearch;
+
+            const { data, pagination } = await getClientsPaginated(params);
+            setFilteredClients(data);
+            setClients(data); // Using filtered as main display array
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load clients. Please try again.');
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterClients = () => {
-        let filtered = [...clients];
-
-        if (searchTerm) {
-            filtered = filtered.filter(client => {
-                const userName = client.user && typeof client.user === 'object' ? client.user.userName : '';
-                const email = client.user && typeof client.user === 'object' ? client.user.email : '';
-                const phoneNumber = client.phoneNumber || '';
-                const address = client.address || '';
-
-                return (
-                    userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    phoneNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    address.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-            });
-        }
-
-        setFilteredClients(filtered);
     };
 
     const handleDeleteClient = (client: Client) => {
@@ -176,13 +171,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                     <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
                         <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Clients Found</h3>
-                        <p className="text-gray-600 mb-6">
-                            {clients.length === 0
-                                ? "You haven't added any clients yet. Start by adding your first client."
-                                : "No clients match your current search. Try adjusting your search criteria."
-                            }
-                        </p>
-                        {clients.length === 0 && (
+                        {totalCount === 0 && (
                             <Button
                                 onClick={onAddClient}
                                 className="bg-green-600 hover:bg-green-700"
@@ -308,6 +297,48 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalCount > 0 && (
+                    <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4 text-sm bg-white p-4 rounded-xl border border-gray-200">
+                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} clients</p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(1)}
+                            >
+                                First
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                            >
+                                Prev
+                            </Button>
+                            <span className="px-2 font-medium">Page {page} / {totalPages}</span>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(totalPages)}
+                            >
+                                Last
+                            </Button>
                         </div>
                     </div>
                 )}

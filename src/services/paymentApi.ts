@@ -35,7 +35,7 @@ export const createPayment = async (data: PaymentFormData): Promise<void> => {
 
 export const fetchProjectsForPayment = async (): Promise<PaymentProjectOption[]> => {
   try {
-    const response = await apiClient.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects?basic=true');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -43,9 +43,12 @@ export const fetchProjectsForPayment = async (): Promise<PaymentProjectOption[]>
   }
 };
 
-export const fetchContractorsForPayment = async (): Promise<PaymentContractorOption[]> => {
+export const fetchContractorsForPayment = async (projectId?: string): Promise<PaymentContractorOption[]> => {
   try {
-    const response = await apiClient.get('/api/contractor/get-all-contractors');
+    const url = projectId 
+      ? `/api/project/get-project-contractors/${projectId}` 
+      : '/api/contractor/get-all-contractors?basic=true';
+    const response = await apiClient.get(url);
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch contractors:', error);
@@ -53,9 +56,12 @@ export const fetchContractorsForPayment = async (): Promise<PaymentContractorOpt
   }
 };
 
-export const fetchContractsForPayment = async (): Promise<PaymentContractOption[]> => {
+export const fetchContractsForPayment = async (projectId?: string): Promise<PaymentContractOption[]> => {
   try {
-    const response = await apiClient.get('/api/project-contract/get-all-project-contracts');
+    const url = projectId 
+      ? `/api/project-contract/get-all-project-contracts?project=${projectId}`
+      : '/api/project-contract/get-all-project-contracts';
+    const response = await apiClient.get(url);
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch contracts:', error);

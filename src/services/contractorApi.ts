@@ -12,8 +12,18 @@ export const createContractor = async (data: ContractorFormData): Promise<void> 
 
 export const fetchAllContractors = async (): Promise<Contractor[]> => {
   try {
-    const response = await apiClient.get('/api/contractor/get-all-contractors');
+    const response = await apiClient.get('/api/contractor/get-all-contractors?limit=all');
     return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch contractors:', error);
+    throw new Error('Failed to load contractors');
+  }
+};
+
+export const getContractorsPaginated = async (params: { page?: number; limit?: number; search?: string } = {}): Promise<{ data: Contractor[], pagination: any }> => {
+  try {
+    const response = await apiClient.get('/api/contractor/get-all-contractors', { params });
+    return { data: response.data.data || [], pagination: response.data.pagination };
   } catch (error) {
     console.error('Failed to fetch contractors:', error);
     throw new Error('Failed to load contractors');

@@ -41,6 +41,7 @@ import { updatePayment, deletePayment } from '../services/paymentApi';
 import { formatPKRCurrency } from '../utils/paymentValidation';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { PaymentEditModal } from './PaymentEditModal';
+import { getPaginatedProjectPayments } from '../services/projectSummaryApi';
 
 interface Project {
     _id: string;
@@ -75,8 +76,8 @@ interface ContractPaymentSummary {
     contractType: string;
     totalAmount: number;
     totalPayments: number;
+    totalPaymentCount: number;
     net: number;
-    payments: ContractPayment[];
     contract: ProjectContract;
 }
 
@@ -110,6 +111,7 @@ export const ProjectContractPayments: React.FC = () => {
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [contracts, setContracts] = useState<ProjectContract[]>([]);
     const [selectedContract, setSelectedContract] = useState<ContractPaymentSummary | null>(null);
+    const [payments, setPayments] = useState<ContractPayment[]>([]);
     const [selectedPaymentDetail, setSelectedPaymentDetail] = useState<ContractPayment | null>(null);
     const [editingPayment, setEditingPayment] = useState<ContractPayment | null>(null);
     const [deleteModal, setDeleteModal] = useState({
@@ -120,6 +122,7 @@ export const ProjectContractPayments: React.FC = () => {
     });
     const [zoomImage, setZoomImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [loadingData, setLoadingData] = useState(false);
     const [loadingProjects, setLoadingProjects] = useState(true);
 
     // Global Search State
@@ -133,7 +136,9 @@ export const ProjectContractPayments: React.FC = () => {
     const [sortBy, setSortBy] = useState('date_desc');
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
     const [notification, setNotification] = useState({
         show: false,
@@ -145,10 +150,20 @@ export const ProjectContractPayments: React.FC = () => {
         loadProjects();
     }, []);
 
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(paymentSearchTerm);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [paymentSearchTerm]);
+
     // Reset pagination on filter or contract change
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedContract, paymentSearchTerm, typeFilter, methodFilter, statusFilter, sortBy]);
+    }, [selectedContract, typeFilter, methodFilter, statusFilter, sortBy]);
 
     const loadProjects = async () => {
         try {
@@ -161,6 +176,7 @@ export const ProjectContractPayments: React.FC = () => {
             setLoadingProjects(false);
         }
     };
+
 
     const loadProjectContracts = async (projectId: string) => {
         try {
@@ -189,6 +205,43 @@ export const ProjectContractPayments: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const loadTableData = async () => {
+        if (!selectedContract) return;
+        setLoadingData(true);
+        try {
+            const params: any = { 
+                page: currentPage, 
+                limit: itemsPerPage,
+                contract: selectedContract.projectContractId 
+            };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (typeFilter !== 'ALL') params.type = typeFilter;
+            if (methodFilter !== 'ALL') params.method = methodFilter;
+            if (statusFilter !== 'ALL') params.status = statusFilter;
+            if (sortBy !== 'date_desc') params.sort = sortBy;
+
+            const projectId = selectedContract.contract.project?._id || (selectedContract.contract as any).project;
+            if(!projectId) throw new Error("Missing Project ID");
+
+            const { data, pagination } = await getPaginatedProjectPayments(projectId, params);
+            setPayments(data);
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
+        } catch (error) {
+            showNotification('error', 'Failed to load payments');
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedContract) {
+            loadTableData();
+        }
+    }, [selectedContract, currentPage, debouncedSearch, typeFilter]);
 
     const resetPaymentFilters = () => {
         setPaymentSearchTerm('');
@@ -235,15 +288,7 @@ export const ProjectContractPayments: React.FC = () => {
     const handleConfirmDeactivatePayment = async () => {
         try {
             await updatePayment(deleteModal.paymentId, { isActive: false });
-            if (selectedContract) {
-                setSelectedContract(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.map(p => p._id === deleteModal.paymentId ? { ...p, isActive: false } : p)
-                    };
-                });
-            }
+            setPayments(prev => prev.map(p => p._id === deleteModal.paymentId ? { ...p, isActive: false } : p));
             showNotification('success', 'Payment deactivated successfully');
         } catch (error) {
             showNotification('error', 'Failed to deactivate payment.');
@@ -254,15 +299,7 @@ export const ProjectContractPayments: React.FC = () => {
     const handleActivatePayment = async (payment: ContractPayment) => {
         try {
             await updatePayment(payment._id, { isActive: true });
-            if (selectedContract) {
-                setSelectedContract(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.map(p => p._id === payment._id ? { ...p, isActive: true } : p)
-                    };
-                });
-            }
+            setPayments(prev => prev.map(p => p._id === payment._id ? { ...p, isActive: true } : p));
             showNotification('success', 'Payment activated successfully');
         } catch (error) {
             showNotification('error', 'Failed to activate payment.');
@@ -272,16 +309,9 @@ export const ProjectContractPayments: React.FC = () => {
     const handleConfirmDeletePayment = async () => {
         try {
             await deletePayment(deleteModal.paymentId);
-            if (selectedContract) {
-                setSelectedContract(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.filter(p => p._id !== deleteModal.paymentId)
-                    };
-                });
-            }
+            setPayments(prev => prev.filter(p => p._id !== deleteModal.paymentId));
             showNotification('success', 'Payment deleted successfully');
+            loadContractSummary(selectedContract!.projectContractId);
         } catch (error) {
             showNotification('error', 'Failed to delete payment.');
             throw error;
@@ -289,54 +319,13 @@ export const ProjectContractPayments: React.FC = () => {
     };
 
     const handlePaymentUpdated = (updatedPayment: any) => {
-        if (selectedContract) {
-            setSelectedContract(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    payments: prev.payments.map(p => p._id === updatedPayment._id ? { ...p, ...updatedPayment } : p)
-                };
-            });
-        }
+        setPayments(prev => prev.map(p => p._id === updatedPayment._id ? { ...p, ...updatedPayment } : p));
         showNotification('success', 'Payment updated successfully');
+        if (selectedContract) loadContractSummary(selectedContract.projectContractId);
     };
 
-    // Filter & Sort Contractor Payments
-    const filteredPayments = useMemo(() => {
-        if (!selectedContract?.payments) return [];
-        return selectedContract.payments.filter(p => {
-            const matchesSearch =
-                (selectedContract.contractorName || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                (p.workDescription || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                (p.notes || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                (p.paymentMethod || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                (p.transactionId || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                (p.createdBy?.userName || '').toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-                p.amount.toString().includes(paymentSearchTerm);
-
-            const matchesType = typeFilter === 'ALL' || p.type === typeFilter;
-            const matchesMethod = methodFilter === 'ALL' || p.paymentMethod.toLowerCase() === methodFilter.toLowerCase();
-            const matchesStatus = statusFilter === 'ALL' || p.status.toLowerCase() === statusFilter.toLowerCase();
-
-            return matchesSearch && matchesType && matchesMethod && matchesStatus;
-        }).sort((a, b) => {
-            if (sortBy === 'date_desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
-            if (sortBy === 'date_asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (sortBy === 'amount_desc') return b.amount - a.amount;
-            if (sortBy === 'amount_asc') return a.amount - b.amount;
-            return 0;
-        });
-    }, [selectedContract, paymentSearchTerm, typeFilter, methodFilter, statusFilter, sortBy]);
-
-    // Paginated subset
-    const paginatedPayments = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredPayments.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredPayments, currentPage, itemsPerPage]);
-
-    const totalPages = useMemo(() => {
-        return Math.ceil(filteredPayments.length / itemsPerPage) || 1;
-    }, [filteredPayments.length, itemsPerPage]);
+    // Server-side pagination replaces local filtering and sorting
+    const paginatedPayments = payments;
 
     const handlePrintPDF = () => {
         if (!selectedContract) return;
@@ -356,7 +345,7 @@ export const ProjectContractPayments: React.FC = () => {
 
     const generatePrintContent = (summary: ContractPaymentSummary) => {
         const receiptNo = generateReceiptNumber();
-        const paymentsToPrint = filteredPayments;
+        const paymentsToPrint = paginatedPayments; // Print only current page, or would need separate API call for all
 
         return `
       <!DOCTYPE html>
@@ -559,7 +548,7 @@ export const ProjectContractPayments: React.FC = () => {
                                 </div>
                             </div>
                             <div className="mt-2">
-                                <p className="text-lg font-bold text-slate-900">{selectedContract.payments.length}</p>
+                                <p className="text-lg font-bold text-slate-900">{selectedContract.totalPaymentCount}</p>
                                 <span className="text-[10px] text-slate-400 font-medium">Recorded Vouchers</span>
                             </div>
                         </div>
@@ -574,12 +563,12 @@ export const ProjectContractPayments: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <h2 className="text-base font-bold text-slate-900">Contract Payment History</h2>
                                 <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                                    {selectedContract.payments.length} Total Vouchers
+                                    {selectedContract.totalPaymentCount} Total Vouchers
                                 </span>
                             </div>
 
                             <div className="text-xs text-slate-500 font-medium">
-                                Showing <span className="font-bold text-slate-800">{filteredPayments.length}</span> of <span className="font-bold text-slate-800">{selectedContract.payments.length}</span> records
+                                Showing <span className="font-bold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)}</span> of <span className="font-bold text-slate-800">{totalCount}</span> records
                             </div>
                         </div>
 
@@ -627,6 +616,17 @@ export const ProjectContractPayments: React.FC = () => {
                                     <option value="online">Online / UPI</option>
                                 </select>
 
+                                {/* Status Filter */}
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                >
+                                    <option value="ALL">All Statuses</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+
                                 {/* Sort Selector */}
                                 <select
                                     value={sortBy}
@@ -657,7 +657,11 @@ export const ProjectContractPayments: React.FC = () => {
 
                         {/* Statement Table View */}
                         <div className="overflow-x-auto">
-                            {paginatedPayments.length === 0 ? (
+                            {loadingData ? (
+                                <div className="p-12 flex justify-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
+                            ) : paginatedPayments.length === 0 ? (
                                 <div className="text-center py-12 px-4">
                                     <CreditCard className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                                     <p className="text-sm font-medium text-slate-600">No payment transactions found</p>
@@ -789,40 +793,21 @@ export const ProjectContractPayments: React.FC = () => {
                                 <span>
                                     Page <strong className="text-slate-800">{currentPage}</strong> of <strong className="text-slate-800">{totalPages}</strong>
                                 </span>
-                                <div className="flex items-center gap-1">
-                                    <span className="text-slate-400">Rows per page:</span>
-                                    <select
-                                        value={itemsPerPage}
-                                        onChange={(e) => {
-                                            setItemsPerPage(Number(e.target.value));
-                                            setCurrentPage(1);
-                                        }}
-                                        className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700"
-                                    >
-                                        <option value={10}>10</option>
-                                        <option value={25}>25</option>
-                                        <option value={50}>50</option>
-                                        <option value={100}>100</option>
-                                    </select>
-                                </div>
                             </div>
 
-                            {/* Pagination Controls */}
                             <div className="flex items-center gap-1">
                                 <button
-                                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
                                     className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                                 >
-                                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
                                 </button>
-
-                                <div className="flex items-center gap-1 px-1">
-                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                        let pageNum = i + 1;
-                                        if (totalPages > 5 && currentPage > 3) {
-                                            pageNum = currentPage - 3 + i;
-                                            if (pageNum > totalPages) pageNum = totalPages - (4 - i);
+                                
+                                <div className="hidden sm:flex items-center gap-1 px-2">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1).map((pageNum, idx, arr) => {
+                                        if (idx > 0 && pageNum - arr[idx - 1] > 1) {
+                                            return <span key={`ellipsis-${pageNum}`} className="text-slate-400 px-1">...</span>;
                                         }
                                         return (
                                             <button
@@ -840,7 +825,7 @@ export const ProjectContractPayments: React.FC = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage >= totalPages}
                                     className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                                 >

@@ -86,43 +86,79 @@ export const PaymentForm: React.FC = () => {
     loadInitialData();
   }, []);
 
-  // Filter contracts when project or contractor changes
+  // Fetch contractors when project changes
+  useEffect(() => {
+    if (formData.project) {
+      loadContractors(formData.project);
+    } else {
+      setContractors([]);
+      setFormData(prev => ({ ...prev, contractor: '', contract: '' }));
+    }
+  }, [formData.project]);
+
+  // Fetch contracts when project AND contractor are selected
   useEffect(() => {
     if (formData.project && formData.contractor) {
-      const filtered = getFilteredContracts(contracts, formData.project, formData.contractor);
+      loadContracts(formData.project, formData.contractor);
+    } else {
+      setContracts([]);
+      setFilteredContracts([]);
+      setFormData(prev => ({ ...prev, contract: '' }));
+    }
+  }, [formData.project, formData.contractor]);
+
+  const loadInitialData = async () => {
+    try {
+      setLoadingData(true);
+      const projectsData = await fetchProjectsForPayment();
+      setProjects(projectsData);
+
+      if (projectsData.length === 0) {
+        showNotification('error', 'No projects found. Please create projects first.');
+      }
+    } catch (error) {
+      showNotification('error', 'Failed to load projects. Please refresh the page.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const loadContractors = async (projectId: string) => {
+    try {
+      setLoadingData(true);
+      const contractorsData = await fetchContractorsForPayment(projectId);
+      setContractors(contractorsData);
+      
+      if (contractorsData.length === 0) {
+        setFormData(prev => ({ ...prev, contractor: '' }));
+      } else {
+        const stillExists = contractorsData.some(c => c._id === formData.contractor);
+        if (!stillExists) {
+          setFormData(prev => ({ ...prev, contractor: '' }));
+        }
+      }
+    } catch (error) {
+      showNotification('error', 'Failed to load contractors for this project.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const loadContracts = async (projectId: string, contractorId: string) => {
+    try {
+      setLoadingData(true);
+      const contractsData = await fetchContractsForPayment(projectId);
+      setContracts(contractsData);
+      
+      const filtered = getFilteredContracts(contractsData, projectId, contractorId);
       setFilteredContracts(filtered);
 
       // Reset contract selection if current selection is not valid
       if (formData.contract && !filtered.find(c => c._id === formData.contract)) {
         setFormData(prev => ({ ...prev, contract: '' }));
       }
-    } else {
-      setFilteredContracts([]);
-      setFormData(prev => ({ ...prev, contract: '' }));
-    }
-  }, [formData.project, formData.contractor, contracts]);
-
-  const loadInitialData = async () => {
-    try {
-      setLoadingData(true);
-      const [projectsData, contractorsData, contractsData] = await Promise.all([
-        fetchProjectsForPayment(),
-        fetchContractorsForPayment(),
-        fetchContractsForPayment()
-      ]);
-
-      setProjects(projectsData);
-      setContractors(contractorsData);
-      setContracts(contractsData);
-
-      if (projectsData.length === 0) {
-        showNotification('error', 'No projects found. Please create projects first.');
-      }
-      if (contractorsData.length === 0) {
-        showNotification('error', 'No contractors found. Please add contractors first.');
-      }
     } catch (error) {
-      showNotification('error', 'Failed to load data. Please refresh the page.');
+      showNotification('error', 'Failed to load contracts.');
     } finally {
       setLoadingData(false);
     }
@@ -311,8 +347,16 @@ export const PaymentForm: React.FC = () => {
                       onChange={handleInputChange('contractor')}
                       error={errors.contractor}
                       required
-                      placeholder={loadingData ? "Loading contractors..." : "Choose a contractor"}
-                      disabled={loadingData}
+                      placeholder={
+                        !formData.project 
+                            ? "Please select a project first" 
+                            : loadingData 
+                                ? "Loading contractors..." 
+                                : contractors.length === 0 
+                                    ? "No contractors found for this project" 
+                                    : "Choose a contractor"
+                      }
+                      disabled={loadingData || !formData.project || contractors.length === 0}
                     />
                     {selectedContractor && (
                       <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">

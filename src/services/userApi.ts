@@ -11,9 +11,9 @@ export interface IUserResponse {
   updatedAt: string;
 }
 
-export const getAllUsers = async (): Promise<IUserResponse[]> => {
-  const res = await apiClient.get('/api/user/get-all-users?limit=all');
-  return res.data?.data || [];
+export const getAllUsers = async (params: { page?: number; limit?: number; search?: string; role?: string; status?: string } = {}): Promise<{ data: IUserResponse[], pagination: any }> => {
+  const res = await apiClient.get('/api/user/get-all-users', { params });
+  return { data: res.data?.data || [], pagination: res.data?.pagination };
 };
 
 export const updateUser = async (id: string, data: Partial<IUserResponse & { password?: string }>): Promise<IUserResponse> => {

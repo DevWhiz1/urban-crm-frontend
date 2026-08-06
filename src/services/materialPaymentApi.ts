@@ -26,7 +26,7 @@ export const createMaterialPayment = async (data: MaterialPaymentFormData): Prom
 
 export const fetchProjectsForMaterial = async (): Promise<MaterialProjectOption[]> => {
   try {
-    const response = await apiClient.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects?basic=true');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);

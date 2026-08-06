@@ -33,7 +33,7 @@ import {
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
-import { fetchAllProjects, fetchProjectPaymentSummary } from '../services/projectSummaryApi';
+import { fetchAllProjects, fetchProjectPaymentSummary, getPaginatedProjectPayments, getPaginatedProjectMaterials } from '../services/projectSummaryApi';
 import { updatePayment, deletePayment } from '../services/paymentApi';
 import { deleteMaterialPayment } from '../services/materialPaymentApi';
 import { formatPKRCurrency } from '../utils/paymentValidation';
@@ -55,12 +55,12 @@ interface PaymentSummary {
     projectCost: number;
     totalPaymentReceived: number;
     totalDebits: number;
+    totalPaymentCount: number;
     totalMaterialPayments: number;
+    totalMaterialCount: number;
     materialPurchaseCost: number;
     materialReturnAmount: number;
     net: number;
-    payments: Payment[];
-    materials: Material[];
 }
 
 interface Payment {
@@ -82,6 +82,7 @@ interface Payment {
     transactionId?: string;
     workDescription?: string;
     status: string;
+    isActive?: boolean;
     receiptPhoto?: string;
     notes?: string;
     createdBy?: {
@@ -111,7 +112,10 @@ interface Material {
 export const ProjectPaymentSummary: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<PaymentSummary | null>(null);
+    const [payments, setPayments] = useState<Payment[]>([]);
+    const [materials, setMaterials] = useState<Material[]>([]);
     const [loading, setLoading] = useState(false);
+    const [loadingData, setLoadingData] = useState(false);
     const [loadingProjects, setLoadingProjects] = useState(true);
 
     // Active View Tab: 'payments' | 'materials'
@@ -143,7 +147,9 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     // Pagination States
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
 
     const [notification, setNotification] = useState({
         show: false,
@@ -155,9 +161,19 @@ export const ProjectPaymentSummary: React.FC = () => {
         loadProjects();
     }, []);
 
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, searchTerm, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, selectedProject]);
+    }, [activeTab, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, selectedProject]);
 
     const loadProjects = async () => {
         try {
@@ -171,6 +187,7 @@ export const ProjectPaymentSummary: React.FC = () => {
         }
     };
 
+
     const loadProjectSummary = async (projectId: string) => {
         try {
             setLoading(true);
@@ -183,6 +200,46 @@ export const ProjectPaymentSummary: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const loadTableData = async () => {
+        if (!selectedProject) return;
+        setLoadingData(true);
+        try {
+            const params: any = { page: currentPage, limit: itemsPerPage };
+            if (debouncedSearch) params.search = debouncedSearch;
+
+            if (activeTab === 'payments') {
+                if (typeFilter !== 'ALL') params.type = typeFilter;
+                if (methodFilter !== 'ALL') params.method = methodFilter;
+                if (sortBy !== 'date_desc') params.sort = sortBy;
+                const { data, pagination } = await getPaginatedProjectPayments(selectedProject.projectId, params);
+                setPayments(data);
+                if (pagination) {
+                    setTotalPages(pagination.totalPages || 1);
+                    setTotalCount(pagination.total || 0);
+                }
+            } else {
+                if (materialTransactionTypeFilter !== 'ALL') params.type = materialTransactionTypeFilter;
+                if (sortBy !== 'date_desc') params.sort = sortBy;
+                const { data, pagination } = await getPaginatedProjectMaterials(selectedProject.projectId, params);
+                setMaterials(data);
+                if (pagination) {
+                    setTotalPages(pagination.totalPages || 1);
+                    setTotalCount(pagination.total || 0);
+                }
+            }
+        } catch (error) {
+            showNotification('error', 'Failed to load data');
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedProject) {
+            loadTableData();
+        }
+    }, [selectedProject, activeTab, currentPage, debouncedSearch, typeFilter, materialTransactionTypeFilter]);
 
     const resetFilters = () => {
         setSearchTerm('');
@@ -232,15 +289,7 @@ export const ProjectPaymentSummary: React.FC = () => {
     const handleConfirmDeactivatePayment = async () => {
         try {
             await updatePayment(deleteModal.paymentId, { isActive: false });
-            if (selectedProject) {
-                setSelectedProject(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.map(p => p._id === deleteModal.paymentId ? { ...p, isActive: false } : p)
-                    };
-                });
-            }
+            setPayments(prev => prev.map(p => p._id === deleteModal.paymentId ? { ...p, isActive: false } : p));
             showNotification('success', 'Payment deactivated successfully');
         } catch (error) {
             showNotification('error', 'Failed to deactivate payment.');
@@ -251,15 +300,7 @@ export const ProjectPaymentSummary: React.FC = () => {
     const handleActivatePayment = async (payment: Payment) => {
         try {
             await updatePayment(payment._id, { isActive: true });
-            if (selectedProject) {
-                setSelectedProject(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.map(p => p._id === payment._id ? { ...p, isActive: true } : p)
-                    };
-                });
-            }
+            setPayments(prev => prev.map(p => p._id === payment._id ? { ...p, isActive: true } : p));
             showNotification('success', 'Payment activated successfully');
         } catch (error) {
             showNotification('error', 'Failed to activate payment.');
@@ -270,28 +311,14 @@ export const ProjectPaymentSummary: React.FC = () => {
         try {
             if (deleteModal.isMaterial) {
                 await deleteMaterialPayment(deleteModal.paymentId);
-                if (selectedProject) {
-                    setSelectedProject(prev => {
-                        if (!prev) return prev;
-                        return {
-                            ...prev,
-                            materials: prev.materials.filter(m => m._id !== deleteModal.paymentId)
-                        };
-                    });
-                }
+                setMaterials(prev => prev.filter(m => m._id !== deleteModal.paymentId));
                 showNotification('success', 'Material payment deleted successfully');
+                loadProjectSummary(selectedProject!.projectId);
             } else {
                 await deletePayment(deleteModal.paymentId);
-                if (selectedProject) {
-                    setSelectedProject(prev => {
-                        if (!prev) return prev;
-                        return {
-                            ...prev,
-                            payments: prev.payments.filter(p => p._id !== deleteModal.paymentId)
-                        };
-                    });
-                }
+                setPayments(prev => prev.filter(p => p._id !== deleteModal.paymentId));
                 showNotification('success', 'Payment deleted successfully');
+                loadProjectSummary(selectedProject!.projectId);
             }
         } catch (error) {
             showNotification('error', `Failed to delete ${deleteModal.isMaterial ? 'material' : 'payment'}.`);
@@ -300,123 +327,20 @@ export const ProjectPaymentSummary: React.FC = () => {
     };
 
     const handleMaterialUpdated = (updatedMaterial: any) => {
-        if (selectedProject) {
-            setSelectedProject(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    materials: prev.materials.map(m => m._id === updatedMaterial._id ? { ...m, ...updatedMaterial } : m)
-                };
-            });
-        }
+        setMaterials(prev => prev.map(m => m._id === updatedMaterial._id ? { ...m, ...updatedMaterial } : m));
         showNotification('success', 'Material updated successfully');
+        if (selectedProject) loadProjectSummary(selectedProject.projectId);
     };
 
     const handlePaymentUpdated = (updatedPayment: any) => {
-        if (selectedProject) {
-            setSelectedProject(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    payments: prev.payments.map(p => p._id === updatedPayment._id ? { ...p, ...updatedPayment } : p)
-                };
-            });
-        }
+        setPayments(prev => prev.map(p => p._id === updatedPayment._id ? { ...p, ...updatedPayment } : p));
         showNotification('success', 'Payment updated successfully');
+        if (selectedProject) loadProjectSummary(selectedProject.projectId);
     };
 
-    // Filter Contractor Payments
-    const filteredPayments = useMemo(() => {
-        if (!selectedProject?.payments) return [];
-        return selectedProject.payments.filter(p => {
-            const matchesSearch =
-                (p.contractor?.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.workDescription || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.notes || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.paymentMethod || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.createdBy?.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.amount.toString().includes(searchTerm);
-
-            const matchesType = typeFilter === 'ALL' || p.type === typeFilter;
-            const matchesContractor = contractorFilter === 'ALL' || p.contractor?.companyName === contractorFilter;
-            const matchesMethod = methodFilter === 'ALL' || p.paymentMethod.toLowerCase() === methodFilter.toLowerCase();
-
-            return matchesSearch && matchesType && matchesContractor && matchesMethod;
-        }).sort((a, b) => {
-            if (sortBy === 'date_desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
-            if (sortBy === 'date_asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (sortBy === 'amount_desc') return b.amount - a.amount;
-            if (sortBy === 'amount_asc') return a.amount - b.amount;
-            return 0;
-        });
-    }, [selectedProject, searchTerm, typeFilter, contractorFilter, methodFilter, sortBy]);
-
-    // Filter Material Payments
-    const filteredMaterials = useMemo(() => {
-        if (!selectedProject?.materials) return [];
-        return selectedProject.materials.filter(m => {
-            const matchesSearch =
-                m.materialDetail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                m.materialProvider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                m.totalAmount.toString().includes(searchTerm);
-
-            const matchesProvider = providerFilter === 'ALL' || m.materialProvider === providerFilter;
-            const matchesMaterialDetail = materialDetailFilter === 'ALL' || m.materialDetail === materialDetailFilter;
-            const matchesType = materialTransactionTypeFilter === 'ALL' || (m.transactionType || 'purchase') === materialTransactionTypeFilter;
-
-            return matchesSearch && matchesProvider && matchesMaterialDetail && matchesType;
-        }).sort((a, b) => {
-            if (sortBy === 'date_desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
-            if (sortBy === 'date_asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
-            if (sortBy === 'amount_desc') return b.totalAmount - a.totalAmount;
-            if (sortBy === 'amount_asc') return a.totalAmount - b.totalAmount;
-            return 0;
-        });
-    }, [selectedProject, searchTerm, providerFilter, materialDetailFilter, sortBy]);
-
-    // Unique filter options
-    const uniqueContractors = useMemo(() => {
-        if (!selectedProject?.payments) return [];
-        const set = new Set<string>();
-        selectedProject.payments.forEach(p => {
-            if (p.contractor?.companyName) set.add(p.contractor.companyName);
-        });
-        return Array.from(set);
-    }, [selectedProject]);
-
-    const uniqueProviders = useMemo(() => {
-        if (!selectedProject?.materials) return [];
-        const set = new Set<string>();
-        selectedProject.materials.forEach(m => {
-            if (m.materialProvider) set.add(m.materialProvider);
-        });
-        return Array.from(set);
-    }, [selectedProject]);
-
-    const uniqueMaterialDetails = useMemo(() => {
-        if (!selectedProject?.materials) return [];
-        const set = new Set<string>();
-        selectedProject.materials.forEach(m => {
-            if (m.materialDetail) set.add(m.materialDetail);
-        });
-        return Array.from(set);
-    }, [selectedProject]);
-
-    // Paginated datasets
-    const paginatedPayments = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredPayments.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredPayments, currentPage, itemsPerPage]);
-
-    const paginatedMaterials = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredMaterials.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredMaterials, currentPage, itemsPerPage]);
-
-    const totalPages = useMemo(() => {
-        const totalItems = activeTab === 'payments' ? filteredPayments.length : filteredMaterials.length;
-        return Math.ceil(totalItems / itemsPerPage) || 1;
-    }, [activeTab, filteredPayments.length, filteredMaterials.length, itemsPerPage]);
+    // With Server side pagination we remove local sorting and filtering logic
+    const paginatedPayments = payments;
+    const paginatedMaterials = materials;
 
     const handlePrintPDF = (type: 'payments' | 'materials') => {
         if (!selectedProject) return;
@@ -519,7 +443,7 @@ export const ProjectPaymentSummary: React.FC = () => {
               `}
             </thead>
             <tbody>
-              ${isPayments ? filteredPayments.map(p => `
+              ${isPayments ? paginatedPayments.map(p => `
                 <tr>
                   <td>${new Date(p.date).toLocaleDateString()}</td>
                   <td><strong>${p.contractor?.companyName || 'N/A'}</strong></td>
@@ -530,7 +454,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                   <td>${p.createdBy?.userName || 'System'}</td>
                   <td class="amount ${p.type === 'credit' ? 'credit' : 'debit'}">${formatPKRCurrency(p.amount.toString())}</td>
                 </tr>
-              `).join('') : filteredMaterials.map(m => `
+              `).join('') : paginatedMaterials.map(m => `
                 <tr>
                   <td>${new Date(m.date).toLocaleDateString()}</td>
                   <td><strong>${m.materialDetail}</strong></td>
@@ -670,7 +594,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 <p className="text-base sm:text-lg font-bold text-amber-600 truncate" title={formatPKRCurrency(selectedProject.totalDebits.toString())}>
                                     {formatPKRCurrency(selectedProject.totalDebits.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.payments.length} Payments Paid</span>
+                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.totalPaymentCount} Payments Paid</span>
                             </div>
                         </div>
 
@@ -686,10 +610,11 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 <p className="text-base sm:text-lg font-bold text-teal-600 truncate" title={formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}>
                                     {formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-500 font-medium flex gap-1">
+                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.totalMaterialCount} Purchases Logged</span>
+                                <div className="text-[10px] text-slate-500 font-medium flex gap-1">
                                     <span className="text-teal-600" title="Purchase Cost">P: {formatPKRCurrency(selectedProject.materialPurchaseCost?.toString() || '0')}</span> | 
                                     <span className="text-rose-600" title="Returned Amount">R: {formatPKRCurrency(selectedProject.materialReturnAmount?.toString() || '0')}</span>
-                                </span>
+                                </div>
                             </div>
                         </div>
 
@@ -724,9 +649,6 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 >
                                     <Users className="w-4 h-4" />
                                     Contractor Payments
-                                    <span className={`px-2 py-0.5 text-xs rounded-full font-bold ${activeTab === 'payments' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'}`}>
-                                        {selectedProject.payments.length}
-                                    </span>
                                 </button>
 
                                 <button
@@ -738,15 +660,12 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 >
                                     <PackageCheck className="w-4 h-4" />
                                     Material Payments
-                                    <span className={`px-2 py-0.5 text-xs rounded-full font-bold ${activeTab === 'materials' ? 'bg-teal-100 text-teal-700' : 'bg-slate-200 text-slate-600'}`}>
-                                        {selectedProject.materials.length}
-                                    </span>
                                 </button>
                             </nav>
 
                             {/* Search & Counter Summary */}
                             <div className="pb-3 text-xs text-slate-500 font-medium flex items-center gap-2">
-                                Showing <span className="font-bold text-slate-800">{activeTab === 'payments' ? filteredPayments.length : filteredMaterials.length}</span> of <span className="font-bold text-slate-800">{activeTab === 'payments' ? selectedProject.payments.length : selectedProject.materials.length}</span> records
+                                Showing <span className="font-bold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)}</span> of <span className="font-bold text-slate-800">{totalCount}</span> records
                             </div>
                         </div>
 
@@ -782,31 +701,6 @@ export const ProjectPaymentSummary: React.FC = () => {
                                             <option value="debit">DEBIT (Outflow)</option>
                                             <option value="credit">CREDIT (Inflow)</option>
                                         </select>
-
-                                        {/* Contractor Filter */}
-                                        <select
-                                            value={contractorFilter}
-                                            onChange={(e) => setContractorFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                        >
-                                            <option value="ALL">All Contractors</option>
-                                            {uniqueContractors.map(name => (
-                                                <option key={name} value={name}>{name}</option>
-                                            ))}
-                                        </select>
-
-                                        {/* Payment Method Filter */}
-                                        <select
-                                            value={methodFilter}
-                                            onChange={(e) => setMethodFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                        >
-                                            <option value="ALL">All Payment Methods</option>
-                                            <option value="cash">Cash</option>
-                                            <option value="bank_transfer">Bank Transfer</option>
-                                            <option value="cheque">Cheque</option>
-                                            <option value="online">Online / UPI</option>
-                                        </select>
                                     </>
                                 ) : (
                                     <>
@@ -818,314 +712,250 @@ export const ProjectPaymentSummary: React.FC = () => {
                                         >
                                             <option value="ALL">All Transaction Types</option>
                                             <option value="purchase">Purchase (Outflow)</option>
-                                            <option value="return">Return (Inflow)</option>
-                                        </select>
-
-                                        {/* Provider Filter */}
-                                        <select
-                                            value={providerFilter}
-                                            onChange={(e) => setProviderFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                        >
-                                            <option value="ALL">All Providers</option>
-                                            {uniqueProviders.map(name => (
-                                                <option key={name} value={name}>{name}</option>
-                                            ))}
-                                        </select>
-
-                                        {/* Material Detail Filter */}
-                                        <select
-                                            value={materialDetailFilter}
-                                            onChange={(e) => setMaterialDetailFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                        >
-                                            <option value="ALL">All Material Types</option>
-                                            {uniqueMaterialDetails.map(name => (
-                                                <option key={name} value={name}>{name}</option>
-                                            ))}
+                                            <option value="return">RETURN</option>
                                         </select>
                                     </>
                                 )}
-
-                                {/* Sort Selector */}
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                >
-                                    <option value="date_desc">Sort: Newest First</option>
-                                    <option value="date_asc">Sort: Oldest First</option>
-                                    <option value="amount_desc">Amount: High → Low</option>
-                                    <option value="amount_asc">Amount: Low → High</option>
-                                </select>
                             </div>
-
-                            {hasActiveFilters && (
-                                <div className="flex items-center justify-between pt-1">
-                                    <span className="text-[11px] text-blue-700 font-medium flex items-center gap-1">
-                                        <Filter className="w-3 h-3" /> Filters applied
-                                    </span>
-                                    <button
-                                        onClick={resetFilters}
-                                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-1 hover:underline"
-                                    >
-                                        <RotateCcw className="w-3 h-3" /> Reset Filters
-                                    </button>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Single-Line Bank Statement Table */}
-                        <div className="overflow-x-auto">
-                            {activeTab === 'payments' ? (
-                                paginatedPayments.length === 0 ? (
-                                    <div className="text-center py-12 px-4">
-                                        <CreditCard className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                                        <p className="text-sm font-medium text-slate-600">No contractor payments found</p>
-                                        <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms</p>
-                                    </div>
-                                ) : (
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                                                <th className="py-3 px-4">Payment ID</th>
-                                                <th className="py-3 px-4">Date</th>
-                                                <th className="py-3 px-4">Contractor</th>
-                                                <th className="py-3 px-4">Type</th>
-                                                <th className="py-3 px-4 text-right">Amount</th>
-                                                <th className="py-3 px-4">Method & Status</th>
-                                                <th className="py-3 px-4">Description / Notes</th>
-                                                <th className="py-3 px-4">Created By</th>
-                                                <th className="py-3 px-4 text-center">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
-                                            {paginatedPayments.map((payment) => {
-                                                const isDebit = payment.type === 'debit';
-                                                return (
-                                                    <tr
-                                                        key={payment._id}
-                                                        className="hover:bg-slate-50 transition-colors group cursor-pointer"
-                                                        onClick={() => setSelectedPaymentDetail(payment)}
-                                                    >
-                                                        {/* Payment ID */}
-                                                        <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-800">
-                                                            {payment.paymentId || 'N/A'}
-                                                        </td>
-                                                        {/* Date */}
-                                                        <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
-                                                            {new Date(payment.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                                                        </td>
+                        {/* Content Area */}
+                        {loadingData ? (
+                            <div className="p-12 flex justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : activeTab === 'payments' ? (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                        <th className="py-3 px-4">Payment ID</th>
+                                        <th className="py-3 px-4">Date</th>
+                                        <th className="py-3 px-4">Contractor</th>
+                                        <th className="py-3 px-4">Type</th>
+                                        <th className="py-3 px-4 text-right">Amount</th>
+                                        <th className="py-3 px-4">Method & Status</th>
+                                        <th className="py-3 px-4">Description / Notes</th>
+                                        <th className="py-3 px-4">Created By</th>
+                                        <th className="py-3 px-4 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
+                                    {paginatedPayments.map((payment) => {
+                                        const isDebit = payment.type === 'debit';
+                                        return (
+                                            <tr
+                                                key={payment._id}
+                                                className="hover:bg-slate-50 transition-colors group cursor-pointer"
+                                                onClick={() => setSelectedPaymentDetail(payment)}
+                                            >
+                                                {/* Payment ID */}
+                                                <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-800">
+                                                    {payment.paymentId || 'N/A'}
+                                                </td>
+                                                {/* Date */}
+                                                <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
+                                                    {new Date(payment.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                </td>
 
-                                                        {/* Contractor */}
-                                                        <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <User className="w-3.5 h-3.5 text-slate-400" />
-                                                                <span>{payment.contractor?.companyName || 'N/A'}</span>
-                                                            </div>
-                                                        </td>
+                                                {/* Contractor */}
+                                                <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <User className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span>{payment.contractor?.companyName || 'N/A'}</span>
+                                                    </div>
+                                                </td>
 
-                                                        {/* Type Badge */}
-                                                        <td className="py-3 px-4 whitespace-nowrap">
-                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isDebit
-                                                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                }`}>
-                                                                {isDebit ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownLeft className="w-3 h-3 mr-0.5" />}
-                                                                {payment.type}
+                                                {/* Type Badge */}
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isDebit
+                                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        }`}>
+                                                        {isDebit ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownLeft className="w-3 h-3 mr-0.5" />}
+                                                        {payment.type}
+                                                    </span>
+                                                </td>
+
+                                                {/* Amount */}
+                                                <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-sm ${isDebit ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                                    {formatPKRCurrency(payment.amount.toString())}
+                                                </td>
+
+                                                {/* Method & Status */}
+                                                <td className="py-3 px-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="capitalize font-medium text-slate-700">{payment.paymentMethod}</span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+                                                            {payment.status}
+                                                        </span>
+                                                    </div>
+                                                </td>
+
+                                                {/* Description */}
+                                                <td className="py-3 px-4 max-w-xs truncate text-slate-500">
+                                                    {payment.workDescription || payment.notes || <span className="text-slate-300 italic">No notes</span>}
+                                                </td>
+
+                                                {/* Created By */}
+                                                <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
+                                                    {payment.createdBy?.userName || 'System'}
+                                                </td>
+
+                                                {/* Action */}
+                                                <td className="py-3 px-4 text-center whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        {payment.receiptPhoto && (
+                                                            <span className="p-1 text-blue-600 bg-blue-50 rounded border border-blue-100" title="Has receipt attachment">
+                                                                <Receipt className="w-3 h-3" />
                                                             </span>
-                                                        </td>
-
-                                                        {/* Amount */}
-                                                        <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-sm ${isDebit ? 'text-rose-600' : 'text-emerald-600'}`}>
-                                                            {formatPKRCurrency(payment.amount.toString())}
-                                                        </td>
-
-                                                        {/* Method & Status */}
-                                                        <td className="py-3 px-4 whitespace-nowrap">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <span className="capitalize font-medium text-slate-700">{payment.paymentMethod}</span>
-                                                                <span className="text-slate-300">•</span>
-                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 uppercase">
-                                                                    {payment.status}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* Description */}
-                                                        <td className="py-3 px-4 max-w-xs truncate text-slate-500">
-                                                            {payment.workDescription || payment.notes || <span className="text-slate-300 italic">No notes</span>}
-                                                        </td>
-
-                                                        {/* Created By */}
-                                                        <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
-                                                            {payment.createdBy?.userName || 'System'}
-                                                        </td>
-
-                                                        {/* Action */}
-                                                        <td className="py-3 px-4 text-center whitespace-nowrap">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                {payment.receiptPhoto && (
-                                                                    <span className="p-1 text-blue-600 bg-blue-50 rounded border border-blue-100" title="Has receipt attachment">
-                                                                        <Receipt className="w-3 h-3" />
-                                                                    </span>
-                                                                )}
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedPaymentDetail(payment);
-                                                                    }}
-                                                                    className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
-                                                                    title="View Details"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditingPayment(payment);
-                                                                    }}
-                                                                    className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
-                                                                    title="Edit Payment"
-                                                                >
-                                                                    <Edit className="w-4 h-4" />
-                                                                </button>
-                                                                {payment.isActive === false && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleActivatePayment(payment);
-                                                                        }}
-                                                                        className="p-1.5 text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
-                                                                        title="Activate Payment"
-                                                                    >
-                                                                        <CheckCircle className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleInitiateDelete(payment);
-                                                                    }}
-                                                                    className="p-1.5 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-                                                                    title={payment.isActive === false ? "Permanently Delete" : "Deactivate"}
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )
-                            ) : (
-                                paginatedMaterials.length === 0 ? (
-                                    <div className="text-center py-12 px-4">
-                                        <PackageCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                                        <p className="text-sm font-medium text-slate-600">No material payments found</p>
-                                        <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms</p>
-                                    </div>
-                                ) : (
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                                                <th className="py-3 px-4">Date</th>
-                                                <th className="py-3 px-4">Material Detail</th>
-                                                <th className="py-3 px-4">Provider</th>
-                                                <th className="py-3 px-4">Quantity & Rate</th>
-                                                <th className="py-3 px-4 text-right">Total Amount</th>
-                                                <th className="py-3 px-4">Created By</th>
-                                                <th className="py-3 px-4 text-center">Action</th>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedPaymentDetail(payment);
+                                                            }}
+                                                            className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                                            title="View Details"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingPayment(payment);
+                                                            }}
+                                                            className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                                                            title="Edit Payment"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        {payment.isActive === false && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleActivatePayment(payment);
+                                                                }}
+                                                                className="p-1.5 text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
+                                                                title="Activate Payment"
+                                                            >
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleInitiateDelete(payment);
+                                                            }}
+                                                            className="p-1.5 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                                                            title={payment.isActive === false ? "Permanently Delete" : "Deactivate"}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
-                                            {paginatedMaterials.map((material) => (
-                                                <tr
-                                                    key={material._id}
-                                                    className="hover:bg-slate-50 transition-colors group cursor-pointer"
-                                                    onClick={() => setSelectedMaterialDetail(material)}
-                                                >
-                                                    {/* Date */}
-                                                    <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
-                                                        {new Date(material.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                                                    </td>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                        <th className="py-3 px-4">Date</th>
+                                        <th className="py-3 px-4">Material Detail</th>
+                                        <th className="py-3 px-4">Provider</th>
+                                        <th className="py-3 px-4">Quantity & Rate</th>
+                                        <th className="py-3 px-4 text-right">Total Amount</th>
+                                        <th className="py-3 px-4">Created By</th>
+                                        <th className="py-3 px-4 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 text-xs text-slate-700">
+                                    {paginatedMaterials.map((material) => (
+                                        <tr
+                                            key={material._id}
+                                            className="hover:bg-slate-50 transition-colors group cursor-pointer"
+                                            onClick={() => setSelectedMaterialDetail(material)}
+                                        >
+                                            {/* Date */}
+                                            <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
+                                                {new Date(material.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                            </td>
 
-                                                    {/* Material Detail */}
-                                                    <td className="py-3 px-4 font-semibold text-slate-900">
-                                                        <div className="flex items-center gap-2">
-                                                            {material.materialDetail}
-                                                            {material.transactionType === 'return' && (
-                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
-                                                                    RETURNED
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
+                                            {/* Material Detail */}
+                                            <td className="py-3 px-4 font-semibold text-slate-900">
+                                                <div className="flex items-center gap-2">
+                                                    {material.materialDetail}
+                                                    {material.transactionType === 'return' && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                                                            RETURNED
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                                                    {/* Provider */}
-                                                    <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-700">
-                                                        {material.materialProvider}
-                                                    </td>
+                                            {/* Provider */}
+                                            <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-700">
+                                                {material.materialProvider}
+                                            </td>
 
-                                                    {/* Qty & Rate */}
-                                                    <td className="py-3 px-4 whitespace-nowrap text-slate-600">
-                                                        <span className="font-semibold text-slate-800">{material.MaterialQuantity}</span> @ {formatPKRCurrency(material.MaterialRate.toString())}
-                                                    </td>
+                                            {/* Qty & Rate */}
+                                            <td className="py-3 px-4 whitespace-nowrap text-slate-600">
+                                                <span className="font-semibold text-slate-800">{material.MaterialQuantity}</span> @ {formatPKRCurrency(material.MaterialRate.toString())}
+                                            </td>
 
-                                                    {/* Total Amount */}
-                                                    <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-sm ${material.transactionType === 'return' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                        {formatPKRCurrency(material.totalAmount.toString())}
-                                                    </td>
+                                            {/* Total Amount */}
+                                            <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-sm ${material.transactionType === 'return' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                {formatPKRCurrency(material.totalAmount.toString())}
+                                            </td>
 
-                                                    {/* Created By */}
-                                                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
-                                                        {material.createdBy?.userName || 'System'}
-                                                    </td>
+                                            {/* Created By */}
+                                            <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
+                                                {material.createdBy?.userName || 'System'}
+                                            </td>
 
-                                                    {/* Action */}
-                                                    <td className="py-3 px-4 text-center whitespace-nowrap">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedMaterialDetail(material);
-                                                                }}
-                                                                className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
-                                                                title="View Details"
-                                                            >
-                                                                <Eye className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setEditingMaterial(material);
-                                                                }}
-                                                                className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
-                                                                title="Edit Material"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleInitiateMaterialDelete(material);
-                                                                }}
-                                                                className="p-1.5 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
-                                                                title="Delete Material"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )
-                            )}
-                        </div>
+                                            {/* Action */}
+                                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedMaterialDetail(material);
+                                                        }}
+                                                        className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingMaterial(material);
+                                                        }}
+                                                        className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                                                        title="Edit Material"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleInitiateMaterialDelete(material);
+                                                        }}
+                                                        className="p-1.5 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
+                                                        title="Delete Material"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
 
                         {/* Pagination Bar */}
                         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">

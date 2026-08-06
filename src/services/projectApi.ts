@@ -38,6 +38,16 @@ export const fetchClients = async (): Promise<Client[]> => {
   }
 };
 
+export const fetchBasicClients = async (): Promise<Client[]> => {
+  try {
+    const response = await apiClient.get('/api/client/get-all-clients?basic=true');
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch basic clients:', error);
+    throw new Error('Failed to load clients');
+  }
+};
+
 export const fetchContractors = async (): Promise<Contractor[]> => {
   try {
     const response = await apiClient.get('/api/contractor/get-all-contractors');
@@ -50,11 +60,41 @@ export const fetchContractors = async (): Promise<Contractor[]> => {
 
 export const fetchAllProjects = async (): Promise<Project[]> => {
   try {
-    const response = await apiClient.get('/api/project/get-all-projects');
+    const response = await apiClient.get('/api/project/get-all-projects?limit=all');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch projects:', error);
     throw new Error('Failed to load projects');
+  }
+};
+
+export const getProjectsPaginated = async (params: { page?: number; limit?: number; search?: string; status?: string; category?: string } = {}): Promise<{ data: Project[], pagination: any }> => {
+  try {
+    const response = await apiClient.get('/api/project/get-all-projects', { params });
+    return { data: response.data.data || [], pagination: response.data.pagination };
+  } catch (error) {
+    console.error('Failed to fetch projects:', error);
+    throw new Error('Failed to load projects');
+  }
+};
+
+export const fetchBasicProjects = async (): Promise<Project[]> => {
+  try {
+    const response = await apiClient.get('/api/project/get-all-projects?basic=true');
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch basic projects:', error);
+    throw new Error('Failed to load projects');
+  }
+};
+
+export const fetchProjectContractors = async (projectId: string): Promise<Contractor[]> => {
+  try {
+    const response = await apiClient.get(`/api/project/get-project-contractors/${projectId}`);
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch project contractors:', error);
+    throw new Error('Failed to load project contractors');
   }
 };
 

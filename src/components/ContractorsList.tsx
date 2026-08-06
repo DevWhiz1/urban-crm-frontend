@@ -20,7 +20,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
-import { fetchAllContractors, deleteContractor } from '../services/contractorApi';
+import { getContractorsPaginated, deleteContractor } from '../services/contractorApi';
 import { updateUser } from '../services/userApi';
 import { Contractor } from '../types/contractor';
 
@@ -39,6 +39,11 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
     const [filteredContractors, setFilteredContractors] = useState<Contractor[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 10;
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -48,45 +53,35 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
     const [contractorToDelete, setContractorToDelete] = useState<Contractor | null>(null);
 
     useEffect(() => {
-        loadContractors();
-    }, []);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
-        filterContractors();
-    }, [contractors, searchTerm]);
+        loadContractors();
+    }, [page, debouncedSearch]);
 
     const loadContractors = async () => {
         try {
             setLoading(true);
-            const contractorsData = await fetchAllContractors();
-            setContractors(contractorsData);
+            const params: any = { page, limit: pageSize };
+            if (debouncedSearch) params.search = debouncedSearch;
+
+            const { data, pagination } = await getContractorsPaginated(params);
+            setFilteredContractors(data);
+            setContractors(data); // Using filtered as main display array
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load contractors. Please try again.');
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterContractors = () => {
-        let filtered = [...contractors];
-
-        if (searchTerm) {
-            filtered = filtered.filter(contractor => {
-                const companyName = contractor.companyName || '';
-                const contractorType = contractor.contractorType || '';
-                const userName = contractor.user && typeof contractor.user === 'object' ? contractor.user.userName : '';
-                const email = contractor.user && typeof contractor.user === 'object' ? contractor.user.email : '';
-
-                return (
-                    companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    contractorType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    email.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-            });
-        }
-
-        setFilteredContractors(filtered);
     };
 
     const handleDeleteContractor = (contractor: Contractor) => {
@@ -178,13 +173,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                     <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
                         <Wrench className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Contractors Found</h3>
-                        <p className="text-gray-600 mb-6">
-                            {contractors.length === 0
-                                ? "You haven't added any contractors yet. Start by adding your first contractor."
-                                : "No contractors match your current search. Try adjusting your search criteria."
-                            }
-                        </p>
-                        {contractors.length === 0 && (
+                        {totalCount === 0 && (
                             <Button
                                 onClick={onAddContractor}
                                 className="bg-blue-600 hover:bg-blue-700"
@@ -302,6 +291,48 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalCount > 0 && (
+                    <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4 text-sm bg-white p-4 rounded-xl border border-gray-200">
+                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} contractors</p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(1)}
+                            >
+                                First
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                            >
+                                Prev
+                            </Button>
+                            <span className="px-2 font-medium">Page {page} / {totalPages}</span>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(totalPages)}
+                            >
+                                Last
+                            </Button>
                         </div>
                     </div>
                 )}

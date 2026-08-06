@@ -26,8 +26,18 @@ export type { User } from '../types/contractor';
 
 export const fetchAllClients = async (): Promise<Client[]> => {
   try {
-    const response = await apiClient.get('/api/client/get-all-clients');
+    const response = await apiClient.get('/api/client/get-all-clients?limit=all');
     return response.data.data || [];
+  } catch (error) {
+    console.error('Failed to fetch clients:', error);
+    throw new Error('Failed to load clients');
+  }
+};
+
+export const getClientsPaginated = async (params: { page?: number; limit?: number; search?: string } = {}): Promise<{ data: Client[], pagination: any }> => {
+  try {
+    const response = await apiClient.get('/api/client/get-all-clients', { params });
+    return { data: response.data.data || [], pagination: response.data.pagination };
   } catch (error) {
     console.error('Failed to fetch clients:', error);
     throw new Error('Failed to load clients');
