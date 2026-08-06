@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building2 } from 'lucide-react';
+import { Mail, Lock, Building2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
@@ -10,6 +10,7 @@ export const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     type: 'success' as 'success' | 'error',
@@ -114,33 +115,38 @@ export const Login: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="relative group">
-              <Mail className="absolute left-4 top-[38px] transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors z-10" />
-              <Input
-                label="Email Address"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange('email')}
-                error={errors.email}
-                placeholder="Enter your email"
-                className="pl-12 bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
-                required
-              />
-            </div>
+            <Input
+              label="Email Address"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange('email')}
+              error={errors.email}
+              placeholder="Enter your email"
+              icon={<Mail className="w-5 h-5" />}
+              className="bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
+              required
+            />
 
-            <div className="relative group">
-              <Lock className="absolute left-4 top-[38px] transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors z-10" />
-              <Input
-                label="Password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange('password')}
-                error={errors.password}
-                placeholder="Enter your password"
-                className="pl-12 bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
-                required
-              />
-            </div>
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleInputChange('password')}
+              error={errors.password}
+              placeholder="Enter your password"
+              icon={<Lock className="w-5 h-5" />}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              }
+              className="bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
+              required
+            />
 
             <Button
               type="submit"

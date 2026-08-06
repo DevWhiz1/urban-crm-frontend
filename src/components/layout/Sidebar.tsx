@@ -145,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isDesktopExpanded = tr
   const { user } = useAuth();
   const userRole = user?.role || 'Client';
 
-  const [expandedItems, setExpandedItems] = useState<string[]>(['projects', 'project-contracts', 'payments', 'contractors', 'clients']);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = isDesktopExpanded || isHovered;
 
@@ -169,8 +169,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isDesktopExpanded = tr
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
       prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
+        ? []
+        : [itemId]
     );
   };
 
@@ -263,18 +263,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isDesktopExpanded = tr
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Mobile Close Button */}
-        <div className="lg:hidden flex justify-end p-4">
-          <button
-            onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Logo */}
-        <div className={`p-4 border-b border-gray-200 flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} h-16`}>
+        {/* Logo and Mobile Close Button */}
+        <div className={`p-4 border-b border-gray-200 flex items-center ${isExpanded ? 'justify-between' : 'justify-center'} h-16`}>
           <div className="flex items-center gap-3 overflow-hidden">
             <img src="/logo.png" alt="Urban Design" className="w-8 h-8 flex-shrink-0 object-contain" />
             {isExpanded && (
@@ -284,6 +274,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isDesktopExpanded = tr
               </div>
             )}
           </div>
+          {isExpanded && (
+            <button
+              onClick={onToggle}
+              className="lg:hidden p-1.5 -mr-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          )}
         </div>
 
         {/* Navigation */}

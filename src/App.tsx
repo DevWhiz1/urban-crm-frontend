@@ -27,11 +27,12 @@ import EmployeeForm from './components/employees/EmployeeForm';
 import EmployeeView from './components/employees/EmployeeView';
 import ExpensesManagement from './components/expenses/ExpensesManagement';
 import ExpenseForm from './components/expenses/ExpenseForm';
+import { NotFound } from './components/NotFound';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
@@ -72,6 +73,9 @@ function App() {
 
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          
+          {/* 404 Not Found */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>
