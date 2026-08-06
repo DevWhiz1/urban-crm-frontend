@@ -16,7 +16,17 @@ export const expenseApi = {
   },
 
   // Expenses
-  getExpenses: async (params?: { page?: number; limit?: number; search?: string; expenseType?: string }): Promise<any> => {
+  getExpenses: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    expenseType?: string;
+    category?: string;
+    project?: string;
+    employee?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<any> => {
     const response = await apiClient.get('/api/expense', { params });
     return response.data;
   },

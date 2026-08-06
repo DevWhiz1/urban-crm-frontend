@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit2, Trash2, Paperclip, Eye } from 'lucide-react';
-import { Expense } from '../../types/expense';
+import { Expense, ExpenseCategory } from '../../types/expense';
 
 interface Props {
   expenses: Expense[];

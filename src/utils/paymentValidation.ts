@@ -12,6 +12,10 @@ export const validatePaymentForm = (data: PaymentFormData): PaymentFormErrors =>
     errors.contractor = 'Contractor selection is required';
   }
 
+  if (!data.contract.trim()) {
+    errors.contract = 'Contract selection is required';
+  }
+
   if (!data.amount.trim()) {
     errors.amount = 'Payment amount is required';
   } else if (isNaN(parseFloat(data.amount)) || parseFloat(data.amount) <= 0) {

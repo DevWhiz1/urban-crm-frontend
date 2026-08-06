@@ -35,9 +35,11 @@ import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import { fetchAllProjects, fetchProjectPaymentSummary } from '../services/projectSummaryApi';
 import { updatePayment, deletePayment } from '../services/paymentApi';
+import { deleteMaterialPayment } from '../services/materialPaymentApi';
 import { formatPKRCurrency } from '../utils/paymentValidation';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { PaymentEditModal } from './PaymentEditModal';
+import { MaterialEditModal } from './MaterialEditModal';
 
 interface Project {
     _id: string;
@@ -54,6 +56,8 @@ interface PaymentSummary {
     totalPaymentReceived: number;
     totalDebits: number;
     totalMaterialPayments: number;
+    materialPurchaseCost: number;
+    materialReturnAmount: number;
     net: number;
     payments: Payment[];
     materials: Material[];
@@ -61,6 +65,7 @@ interface PaymentSummary {
 
 interface Payment {
     _id: string;
+    paymentId: string;
     project: string;
     contractor?: {
         _id: string;
@@ -94,8 +99,13 @@ interface Material {
     MaterialQuantity: number;
     MaterialRate: number;
     totalAmount: number;
+    transactionType?: 'purchase' | 'return';
     date: string;
     createdAt: string;
+    createdBy?: {
+        _id: string;
+        userName: string;
+    } | null;
 }
 
 export const ProjectPaymentSummary: React.FC = () => {
@@ -111,11 +121,13 @@ export const ProjectPaymentSummary: React.FC = () => {
     const [selectedPaymentDetail, setSelectedPaymentDetail] = useState<Payment | null>(null);
     const [selectedMaterialDetail, setSelectedMaterialDetail] = useState<Material | null>(null);
     const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+    const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
         paymentId: '',
         paymentName: '',
-        isInactive: false
+        isInactive: false,
+        isMaterial: false
     });
     const [zoomImage, setZoomImage] = useState<string | null>(null);
 
@@ -124,6 +136,8 @@ export const ProjectPaymentSummary: React.FC = () => {
     const [typeFilter, setTypeFilter] = useState('ALL');
     const [contractorFilter, setContractorFilter] = useState('ALL');
     const [providerFilter, setProviderFilter] = useState('ALL');
+    const [materialDetailFilter, setMaterialDetailFilter] = useState('ALL');
+    const [materialTransactionTypeFilter, setMaterialTransactionTypeFilter] = useState('ALL');
     const [methodFilter, setMethodFilter] = useState('ALL');
     const [sortBy, setSortBy] = useState('date_desc');
 
@@ -141,10 +155,9 @@ export const ProjectPaymentSummary: React.FC = () => {
         loadProjects();
     }, []);
 
-    // Reset pagination on filter or tab change
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, searchTerm, typeFilter, contractorFilter, providerFilter, methodFilter, sortBy, selectedProject]);
+    }, [activeTab, searchTerm, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, selectedProject]);
 
     const loadProjects = async () => {
         try {
@@ -176,6 +189,8 @@ export const ProjectPaymentSummary: React.FC = () => {
         setTypeFilter('ALL');
         setContractorFilter('ALL');
         setProviderFilter('ALL');
+        setMaterialDetailFilter('ALL');
+        setMaterialTransactionTypeFilter('ALL');
         setMethodFilter('ALL');
         setSortBy('date_desc');
         setCurrentPage(1);
@@ -199,7 +214,18 @@ export const ProjectPaymentSummary: React.FC = () => {
             isOpen: true,
             paymentId: payment._id,
             paymentName: `Payment of ${formatPKRCurrency(payment.amount.toString())}`,
-            isInactive: payment.isActive === false
+            isInactive: payment.isActive === false,
+            isMaterial: false
+        });
+    };
+
+    const handleInitiateMaterialDelete = (material: Material) => {
+        setDeleteModal({
+            isOpen: true,
+            paymentId: material._id,
+            paymentName: `Material of ${formatPKRCurrency(material.totalAmount.toString())}`,
+            isInactive: false,
+            isMaterial: true
         });
     };
 
@@ -242,21 +268,48 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     const handleConfirmDeletePayment = async () => {
         try {
-            await deletePayment(deleteModal.paymentId);
-            if (selectedProject) {
-                setSelectedProject(prev => {
-                    if (!prev) return prev;
-                    return {
-                        ...prev,
-                        payments: prev.payments.filter(p => p._id !== deleteModal.paymentId)
-                    };
-                });
+            if (deleteModal.isMaterial) {
+                await deleteMaterialPayment(deleteModal.paymentId);
+                if (selectedProject) {
+                    setSelectedProject(prev => {
+                        if (!prev) return prev;
+                        return {
+                            ...prev,
+                            materials: prev.materials.filter(m => m._id !== deleteModal.paymentId)
+                        };
+                    });
+                }
+                showNotification('success', 'Material payment deleted successfully');
+            } else {
+                await deletePayment(deleteModal.paymentId);
+                if (selectedProject) {
+                    setSelectedProject(prev => {
+                        if (!prev) return prev;
+                        return {
+                            ...prev,
+                            payments: prev.payments.filter(p => p._id !== deleteModal.paymentId)
+                        };
+                    });
+                }
+                showNotification('success', 'Payment deleted successfully');
             }
-            showNotification('success', 'Payment deleted successfully');
         } catch (error) {
-            showNotification('error', 'Failed to delete payment.');
+            showNotification('error', `Failed to delete ${deleteModal.isMaterial ? 'material' : 'payment'}.`);
             throw error;
         }
+    };
+
+    const handleMaterialUpdated = (updatedMaterial: any) => {
+        if (selectedProject) {
+            setSelectedProject(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    materials: prev.materials.map(m => m._id === updatedMaterial._id ? { ...m, ...updatedMaterial } : m)
+                };
+            });
+        }
+        showNotification('success', 'Material updated successfully');
     };
 
     const handlePaymentUpdated = (updatedPayment: any) => {
@@ -308,8 +361,10 @@ export const ProjectPaymentSummary: React.FC = () => {
                 m.totalAmount.toString().includes(searchTerm);
 
             const matchesProvider = providerFilter === 'ALL' || m.materialProvider === providerFilter;
+            const matchesMaterialDetail = materialDetailFilter === 'ALL' || m.materialDetail === materialDetailFilter;
+            const matchesType = materialTransactionTypeFilter === 'ALL' || (m.transactionType || 'purchase') === materialTransactionTypeFilter;
 
-            return matchesSearch && matchesProvider;
+            return matchesSearch && matchesProvider && matchesMaterialDetail && matchesType;
         }).sort((a, b) => {
             if (sortBy === 'date_desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
             if (sortBy === 'date_asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -317,7 +372,7 @@ export const ProjectPaymentSummary: React.FC = () => {
             if (sortBy === 'amount_asc') return a.totalAmount - b.totalAmount;
             return 0;
         });
-    }, [selectedProject, searchTerm, providerFilter, sortBy]);
+    }, [selectedProject, searchTerm, providerFilter, materialDetailFilter, sortBy]);
 
     // Unique filter options
     const uniqueContractors = useMemo(() => {
@@ -334,6 +389,15 @@ export const ProjectPaymentSummary: React.FC = () => {
         const set = new Set<string>();
         selectedProject.materials.forEach(m => {
             if (m.materialProvider) set.add(m.materialProvider);
+        });
+        return Array.from(set);
+    }, [selectedProject]);
+
+    const uniqueMaterialDetails = useMemo(() => {
+        if (!selectedProject?.materials) return [];
+        const set = new Set<string>();
+        selectedProject.materials.forEach(m => {
+            if (m.materialDetail) set.add(m.materialDetail);
         });
         return Array.from(set);
     }, [selectedProject]);
@@ -613,7 +677,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                         {/* Material Payments (Teal Color Palette) */}
                         <div className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm flex flex-col justify-between">
                             <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Material Cost</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Net Material Cost</span>
                                 <div className="w-7 h-7 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center border border-teal-100">
                                     <PackageCheck className="w-4 h-4" />
                                 </div>
@@ -622,7 +686,10 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 <p className="text-base sm:text-lg font-bold text-teal-600 truncate" title={formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}>
                                     {formatPKRCurrency(selectedProject.totalMaterialPayments.toString())}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">{selectedProject.materials.length} Materials Recorded</span>
+                                <span className="text-[10px] text-slate-500 font-medium flex gap-1">
+                                    <span className="text-teal-600" title="Purchase Cost">P: {formatPKRCurrency(selectedProject.materialPurchaseCost?.toString() || '0')}</span> | 
+                                    <span className="text-rose-600" title="Returned Amount">R: {formatPKRCurrency(selectedProject.materialReturnAmount?.toString() || '0')}</span>
+                                </span>
                             </div>
                         </div>
 
@@ -743,14 +810,37 @@ export const ProjectPaymentSummary: React.FC = () => {
                                     </>
                                 ) : (
                                     <>
+                                        {/* Type Filter */}
+                                        <select
+                                            value={materialTransactionTypeFilter}
+                                            onChange={(e) => setMaterialTransactionTypeFilter(e.target.value)}
+                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        >
+                                            <option value="ALL">All Transaction Types</option>
+                                            <option value="purchase">Purchase (Outflow)</option>
+                                            <option value="return">Return (Inflow)</option>
+                                        </select>
+
                                         {/* Provider Filter */}
                                         <select
                                             value={providerFilter}
                                             onChange={(e) => setProviderFilter(e.target.value)}
                                             className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                         >
-                                            <option value="ALL">All Material Providers</option>
+                                            <option value="ALL">All Providers</option>
                                             {uniqueProviders.map(name => (
+                                                <option key={name} value={name}>{name}</option>
+                                            ))}
+                                        </select>
+
+                                        {/* Material Detail Filter */}
+                                        <select
+                                            value={materialDetailFilter}
+                                            onChange={(e) => setMaterialDetailFilter(e.target.value)}
+                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                        >
+                                            <option value="ALL">All Material Types</option>
+                                            {uniqueMaterialDetails.map(name => (
                                                 <option key={name} value={name}>{name}</option>
                                             ))}
                                         </select>
@@ -798,6 +888,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                                <th className="py-3 px-4">Payment ID</th>
                                                 <th className="py-3 px-4">Date</th>
                                                 <th className="py-3 px-4">Contractor</th>
                                                 <th className="py-3 px-4">Type</th>
@@ -817,6 +908,10 @@ export const ProjectPaymentSummary: React.FC = () => {
                                                         className="hover:bg-slate-50 transition-colors group cursor-pointer"
                                                         onClick={() => setSelectedPaymentDetail(payment)}
                                                     >
+                                                        {/* Payment ID */}
+                                                        <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-800">
+                                                            {payment.paymentId || 'N/A'}
+                                                        </td>
                                                         {/* Date */}
                                                         <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
                                                             {new Date(payment.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -941,6 +1036,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                                 <th className="py-3 px-4">Provider</th>
                                                 <th className="py-3 px-4">Quantity & Rate</th>
                                                 <th className="py-3 px-4 text-right">Total Amount</th>
+                                                <th className="py-3 px-4">Created By</th>
                                                 <th className="py-3 px-4 text-center">Action</th>
                                             </tr>
                                         </thead>
@@ -958,7 +1054,14 @@ export const ProjectPaymentSummary: React.FC = () => {
 
                                                     {/* Material Detail */}
                                                     <td className="py-3 px-4 font-semibold text-slate-900">
-                                                        {material.materialDetail}
+                                                        <div className="flex items-center gap-2">
+                                                            {material.materialDetail}
+                                                            {material.transactionType === 'return' && (
+                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                                                                    RETURNED
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
 
                                                     {/* Provider */}
@@ -972,22 +1075,49 @@ export const ProjectPaymentSummary: React.FC = () => {
                                                     </td>
 
                                                     {/* Total Amount */}
-                                                    <td className="py-3 px-4 text-right font-bold text-teal-600 whitespace-nowrap text-sm">
+                                                    <td className={`py-3 px-4 text-right font-bold whitespace-nowrap text-sm ${material.transactionType === 'return' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                         {formatPKRCurrency(material.totalAmount.toString())}
+                                                    </td>
+
+                                                    {/* Created By */}
+                                                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 font-medium">
+                                                        {material.createdBy?.userName || 'System'}
                                                     </td>
 
                                                     {/* Action */}
                                                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedMaterialDetail(material);
-                                                            }}
-                                                            className="px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors flex items-center gap-1 mx-auto"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" />
-                                                            Details
-                                                        </button>
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedMaterialDetail(material);
+                                                                }}
+                                                                className="p-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                                                title="View Details"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingMaterial(material);
+                                                                }}
+                                                                className="p-1.5 text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                                                                title="Edit Material"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleInitiateMaterialDelete(material);
+                                                                }}
+                                                                className="p-1.5 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-md transition-colors"
+                                                                title="Delete Material"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -1265,6 +1395,11 @@ export const ProjectPaymentSummary: React.FC = () => {
                                         <span className="text-slate-400 block font-medium">Unit Rate</span>
                                         <span className="font-bold text-slate-900 text-sm">{formatPKRCurrency(selectedMaterialDetail.MaterialRate.toString())}</span>
                                     </div>
+
+                                    <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100">
+                                        <span className="text-slate-400 block font-medium">Created By</span>
+                                        <span className="font-bold text-slate-900 text-sm">{selectedMaterialDetail.createdBy?.userName || 'System'}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1308,6 +1443,13 @@ export const ProjectPaymentSummary: React.FC = () => {
                     onClose={() => setEditingPayment(null)}
                     payment={editingPayment as any}
                     onSuccess={handlePaymentUpdated}
+                />
+
+                <MaterialEditModal
+                    isOpen={!!editingMaterial}
+                    onClose={() => setEditingMaterial(null)}
+                    material={editingMaterial as any}
+                    onSuccess={handleMaterialUpdated}
                 />
 
                 <DeleteConfirmationModal

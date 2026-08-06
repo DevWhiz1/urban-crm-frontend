@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, FileText, Receipt } from 'lucide-react';
+import { X, Save, FileText, Receipt, Upload, CheckCircle } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { updatePayment } from '../services/paymentApi';
+import { uploadApi } from '../services/uploadApi';
 
 interface Payment {
     _id: string;
+    paymentId?: string;
     amount: number;
     paymentMethod: string;
     transactionId?: string;
@@ -43,7 +45,23 @@ export const PaymentEditModal: React.FC<PaymentEditModalProps> = ({
         notes: ''
     });
     const [loading, setLoading] = useState(false);
+    const [uploadingReceipt, setUploadingReceipt] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingReceipt(true);
+            const data = await uploadApi.uploadFile(file);
+            setFormData(prev => ({ ...prev, receiptPhoto: data.url }));
+        } catch (error) {
+            setError('Failed to upload receipt.');
+        } finally {
+            setUploadingReceipt(false);
+        }
+    };
 
     useEffect(() => {
         if (payment && isOpen) {
@@ -176,11 +194,27 @@ export const PaymentEditModal: React.FC<PaymentEditModalProps> = ({
                                 <label className="text-sm font-medium text-slate-700">Notes & Receipt URL</label>
                             </div>
                             <div className="space-y-4">
-                                <Input
-                                    value={formData.receiptPhoto}
-                                    onChange={handleInputChange('receiptPhoto')}
-                                    placeholder="Receipt Photo URL"
-                                />
+                                <div className="flex items-center space-x-4">
+                                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                        <div className="px-4 py-2 border border-slate-300 rounded-md flex items-center space-x-2 hover:bg-slate-50 transition-colors">
+                                            <Upload className="w-4 h-4" />
+                                            <span className="text-sm">{uploadingReceipt ? 'Uploading...' : 'Upload Receipt Photo'}</span>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            className="sr-only"
+                                            accept="image/*,.pdf"
+                                            onChange={handleFileUpload}
+                                            disabled={uploadingReceipt}
+                                        />
+                                    </label>
+                                    {formData.receiptPhoto && (
+                                        <div className="text-sm text-emerald-600 flex items-center font-medium">
+                                            <CheckCircle className="w-4 h-4 mr-1.5" />
+                                            Uploaded
+                                        </div>
+                                    )}
+                                </div>
                                 <Textarea
                                     value={formData.notes}
                                     onChange={handleInputChange('notes')}

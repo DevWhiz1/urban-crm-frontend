@@ -7,10 +7,14 @@ import {
     Calendar,
     Banknote,
     Truck,
-    Hash,
-    FileText,
     User,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Receipt,
+    Upload,
+    CreditCard,
+    CheckCircle,
+    Hash,
+    FileText
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -19,14 +23,33 @@ import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
 import { MaterialExcelImportModal } from './MaterialExcelImportModal';
 import { createMaterialPayment, fetchProjectsForMaterial } from '../services/materialPaymentApi';
+import { uploadApi } from '../services/uploadApi';
 import { validateMaterialPaymentForm, hasMaterialPaymentErrors, formatPKRCurrency } from '../utils/materialPaymentValidation';
+import { getPaymentStatusColor } from '../utils/paymentValidation';
+import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { MaterialPaymentFormData, MaterialPaymentFormErrors, MaterialPaymentNotificationState, MaterialProjectOption } from '../types/materialPayment';
+
+const MATERIAL_TYPES = [
+    { value: 'Cement', label: 'Cement' },
+    { value: 'Steel', label: 'Steel' },
+    { value: 'Bricks', label: 'Bricks' },
+    { value: 'Sand', label: 'Sand' },
+    { value: 'Crush', label: 'Crush' },
+    { value: 'Wood', label: 'Wood' },
+    { value: 'Paint', label: 'Paint' },
+    { value: 'Tiles', label: 'Tiles' },
+    { value: 'Electrical', label: 'Electrical' },
+    { value: 'Plumbing', label: 'Plumbing' },
+    { value: 'Other', label: 'Other (Specify)' }
+];
 
 export const MaterialPaymentForm: React.FC = () => {
     const [projects, setProjects] = useState<MaterialProjectOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [uploadingReceipt, setUploadingReceipt] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isOtherMaterial, setIsOtherMaterial] = useState(false);
     const [notification, setNotification] = useState<MaterialPaymentNotificationState>({
         show: false,
         type: 'success',
@@ -40,7 +63,11 @@ export const MaterialPaymentForm: React.FC = () => {
         MaterialQuantity: '',
         MaterialRate: '',
         totalAmount: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        status: 'paid',
+        paymentMethod: 'online',
+        transactionType: 'purchase',
+        receiptPhoto: ''
     });
 
     const [errors, setErrors] = useState<MaterialPaymentFormErrors>({});
@@ -116,7 +143,11 @@ export const MaterialPaymentForm: React.FC = () => {
                 MaterialQuantity: '',
                 MaterialRate: '',
                 totalAmount: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
+                status: 'paid',
+                paymentMethod: 'online',
+                transactionType: 'purchase',
+                receiptPhoto: ''
             });
 
             showNotification('success', 'Material payment recorded successfully!');
@@ -135,15 +166,37 @@ export const MaterialPaymentForm: React.FC = () => {
             MaterialQuantity: '',
             MaterialRate: '',
             totalAmount: '',
-            date: new Date().toISOString().split('T')[0]
+            date: new Date().toISOString().split('T')[0],
+            status: 'paid',
+            paymentMethod: 'online',
+            transactionType: 'purchase',
+            receiptPhoto: ''
         });
         setErrors({});
     };
 
-    const projectOptions = projects.map(project => ({
-        value: project._id,
-        label: `${project.name} (${project.projectCode}) - ${project.status}`
-    }));
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingReceipt(true);
+            const data = await uploadApi.uploadFile(file);
+            setFormData(prev => ({ ...prev, receiptPhoto: data.url }));
+            showNotification('success', 'Receipt uploaded successfully!');
+        } catch (error) {
+            showNotification('error', 'Failed to upload receipt.');
+        } finally {
+            setUploadingReceipt(false);
+        }
+    };
+
+    const projectOptions = projects
+        .filter(project => project.projectType === 'withMaterial')
+        .map(project => ({
+            value: project._id,
+            label: `${project.name} (${project.projectCode}) - ${project.status}`
+        }));
 
     const selectedProject = projects.find(p => p._id === formData.project);
 
@@ -231,15 +284,50 @@ export const MaterialPaymentForm: React.FC = () => {
                                     <h3 className="text-lg font-medium text-gray-900">Material Details</h3>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <Textarea
-                                        label="Material Detail"
-                                        value={formData.materialDetail}
-                                        onChange={handleInputChange('materialDetail')}
-                                        error={errors.materialDetail}
-                                        placeholder="Describe the materials purchased (e.g., Cement bags, Steel rods, Paint, etc.)"
-                                        rows={3}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                    <Select
+                                        label="Transaction Type"
+                                        options={[
+                                            { value: 'purchase', label: 'Purchase' },
+                                            { value: 'return', label: 'Return (Refund)' }
+                                        ]}
+                                        value={formData.transactionType}
+                                        onChange={handleInputChange('transactionType')}
+                                        required
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <Select
+                                            label="Material Type"
+                                            options={MATERIAL_TYPES}
+                                            value={isOtherMaterial ? 'Other' : (MATERIAL_TYPES.find(m => m.value === formData.materialDetail) ? formData.materialDetail : (formData.materialDetail ? 'Other' : ''))}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'Other') {
+                                                    setIsOtherMaterial(true);
+                                                    setFormData(prev => ({ ...prev, materialDetail: '' }));
+                                                } else {
+                                                    setIsOtherMaterial(false);
+                                                    setFormData(prev => ({ ...prev, materialDetail: val }));
+                                                }
+                                            }}
+                                            placeholder="Select material type"
+                                            required
+                                        />
+                                        
+                                        {isOtherMaterial && (
+                                            <Textarea
+                                                label="Specify Material Detail"
+                                                value={formData.materialDetail}
+                                                onChange={handleInputChange('materialDetail')}
+                                                error={errors.materialDetail}
+                                                placeholder="Describe the materials purchased (e.g., Cement bags, Steel rods, Paint, etc.)"
+                                                rows={2}
+                                            />
+                                        )}
+                                    </div>
 
                                     <Input
                                         label="Material Provider"
@@ -333,6 +421,80 @@ export const MaterialPaymentForm: React.FC = () => {
                                         error={errors.date}
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            {/* Payment Method, Status & Receipt */}
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <CreditCard className="w-4 h-4 text-indigo-600" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Payment Status & Method</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div>
+                                        <Select
+                                            label="Payment Status"
+                                            options={PAYMENT_STATUSES}
+                                            value={formData.status}
+                                            onChange={handleInputChange('status')}
+                                            placeholder="Select status"
+                                        />
+                                        {formData.status && (
+                                            <div className="mt-2">
+                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(formData.status)}`}>
+                                                    {PAYMENT_STATUSES.find(s => s.value === formData.status)?.label}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <Select
+                                        label="Payment Method"
+                                        options={PAYMENT_METHODS}
+                                        value={formData.paymentMethod}
+                                        onChange={handleInputChange('paymentMethod')}
+                                        placeholder="Select payment method"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Receipt */}
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Receipt className="w-4 h-4 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Receipt</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-gray-700">Receipt Photo (Optional)</label>
+                                        <div className="flex items-center space-x-4">
+                                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                                <div className="px-4 py-2 border border-gray-300 rounded-md flex items-center space-x-2">
+                                                    <Upload className="w-4 h-4" />
+                                                    <span>{uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}</span>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="sr-only"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    disabled={uploadingReceipt}
+                                                />
+                                            </label>
+                                            {formData.receiptPhoto && (
+                                                <div className="text-sm text-green-600 flex items-center">
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    Uploaded
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

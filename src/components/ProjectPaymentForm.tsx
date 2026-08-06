@@ -11,8 +11,10 @@ import {
     CheckCircle,
     TrendingUp,
     TrendingDown,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Upload
 } from 'lucide-react';
+import { uploadApi } from '../services/uploadApi';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
@@ -28,6 +30,7 @@ export const ProjectPaymentForm: React.FC = () => {
     const [projects, setProjects] = useState<ProjectPaymentProjectOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [uploadingReceipt, setUploadingReceipt] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [notification, setNotification] = useState<ProjectPaymentNotificationState>({
         show: false,
@@ -136,6 +139,22 @@ export const ProjectPaymentForm: React.FC = () => {
         setErrors({});
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingReceipt(true);
+            const data = await uploadApi.uploadFile(file);
+            setFormData(prev => ({ ...prev, receiptPhoto: data.url }));
+            showNotification('success', 'Receipt uploaded successfully!');
+        } catch (error) {
+            showNotification('error', 'Failed to upload receipt.');
+        } finally {
+            setUploadingReceipt(false);
+        }
+    };
+
     const projectOptions = projects.map(project => ({
         value: project._id,
         label: `${project.name} (${project.projectCode}) - ${project.status}`
@@ -229,26 +248,12 @@ export const ProjectPaymentForm: React.FC = () => {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                                     <div>
-                                        <Select
-                                            label="Payment Type"
-                                            options={PAYMENT_TYPES}
-                                            value={formData.type}
-                                            onChange={handleInputChange('type')}
-                                            error={errors.type}
-                                            required
-                                            placeholder="Select type"
-                                        />
-                                        {formData.type && (
-                                            <div className="mt-2">
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPaymentTypeColor(formData.type)}`}>
-                                                    {formData.type === 'credit' ? (
-                                                        <><TrendingUp className="w-3 h-3 inline mr-1" />Credit</>
-                                                    ) : (
-                                                        <><TrendingDown className="w-3 h-3 inline mr-1" />Debit</>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Payment Type</label>
+                                        <div className="mt-2">
+                                            <span className={`px-2 py-1 text-sm font-medium rounded-full ${getPaymentTypeColor('credit')}`}>
+                                                <TrendingUp className="w-4 h-4 inline mr-1" />Credit
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -338,13 +343,30 @@ export const ProjectPaymentForm: React.FC = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <Input
-                                        label="Receipt Photo URL (Optional)"
-                                        value={formData.receiptPhoto}
-                                        onChange={handleInputChange('receiptPhoto')}
-                                        error={errors.receiptPhoto}
-                                        placeholder="https://example.com/receipt.jpg"
-                                    />
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-gray-700">Receipt Photo (Optional)</label>
+                                        <div className="flex items-center space-x-4">
+                                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                                <div className="px-4 py-2 border border-gray-300 rounded-md flex items-center space-x-2">
+                                                    <Upload className="w-4 h-4" />
+                                                    <span>{uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}</span>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="sr-only"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    disabled={uploadingReceipt}
+                                                />
+                                            </label>
+                                            {formData.receiptPhoto && (
+                                                <div className="text-sm text-green-600 flex items-center">
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    Uploaded
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <div className="lg:row-span-1">
                                         <Textarea

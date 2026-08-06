@@ -1,5 +1,6 @@
 export interface Payment {
   _id: string;
+  paymentId: string;
   project: string;
   contractor: string;
   contract?: string;

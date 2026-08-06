@@ -17,8 +17,10 @@ import {
   Handshake,
   FileSpreadsheet,
   Plus,
-  Minus
+  Minus,
+  Upload
 } from 'lucide-react';
+import { uploadApi } from '../services/uploadApi';
 import { ExcelImportModal } from './ExcelImportModal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -55,6 +57,7 @@ export const PaymentForm: React.FC = () => {
   const [filteredContracts, setFilteredContracts] = useState<PaymentContractOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [notification, setNotification] = useState<PaymentNotificationState>({
@@ -163,7 +166,7 @@ export const PaymentForm: React.FC = () => {
         contract: '',
         date: new Date().toISOString().split('T')[0],
         amount: '',
-        paymentMethod: '',
+        paymentMethod: 'online',
         transactionId: '',
         workDescription: '',
         status: 'paid',
@@ -186,7 +189,7 @@ export const PaymentForm: React.FC = () => {
       contract: '',
       date: new Date().toISOString().split('T')[0],
       amount: '',
-      paymentMethod: '',
+      paymentMethod: 'online',
       transactionId: '',
       workDescription: '',
       status: 'paid',
@@ -194,6 +197,22 @@ export const PaymentForm: React.FC = () => {
       notes: ''
     });
     setErrors({});
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingReceipt(true);
+      const data = await uploadApi.uploadFile(file);
+      setFormData(prev => ({ ...prev, receiptPhoto: data.url }));
+      showNotification('success', 'Receipt uploaded successfully!');
+    } catch (error) {
+      showNotification('error', 'Failed to upload receipt.');
+    } finally {
+      setUploadingReceipt(false);
+    }
   };
 
   const projectOptions = projects.map(project => ({
@@ -344,11 +363,12 @@ export const PaymentForm: React.FC = () => {
                 <div className="grid grid-cols-1 gap-6">
                   <div>
                     <Select
-                      label="Project Contract (Optional)"
+                      label="Project Contract"
                       options={contractOptions}
                       value={formData.contract}
                       onChange={handleInputChange('contract')}
                       error={errors.contract}
+                      required
                       placeholder={
                         !formData.project || !formData.contractor
                           ? "Please select project and contractor first"
@@ -389,9 +409,9 @@ export const PaymentForm: React.FC = () => {
                         </p>
                       </div>
                     ) : filteredContracts.length === 0 && formData.project && formData.contractor ? (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-600">
-                          ℹ️ No contracts found between this project and contractor. You can still record the payment without linking to a contract.
+                      <div className="mt-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <p className="text-sm text-red-600">
+                          ⚠️ No contracts found. You must create a contract for this contractor on this project before recording a payment.
                         </p>
                       </div>
                     ) : null}
@@ -543,13 +563,30 @@ export const PaymentForm: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Input
-                        label="Receipt Photo URL (Optional)"
-                        value={formData.receiptPhoto}
-                        onChange={handleInputChange('receiptPhoto')}
-                        error={errors.receiptPhoto}
-                        placeholder="https://example.com/receipt.jpg"
-                      />
+                      <div className="space-y-4">
+                        <label className="block text-sm font-medium text-gray-700">Receipt Photo (Optional)</label>
+                        <div className="flex items-center space-x-4">
+                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                <div className="px-4 py-2 border border-gray-300 rounded-md flex items-center space-x-2">
+                                    <Upload className="w-4 h-4" />
+                                    <span>{uploadingReceipt ? 'Uploading...' : 'Upload Receipt'}</span>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="sr-only"
+                                    accept="image/*"
+                                    onChange={handleFileUpload}
+                                    disabled={uploadingReceipt}
+                                />
+                            </label>
+                            {formData.receiptPhoto && (
+                                <div className="text-sm text-green-600 flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Uploaded
+                                </div>
+                            )}
+                        </div>
+                      </div>
 
                       <div className="lg:row-span-1">
                         <Textarea

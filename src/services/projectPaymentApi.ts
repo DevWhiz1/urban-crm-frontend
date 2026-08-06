@@ -14,6 +14,7 @@ export const createProjectPayment = async (data: ProjectPaymentFormData): Promis
       amount: parseFloat(data.paymentAmount),
       transactionId: data.transactionId || undefined,
       receiptPhoto: data.receiptPhoto || undefined,
+      paymentMethod: data.paymentMethod || 'online',
       notes: data.notes || undefined,
       createdBy: user.id || user._id,
     };

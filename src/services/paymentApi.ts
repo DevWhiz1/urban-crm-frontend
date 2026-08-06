@@ -21,6 +21,7 @@ export const createPayment = async (data: PaymentFormData): Promise<void> => {
       transactionId: data.transactionId || undefined,
       workDescription: data.workDescription || undefined,
       receiptPhoto: data.receiptPhoto || undefined,
+      paymentMethod: data.paymentMethod || 'online',
       notes: data.notes || undefined,
       createdBy: user.id || user._id
     };
@@ -97,13 +98,14 @@ export const bulkImportPayments = async (data: {
   }
 };
 
-export const updatePayment = async (id: string, data: Partial<PaymentFormData>): Promise<void> => {
+export const updatePayment = async (id: string, data: Partial<PaymentFormData>): Promise<any> => {
   try {
     const paymentData = {
       ...data,
       amount: data.amount ? parseFloat(data.amount.toString()) : undefined,
     };
-    await apiClient.put(`/api/payment/update-payment/${id}`, paymentData);
+    const response = await apiClient.put(`/api/payment/update-payment/${id}`, paymentData);
+    return response.data.payment;
   } catch (error) {
     console.error('Failed to update payment:', error);
     throw new Error('Failed to update payment. Please try again.');

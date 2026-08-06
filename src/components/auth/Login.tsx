@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building2, CheckCircle, Users, Award, Clock } from 'lucide-react';
+import { Mail, Lock, Building2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
@@ -34,13 +34,13 @@ export const Login: React.FC = () => {
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
+
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
     }
@@ -51,7 +51,7 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
@@ -74,113 +74,83 @@ export const Login: React.FC = () => {
     }
   };
 
-  const features = [
-    { icon: CheckCircle, text: 'Quality Materials', color: 'text-green-600' },
-    { icon: Users, text: 'Expert Team', color: 'text-blue-600' },
-    { icon: Clock, text: 'Timely Delivery', color: 'text-purple-600' },
-    { icon: Award, text: 'Sustainable Design', color: 'text-orange-600' }
-  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Left Section - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 p-12 flex-col justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <div className="flex items-center mb-8">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-white">Urban Design</h1>
-          </div>
-          
-          <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-            Welcome Back to Your
-            <br />
-            Construction Hub
-          </h2>
-          
-          <p className="text-blue-100 text-lg mb-12 leading-relaxed">
-            Manage your projects, contractors, and teams with our comprehensive construction management platform.
-          </p>
-
-          <div className="grid grid-cols-2 gap-6">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <feature.icon className="w-8 h-8 text-white mb-3" />
-                <h3 className="text-white font-semibold text-lg">{feature.text}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen relative flex items-center justify-center lg:justify-between lg:px-24 overflow-hidden">
+      {/* Full Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/banner.jpeg"
+          alt="Construction Banner"
+          className="w-full h-full object-cover scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-slate-900/60 to-slate-900/80"></div>
       </div>
 
-      {/* Right Section - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="lg:hidden flex items-center justify-center mb-6">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-3">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Urban Design</h1>
+      {/* Left side catchy text - hidden on mobile */}
+      <div className="hidden lg:flex flex-col relative z-10 max-w-2xl text-white">
+        <div className="w-20 h-1.5 bg-blue-500 mb-8 rounded-full shadow-lg shadow-blue-500/50"></div>
+        <h1 className="text-6xl font-extrabold mb-6 leading-tight drop-shadow-xl tracking-tight">
+          Build with <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Precision.</span><br />
+          Manage with <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Ease.</span>
+        </h1>
+        <p className="text-xl text-gray-300 drop-shadow-md leading-relaxed font-light max-w-lg">
+          Welcome to Urban Design Construction. The ultimate platform to streamline your projects, contractors, and financial workflows.
+        </p>
+      </div>
+
+      {/* Login Card (Glassmorphism) */}
+      <div className="w-full max-w-md relative z-10 m-4">
+        {/* Glass effect background */}
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-white/50"></div>
+
+        <div className="relative z-20 p-8 lg:p-10">
+          <div className="text-center mb-8 flex flex-col items-center">
+            <div className="bg-white p-3 rounded-full shadow-md mb-6 border border-gray-100">
+              <img src="/logo.png" alt="Urban Design Logo" className="h-20 w-auto object-contain" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h2>
-            <p className="text-gray-600">Sign in to access your dashboard</p>
+            <h2 className="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Welcome Back</h2>
+            <p className="text-slate-500 font-medium">Please sign in to your account</p>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  label="Email Address"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange('email')}
-                  error={errors.email}
-                  placeholder="Enter your email"
-                  className="pl-12"
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  label="Password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange('password')}
-                  error={errors.password}
-                  placeholder="Enter your password"
-                  className="pl-12"
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                loading={loading}
-                className="w-full"
-                size="lg"
-              >
-                Sign In
-              </Button>
-            </form>
-
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
-                Don't have an account?{' '}
-                <Link 
-                  to="/signup" 
-                  className="text-blue-600 hover:text-blue-700 font-semibold transition-colors"
-                >
-                  Sign up here
-                </Link>
-              </p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="relative group">
+              <Mail className="absolute left-4 top-[38px] transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors z-10" />
+              <Input
+                label="Email Address"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange('email')}
+                error={errors.email}
+                placeholder="Enter your email"
+                className="pl-12 bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
+                required
+              />
             </div>
-          </div>
+
+            <div className="relative group">
+              <Lock className="absolute left-4 top-[38px] transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-blue-600 transition-colors z-10" />
+              <Input
+                label="Password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange('password')}
+                error={errors.password}
+                placeholder="Enter your password"
+                className="pl-12 bg-slate-50/50 border-slate-200 focus:bg-white hover:bg-slate-50 transition-all rounded-xl"
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              loading={loading}
+              className="w-full h-12 rounded-xl text-lg font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300"
+              size="lg"
+            >
+              Sign In
+            </Button>
+          </form>
         </div>
       </div>
 

@@ -82,6 +82,7 @@ interface ContractPaymentSummary {
 
 interface ContractPayment {
     _id: string;
+    paymentId: string;
     project: string;
     contractor?: {
         _id: string;
@@ -666,6 +667,7 @@ export const ProjectContractPayments: React.FC = () => {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                            <th className="py-3 px-4">Payment ID</th>
                                             <th className="py-3 px-4">Date</th>
                                             <th className="py-3 px-4">Contractor</th>
                                             <th className="py-3 px-4">Type</th>
@@ -685,6 +687,9 @@ export const ProjectContractPayments: React.FC = () => {
                                                     className="hover:bg-slate-50 transition-colors group cursor-pointer"
                                                     onClick={() => setSelectedPaymentDetail(payment)}
                                                 >
+                                                    <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-800">
+                                                        {payment.paymentId || 'N/A'}
+                                                    </td>
                                                     <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
                                                         {new Date(payment.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                                                     </td>

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './components/auth/Login';
-import { Signup } from './components/auth/Signup';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { ContractorForm } from './components/ContractorForm';
@@ -36,7 +35,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={

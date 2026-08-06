@@ -6,6 +6,7 @@ export interface MaterialPayment {
   MaterialQuantity: number;
   MaterialRate: number;
   totalAmount: number;
+  transactionType: 'purchase' | 'return';
   date: string;
 }
 
@@ -16,7 +17,11 @@ export interface MaterialPaymentFormData {
   MaterialQuantity: string;
   MaterialRate: string;
   totalAmount: string;
+  transactionType: 'purchase' | 'return';
   date: string;
+  status: string;
+  paymentMethod: string;
+  receiptPhoto: string;
 }
 
 export interface MaterialPaymentFormErrors {
@@ -40,4 +45,5 @@ export interface MaterialProjectOption {
   name: string;
   projectCode: string;
   status: string;
+  projectType: string;
 }

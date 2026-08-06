@@ -12,10 +12,11 @@ import { fetchAllProjects } from '../../services/projectApi';
 import { employeeApi } from '../../services/employeeApi';
 import { validateExpenseForm, hasExpenseErrors } from '../../utils/expenseValidation';
 import { ExpenseFormData, ExpenseCategory } from '../../types/expense';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+
+const OTHER_CATEGORY_VALUE = '__other__';
 
 export const ExpenseForm: React.FC = () => {
-    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
 
     const [loading, setLoading] = useState(false);
@@ -23,6 +24,8 @@ export const ExpenseForm: React.FC = () => {
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [employees, setEmployees] = useState<any[]>([]);
+    const [isOtherCategory, setIsOtherCategory] = useState(false);
+    const [customCategoryName, setCustomCategoryName] = useState('');
 
     const [notification, setNotification] = useState<{show: boolean, type: 'success'|'error', message: string}>({
         show: false,
@@ -84,6 +87,8 @@ export const ExpenseForm: React.FC = () => {
                 employee: data.employee?._id || '',
                 attachReceipt: data.attachReceipt || '',
             });
+            setIsOtherCategory(false);
+            setCustomCategoryName('');
         } catch (error) {
             showNotification('error', 'Failed to load expense data.');
         }
@@ -101,6 +106,41 @@ export const ExpenseForm: React.FC = () => {
 
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: undefined as any }));
+        }
+    };
+
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        if (value === OTHER_CATEGORY_VALUE) {
+            setIsOtherCategory(true);
+            setFormData(prev => ({ ...prev, category: '' }));
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next.category;
+                delete next.customCategoryName;
+                return next;
+            });
+        } else {
+            setIsOtherCategory(false);
+            setCustomCategoryName('');
+            setFormData(prev => ({ ...prev, category: value }));
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next.category;
+                delete next.customCategoryName;
+                return next;
+            });
+        }
+    };
+
+    const handleCustomCategoryNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCustomCategoryName(e.target.value);
+        if (errors.customCategoryName) {
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next.customCategoryName;
+                return next;
+            });
         }
     };
 
@@ -127,21 +167,81 @@ export const ExpenseForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const validationErrors = validateExpenseForm(formData);
+        let categoryId = formData.category;
+        const preErrors: Record<string, string> = {};
+
+        if (isOtherCategory) {
+            const trimmedName = customCategoryName.trim();
+            if (!trimmedName) {
+                preErrors.customCategoryName = 'New category name is required';
+            }
+
+            // Validate other fields first (skip category until we resolve Other)
+            const otherFieldErrors = validateExpenseForm({ ...formData, category: 'pending' });
+            delete otherFieldErrors.category;
+            Object.assign(preErrors, otherFieldErrors);
+
+            if (hasExpenseErrors(preErrors)) {
+                setErrors(preErrors);
+                showNotification('error', 'Please fix the errors below before submitting.');
+                return;
+            }
+
+            const existingMatch = categories.find(
+                (c) => c.name.toLowerCase() === trimmedName.toLowerCase()
+            );
+
+            try {
+                setLoading(true);
+                if (existingMatch) {
+                    categoryId = existingMatch._id;
+                    setIsOtherCategory(false);
+                    setCustomCategoryName('');
+                    setFormData(prev => ({ ...prev, category: categoryId }));
+                } else {
+                    const newCategory = await expenseApi.createCategory(trimmedName);
+                    setCategories(prev => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
+                    categoryId = newCategory._id;
+                    setIsOtherCategory(false);
+                    setCustomCategoryName('');
+                    setFormData(prev => ({ ...prev, category: categoryId }));
+                }
+            } catch (error: any) {
+                const message = error?.response?.data?.message || '';
+                const isDuplicate = /duplicate|unique|E11000/i.test(message);
+                setErrors({
+                    customCategoryName: isDuplicate
+                        ? 'A category with this name already exists'
+                        : 'Failed to create category. Please try again.',
+                });
+                showNotification(
+                    'error',
+                    isDuplicate
+                        ? 'A category with this name already exists'
+                        : 'Failed to create category. Please try again.'
+                );
+                setLoading(false);
+                return;
+            }
+        }
+
+        const payload = { ...formData, category: categoryId };
+        const validationErrors = validateExpenseForm(payload);
         setErrors(validationErrors);
 
         if (hasExpenseErrors(validationErrors)) {
             showNotification('error', 'Please fix the errors below before submitting.');
+            setLoading(false);
             return;
         }
 
         try {
             setLoading(true);
             if (id) {
-                await expenseApi.updateExpense(id, formData);
+                await expenseApi.updateExpense(id, payload);
                 showNotification('success', 'Expense updated successfully!');
             } else {
-                await expenseApi.createExpense(formData);
+                await expenseApi.createExpense(payload);
                 showNotification('success', 'Expense created successfully!');
                 handleReset();
             }
@@ -153,12 +253,14 @@ export const ExpenseForm: React.FC = () => {
     };
 
     const handleReset = () => {
+        setIsOtherCategory(false);
+        setCustomCategoryName('');
         if (id) {
             loadExpense(id);
         } else {
             setFormData({
                 date: new Date().toISOString().split('T')[0],
-                category: categories.length > 0 ? categories[0]._id : '',
+                category: '',
                 amount: 0,
                 paymentMethod: 'Online',
                 vendor: '',
@@ -173,12 +275,15 @@ export const ExpenseForm: React.FC = () => {
         setErrors({});
     };
 
-    const categoryOptions = categories.map(c => ({ value: c._id, label: c.name }));
+    const categoryOptions = [
+        ...categories.map(c => ({ value: c._id, label: c.name })),
+        { value: OTHER_CATEGORY_VALUE, label: 'Other (add new)' },
+    ];
     const projectOptions = projects.map(p => ({ value: p._id, label: p.title || p.name || 'Unnamed Project' }));
     const employeeOptions = employees.map(e => ({ value: e._id, label: e.fullName }));
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-12">
+        <div className="max-w-4xl mx-auto space-y-6 pb-28 sm:pb-12 px-1 sm:px-0">
             <Breadcrumbs
                 items={[
                     { label: 'Dashboard', path: '/dashboard' },
@@ -226,14 +331,25 @@ export const ExpenseForm: React.FC = () => {
                                     onChange={handleInputChange('date')}
                                     error={errors.date}
                                 />
-                                <Select
-                                    label="Category *"
-                                    options={categoryOptions}
-                                    value={formData.category}
-                                    onChange={handleInputChange('category')}
-                                    error={errors.category}
-                                    placeholder="Select a category"
-                                />
+                                <div className="space-y-4">
+                                    <Select
+                                        label="Category *"
+                                        options={categoryOptions}
+                                        value={isOtherCategory ? OTHER_CATEGORY_VALUE : formData.category}
+                                        onChange={handleCategoryChange}
+                                        error={errors.category}
+                                        placeholder="Select a category"
+                                    />
+                                    {isOtherCategory && (
+                                        <Input
+                                            label="New category name *"
+                                            value={customCategoryName}
+                                            onChange={handleCustomCategoryNameChange}
+                                            error={errors.customCategoryName}
+                                            placeholder="Enter category name"
+                                        />
+                                    )}
+                                </div>
                                 <Input
                                     label="Amount (Rs) *"
                                     type="number"
@@ -385,13 +501,13 @@ export const ExpenseForm: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-end mt-12 pt-8 border-t border-gray-200">
+                    <div className="sticky bottom-0 z-10 -mx-6 sm:-mx-8 px-6 sm:px-8 py-4 mt-12 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 sm:justify-end">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleReset}
                             disabled={loading || uploading}
-                            className="sm:w-auto w-full"
+                            className="w-full sm:w-auto min-h-[44px]"
                         >
                             Reset Form
                         </Button>
@@ -399,7 +515,7 @@ export const ExpenseForm: React.FC = () => {
                             type="submit"
                             loading={loading}
                             disabled={uploading}
-                            className="sm:w-auto w-full bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+                            className="w-full sm:w-auto min-h-[44px] bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
                         >
                             {id ? 'Update Expense' : 'Create Expense'}
                         </Button>

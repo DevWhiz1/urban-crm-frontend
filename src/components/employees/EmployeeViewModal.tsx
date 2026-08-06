@@ -53,6 +53,7 @@ const EmployeeViewModal: React.FC<Props> = ({ employee, onClose }) => {
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Personal</h3>
                 <div className="space-y-2 text-gray-700">
+                  <p><span className="text-gray-500 w-24 inline-block">ID:</span> {employee.employeeId || 'N/A'}</p>
                   <p><span className="text-gray-500 w-24 inline-block">CNIC:</span> {employee.cnic}</p>
                   <p><span className="text-gray-500 w-24 inline-block">Emergency:</span> {employee.emergencyContact || 'N/A'}</p>
                 </div>
