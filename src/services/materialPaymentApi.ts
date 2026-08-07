@@ -3,10 +3,6 @@ import { MaterialPaymentFormData, MaterialProjectOption } from '../types/materia
 
 export const createMaterialPayment = async (data: MaterialPaymentFormData): Promise<void> => {
   try {
-    const userString = localStorage.getItem('user');
-    if (!userString) throw new Error('User not authenticated');
-    const user = JSON.parse(userString);
-
     const materialPaymentData = {
       ...data,
       MaterialQuantity: parseFloat(data.MaterialQuantity),
@@ -14,7 +10,7 @@ export const createMaterialPayment = async (data: MaterialPaymentFormData): Prom
       totalAmount: parseFloat(data.totalAmount),
       paymentMethod: data.paymentMethod || 'online',
       status: data.status || 'paid',
-      createdBy: user.id || user._id,
+      // createdBy is set server-side from the authenticated user (req.user.userId)
     };
 
     await apiClient.post('/api/material/add-material-payment', materialPaymentData);

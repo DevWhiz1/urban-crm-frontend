@@ -10,4 +10,21 @@ export const authService = {
     const response = await apiClient.post('/api/auth/register', userData);
     return response.data;
   },
+
+  /**
+   * Fetches the current authenticated user's profile using the httpOnly cookie.
+   * Called on every app start to rehydrate React Context.
+   */
+  getMe: async () => {
+    const response = await apiClient.get('/api/auth/me');
+    return response.data;
+  },
+
+  /**
+   * Clears the httpOnly cookie on the server, invalidating the session.
+   */
+  logout: async () => {
+    const response = await apiClient.post('/api/auth/logout');
+    return response.data;
+  },
 };

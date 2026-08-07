@@ -2,17 +2,18 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { authService } from '../services/authService';
 
 interface User {
-  _id: string;
+  id: string;
   userName: string;
   email: string;
-  token: string;
+  role: string;
+  status?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (userData: { userName: string; email: string; password: string }) => Promise<any>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -34,27 +35,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * On every app mount, call /api/auth/me.
+   * The httpOnly cookie is sent automatically by the browser.
+   * If valid, the server returns the user profile — no localStorage needed.
+   * If 401, the user is not logged in; we stay on the login page.
+   */
   useEffect(() => {
-    // Check if user is logged in on app start
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const initializeAuth = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-      } catch (error) {
-        localStorage.removeItem('user');
+        const response = await authService.getMe();
+        if (response?.user) {
+          setUser(response.user);
+        }
+      } catch {
+        // Not authenticated — user stays null, app shows login page
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
     try {
       const response = await authService.login(credentials);
-      if (response.token && response.user) {
-        const userData = { ...response.user, token: response.token };
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+      if (response.user) {
+        // Token is in the httpOnly cookie — we only store the non-sensitive profile
+        setUser(response.user);
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
@@ -63,15 +73,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: { userName: string; email: string; password: string }) => {
     try {
-      return await authService.register(userData);
+      const response = await authService.register(userData);
+      if (response.user) {
+        setUser(response.user);
+      }
+      return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const logout = async () => {
+    try {
+      // Ask the server to clear the httpOnly cookie
+      await authService.logout();
+    } catch {
+      // Even if the request fails, clear client-side state
+    } finally {
+      setUser(null);
+    }
   };
 
   const value = {
@@ -79,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
-    loading
+    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

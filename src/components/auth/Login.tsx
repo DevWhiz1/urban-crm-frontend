@@ -63,7 +63,7 @@ export const Login: React.FC = () => {
         type: 'success',
         message: 'Login successful! Redirecting...'
       });
-      setTimeout(() => navigate('/dashboard'), 1500);
+      navigate('/dashboard');
     } catch (error: any) {
       setNotification({
         show: true,

@@ -8,12 +8,6 @@ import {
 
 export const createPayment = async (data: PaymentFormData): Promise<void> => {
   try {
-    const userString = localStorage.getItem('user');
-    if (!userString) {
-      throw new Error('User not authenticated');
-    }
-
-    const user = JSON.parse(userString);
     const paymentData = {
       ...data,
       amount: parseFloat(data.amount),
@@ -23,7 +17,7 @@ export const createPayment = async (data: PaymentFormData): Promise<void> => {
       receiptPhoto: data.receiptPhoto || undefined,
       paymentMethod: data.paymentMethod || 'online',
       notes: data.notes || undefined,
-      createdBy: user.id || user._id
+      // createdBy is set server-side from the authenticated user (req.user.userId)
     };
 
     await apiClient.post('/api/payment/create-payment', paymentData);
