@@ -156,6 +156,13 @@ const allMenuItems: MenuItem[] = [
     path: '/client/payments',
     roles: ['Client'],
   },
+  {
+    id: 'client-settings',
+    label: 'Settings',
+    icon: Settings,
+    path: '/client/settings',
+    roles: ['Client'],
+  },
 
   // ─── CONTRACTOR PORTAL ─────────────────────────────────────────────────────
   {
@@ -177,6 +184,13 @@ const allMenuItems: MenuItem[] = [
     label: 'Payments',
     icon: CreditCard,
     path: '/contractor/payments',
+    roles: ['Contractor'],
+  },
+  {
+    id: 'contractor-settings',
+    label: 'Settings',
+    icon: Settings,
+    path: '/contractor/settings',
     roles: ['Contractor'],
   },
 ];

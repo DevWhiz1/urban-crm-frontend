@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (credentials: { email: string; password: string }) => Promise<User>;
   register: (userData: { userName: string; email: string; password: string }) => Promise<any>;
   logout: () => Promise<void>;
+  updateUser: (user: User) => void;
   loading: boolean;
 }
 
@@ -101,6 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    updateUser: setUser,
     loading,
   };
 

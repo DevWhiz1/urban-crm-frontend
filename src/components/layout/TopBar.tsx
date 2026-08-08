@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, User, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface TopBarProps {
   onToggleSidebar: () => void;
@@ -10,6 +11,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -25,6 +27,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar }) => {
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
+  };
+
+  const handleSettingsClick = () => {
+    setShowUserMenu(false);
+    if (user?.role === 'Client') {
+      navigate('/client/settings');
+    } else if (user?.role === 'Contractor') {
+      navigate('/contractor/settings');
+    } else {
+      navigate('/dashboard/settings');
+    }
   };
 
   return (
@@ -71,12 +84,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar }) => {
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
               
-              <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <User className="w-4 h-4 mr-3" />
-                Profile
-              </button>
-              
-              <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              <button 
+                onClick={handleSettingsClick}
+                className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
                 <Settings className="w-4 h-4 mr-3" />
                 Settings
               </button>
