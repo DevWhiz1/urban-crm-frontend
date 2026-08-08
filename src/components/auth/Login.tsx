@@ -8,7 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getRoleDashboard } from '../ProtectedRoute';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +17,14 @@ export const Login: React.FC = () => {
     type: 'success' as 'success' | 'error',
     message: ''
   });
+
+  // If user is already logged in, redirect them to their dashboard
+  // This prevents session conflicts when opening a new tab
+  React.useEffect(() => {
+    if (user) {
+      navigate(getRoleDashboard(user.role), { replace: true });
+    }
+  }, [user, navigate]);
 
   const [formData, setFormData] = useState({
     email: '',

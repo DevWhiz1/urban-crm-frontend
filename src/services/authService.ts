@@ -27,4 +27,14 @@ export const authService = {
     const response = await apiClient.post('/api/auth/logout');
     return response.data;
   },
+
+  updateProfile: async (data: { userName?: string; email?: string }) => {
+    const response = await apiClient.put('/api/auth/update-profile', data);
+    return response.data;
+  },
+
+  updatePassword: async (data: { oldPassword?: string; newPassword?: string }) => {
+    const response = await apiClient.put('/api/auth/update-password', data);
+    return response.data;
+  },
 };

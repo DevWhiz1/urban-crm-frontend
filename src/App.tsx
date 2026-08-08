@@ -28,6 +28,7 @@ import EmployeeView from './components/employees/EmployeeView';
 import ExpensesManagement from './components/expenses/ExpensesManagement';
 import ExpenseForm from './components/expenses/ExpenseForm';
 import { NotFound } from './components/NotFound';
+import { ProfileSettings } from './components/settings/ProfileSettings';
 
 // ─── Client Portal Pages ─────────────────────────────────────────────────────
 import { ClientDashboard } from './features/client/pages/ClientDashboard';
@@ -78,7 +79,7 @@ function App() {
             <Route path="expenses/add" element={<ExpenseForm />} />
             <Route path="expenses/edit/:id" element={<ExpenseForm />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-gray-600 mt-2">Application settings will be implemented here.</p></div>} />
+            <Route path="settings" element={<ProfileSettings />} />
           </Route>
 
           {/* ─── Client Portal ──────────────────────────────────────────────── */}
@@ -90,6 +91,7 @@ function App() {
             <Route path="dashboard" element={<ClientDashboard />} />
             <Route path="project" element={<ClientProjectPage />} />
             <Route path="payments" element={<ClientPaymentsPage />} />
+            <Route path="settings" element={<ProfileSettings />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -102,6 +104,7 @@ function App() {
             <Route path="dashboard" element={<ContractorDashboard />} />
             <Route path="contracts" element={<ContractorContractsPage />} />
             <Route path="payments" element={<ContractorPaymentsPage />} />
+            <Route path="settings" element={<ProfileSettings />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
