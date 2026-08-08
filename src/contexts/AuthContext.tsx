@@ -11,7 +11,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  login: (credentials: { email: string; password: string }) => Promise<User>;
   register: (userData: { userName: string; email: string; password: string }) => Promise<any>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -59,13 +59,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (credentials: { email: string; password: string }) => {
+  const login = async (credentials: { email: string; password: string }): Promise<User> => {
     try {
       const response = await authService.login(credentials);
       if (response.user) {
         // Token is in the httpOnly cookie — we only store the non-sensitive profile
         setUser(response.user);
+        return response.user;
       }
+      throw new Error('No user returned from login.');
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }

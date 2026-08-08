@@ -27,7 +27,11 @@ const segmentLabels: Record<string, string> = {
   contractor: 'Contractor Payment',
   'all-contractor': 'Contractor Payments',
   material: 'Material Payment',
-  project: 'Project Payment',
+  project: 'My Project',
+  // Client portal
+  client: 'Client Portal',
+  // Contractor portal
+  contracts: 'My Contracts',
 };
 
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
