@@ -29,6 +29,16 @@ import ExpensesManagement from './components/expenses/ExpensesManagement';
 import ExpenseForm from './components/expenses/ExpenseForm';
 import { NotFound } from './components/NotFound';
 
+// ─── Client Portal Pages ─────────────────────────────────────────────────────
+import { ClientDashboard } from './features/client/pages/ClientDashboard';
+import { ClientProjectPage } from './features/client/pages/ClientProjectPage';
+import { ClientPaymentsPage } from './features/client/pages/ClientPaymentsPage';
+
+// ─── Contractor Portal Pages ──────────────────────────────────────────────────
+import { ContractorDashboard } from './features/contractor/pages/ContractorDashboard';
+import { ContractorContractsPage } from './features/contractor/pages/ContractorContractsPage';
+import { ContractorPaymentsPage } from './features/contractor/pages/ContractorPaymentsPage';
+
 function App() {
   return (
     <AuthProvider>
@@ -37,9 +47,9 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes */}
+          {/* ─── Admin Routes ───────────────────────────────────────────────── */}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Admin', 'Accountant']}>
               <DashboardLayout />
             </ProtectedRoute>
           }>
@@ -71,10 +81,34 @@ function App() {
             <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p className="text-gray-600 mt-2">Application settings will be implemented here.</p></div>} />
           </Route>
 
-          {/* Redirect root to dashboard */}
+          {/* ─── Client Portal ──────────────────────────────────────────────── */}
+          <Route path="/client" element={
+            <ProtectedRoute allowedRoles={['Client']}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="dashboard" element={<ClientDashboard />} />
+            <Route path="project" element={<ClientProjectPage />} />
+            <Route path="payments" element={<ClientPaymentsPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* ─── Contractor Portal ──────────────────────────────────────────── */}
+          <Route path="/contractor" element={
+            <ProtectedRoute allowedRoles={['Contractor']}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="dashboard" element={<ContractorDashboard />} />
+            <Route path="contracts" element={<ContractorContractsPage />} />
+            <Route path="payments" element={<ContractorPaymentsPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* Redirect root — ProtectedRoute redirects to role-specific portal */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          {/* 404 Not Found */}
+
+          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

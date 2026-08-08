@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
 import { useAuth } from '../../contexts/AuthContext';
+import { getRoleDashboard } from '../ProtectedRoute';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -57,13 +58,14 @@ export const Login: React.FC = () => {
 
     try {
       setLoading(true);
-      await login(formData);
+      const loggedInUser = await login(formData);
       setNotification({
         show: true,
         type: 'success',
         message: 'Login successful! Redirecting...'
       });
-      navigate('/dashboard');
+      // Centralized role-based redirect — one place, no scattered if/else
+      navigate(getRoleDashboard(loggedInUser.role));
     } catch (error: any) {
       setNotification({
         show: true,

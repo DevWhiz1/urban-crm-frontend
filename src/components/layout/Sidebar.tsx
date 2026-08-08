@@ -32,43 +32,44 @@ interface MenuItem {
 }
 
 const allMenuItems: MenuItem[] = [
+  // ─── ADMIN / ACCOUNTANT ────────────────────────────────────────────────────
   {
     id: 'dashboard',
     label: 'Dashboard',
     icon: Home,
     path: '/dashboard',
-    roles: ['Admin', 'Contractor', 'Client']
+    roles: ['Admin', 'Accountant'],
   },
   {
     id: 'projects',
     label: 'Projects',
     icon: FileText,
-    roles: ['Admin', 'Contractor', 'Client'],
+    roles: ['Admin'],
     children: [
       { id: 'add-project', label: 'Add Project', icon: Plus, path: '/dashboard/projects/add', roles: ['Admin'] },
-      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects', roles: ['Admin', 'Contractor', 'Client'] }
-    ]
+      { id: 'list-projects', label: 'All Projects', icon: List, path: '/dashboard/projects', roles: ['Admin'] },
+    ],
   },
   {
     id: 'project-contracts',
     label: 'Project Contracts',
     icon: Handshake,
-    roles: ['Admin', 'Contractor'],
+    roles: ['Admin'],
     children: [
       { id: 'add-project-contract', label: 'Create Contract', icon: Plus, path: '/dashboard/project-contracts/add', roles: ['Admin'] },
-      { id: 'list-project-contracts', label: 'All Contracts', icon: List, path: '/dashboard/project-contracts', roles: ['Admin', 'Contractor'] }
-    ]
+      { id: 'list-project-contracts', label: 'All Contracts', icon: List, path: '/dashboard/project-contracts', roles: ['Admin'] },
+    ],
   },
   {
     id: 'payments',
     label: 'Payments',
     icon: CreditCard,
-    roles: ['Admin', 'Contractor', 'Client'],
+    roles: ['Admin'],
     children: [
       { id: 'add-payment', label: 'Record Payment', icon: Plus, path: '/dashboard/payments/add', roles: ['Admin'] },
-      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments', roles: ['Admin', 'Contractor', 'Client'] },
-      { id: 'list-contarctor-payments', label: 'All Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor', roles: ['Admin', 'Contractor'] }
-    ]
+      { id: 'list-payments', label: 'All Payments', icon: List, path: '/dashboard/payments', roles: ['Admin'] },
+      { id: 'list-contractor-payments', label: 'Contractor Payments', icon: List, path: '/dashboard/payments/all-contractor', roles: ['Admin'] },
+    ],
   },
   {
     id: 'contractors',
@@ -76,8 +77,8 @@ const allMenuItems: MenuItem[] = [
     icon: Wrench,
     roles: ['Admin'],
     children: [
-      { id: 'list-contractors', label: 'All Contractors', icon: List, path: '/dashboard/contractors', roles: ['Admin'] }
-    ]
+      { id: 'list-contractors', label: 'All Contractors', icon: List, path: '/dashboard/contractors', roles: ['Admin'] },
+    ],
   },
   {
     id: 'clients',
@@ -85,8 +86,8 @@ const allMenuItems: MenuItem[] = [
     icon: UserCheck,
     roles: ['Admin'],
     children: [
-      { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] }
-    ]
+      { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] },
+    ],
   },
   {
     id: 'employees',
@@ -95,8 +96,8 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
     children: [
       { id: 'add-employee', label: 'Add Employee', icon: Plus, path: '/dashboard/employees/add', roles: ['Admin'] },
-      { id: 'list-employees', label: 'All Employees', icon: List, path: '/dashboard/employees', roles: ['Admin'] }
-    ]
+      { id: 'list-employees', label: 'All Employees', icon: List, path: '/dashboard/employees', roles: ['Admin'] },
+    ],
   },
   {
     id: 'expenses',
@@ -105,8 +106,8 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
     children: [
       { id: 'add-expense', label: 'Add Expense', icon: Plus, path: '/dashboard/expenses/add', roles: ['Admin'] },
-      { id: 'list-expenses', label: 'All Expenses', icon: List, path: '/dashboard/expenses', roles: ['Admin'] }
-    ]
+      { id: 'list-expenses', label: 'All Expenses', icon: List, path: '/dashboard/expenses', roles: ['Admin'] },
+    ],
   },
   {
     id: 'users',
@@ -115,23 +116,69 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
     children: [
       { id: 'add-user', label: 'Add User', icon: UserPlus, path: '/dashboard/users/add', roles: ['Admin'] },
-      { id: 'list-users', label: 'All Users', icon: List, path: '/dashboard/users', roles: ['Admin'] }
-    ]
+      { id: 'list-users', label: 'All Users', icon: List, path: '/dashboard/users', roles: ['Admin'] },
+    ],
   },
   {
     id: 'reports',
     label: 'Reports',
     icon: BarChart3,
     path: '/dashboard/reports',
-    roles: ['Admin']
+    roles: ['Admin'],
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: Settings,
     path: '/dashboard/settings',
-    roles: ['Admin']
-  }
+    roles: ['Admin'],
+  },
+
+  // ─── CLIENT PORTAL ─────────────────────────────────────────────────────────
+  {
+    id: 'client-dashboard',
+    label: 'Dashboard',
+    icon: Home,
+    path: '/client/dashboard',
+    roles: ['Client'],
+  },
+  {
+    id: 'client-project',
+    label: 'My Project',
+    icon: FileText,
+    path: '/client/project',
+    roles: ['Client'],
+  },
+  {
+    id: 'client-payments',
+    label: 'Payments',
+    icon: CreditCard,
+    path: '/client/payments',
+    roles: ['Client'],
+  },
+
+  // ─── CONTRACTOR PORTAL ─────────────────────────────────────────────────────
+  {
+    id: 'contractor-dashboard',
+    label: 'Dashboard',
+    icon: Home,
+    path: '/contractor/dashboard',
+    roles: ['Contractor'],
+  },
+  {
+    id: 'contractor-contracts',
+    label: 'My Contracts',
+    icon: Handshake,
+    path: '/contractor/contracts',
+    roles: ['Contractor'],
+  },
+  {
+    id: 'contractor-payments',
+    label: 'Payments',
+    icon: CreditCard,
+    path: '/contractor/payments',
+    roles: ['Contractor'],
+  },
 ];
 
 interface SidebarProps {
