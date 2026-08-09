@@ -188,7 +188,7 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [activeTab, typeFilter, contractorFilter, providerFilter, materialDetailFilter, methodFilter, sortBy, startDate, endDate, selectedProject]);
+    }, [activeTab, selectedProject]);
 
     const loadProjects = async () => {
         try {
@@ -260,7 +260,7 @@ export const ProjectPaymentSummary: React.FC = () => {
         if (selectedProject) {
             loadTableData();
         }
-    }, [selectedProject, activeTab, currentPage, debouncedSearch, typeFilter, materialTransactionTypeFilter]);
+    }, [selectedProject, activeTab, currentPage, debouncedSearch]);
 
     const resetFilters = () => {
         setSearchTerm('');
@@ -778,7 +778,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                         <select
                                             value={materialTransactionTypeFilter}
                                             onChange={(e) => setMaterialTransactionTypeFilter(e.target.value)}
-                                            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
+                                            className="w-full lg:w-auto px-3 py-1.5 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-slate-800"
                                         >
                                             <option value="ALL">All Transaction Types</option>
                                             <option value="purchase">Purchase (Outflow)</option>
@@ -786,6 +786,20 @@ export const ProjectPaymentSummary: React.FC = () => {
                                         </select>
                                     </>
                                 )}
+
+                                {/* Apply Filters Button */}
+                                <Button 
+                                    onClick={() => {
+                                        if (currentPage === 1) {
+                                            loadTableData();
+                                        } else {
+                                            setCurrentPage(1);
+                                        }
+                                    }}
+                                    className="w-full lg:w-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded flex items-center justify-center gap-1.5 transition-colors"
+                                >
+                                    <Filter className="w-3.5 h-3.5" /> Apply Filters
+                                </Button>
                             </div>
                         </div>
 
@@ -936,6 +950,7 @@ export const ProjectPaymentSummary: React.FC = () => {
                                 <table className="w-full text-left border-collapse min-w-[900px]">
                                     <thead>
                                         <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                            <th className="py-3 px-4">Payment ID</th>
                                             <th className="py-3 px-4">Date</th>
                                             <th className="py-3 px-4">Material Detail</th>
                                             <th className="py-3 px-4">Provider</th>
@@ -952,6 +967,10 @@ export const ProjectPaymentSummary: React.FC = () => {
                                             className="hover:bg-slate-50 transition-colors group cursor-pointer"
                                             onClick={() => setSelectedMaterialDetail(material)}
                                         >
+                                            {/* Payment ID */}
+                                            <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-800">
+                                                {material.paymentId || 'N/A'}
+                                            </td>
                                             {/* Date */}
                                             <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-800">
                                                 {new Date(material.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}

@@ -29,7 +29,6 @@ export interface Project {
   progress: number;
   drawings?: string[];
   contracts?: string[];
-  invoices?: string[];
   isActive?: boolean;
 }
 

@@ -162,10 +162,10 @@ export const ProjectContractPayments: React.FC = () => {
         return () => clearTimeout(handler);
     }, [paymentSearchTerm]);
 
-    // Reset pagination on filter or contract change
+    // Reset pagination on contract change
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedContract, typeFilter, methodFilter, statusFilter, sortBy, startDate, endDate]);
+    }, [selectedContract]);
 
     const loadProjects = async () => {
         try {
@@ -245,7 +245,7 @@ export const ProjectContractPayments: React.FC = () => {
         if (selectedContract) {
             loadTableData();
         }
-    }, [selectedContract, currentPage, debouncedSearch, typeFilter]);
+    }, [selectedContract, currentPage, debouncedSearch]);
 
     const resetPaymentFilters = () => {
         setPaymentSearchTerm('');
@@ -661,6 +661,20 @@ export const ProjectContractPayments: React.FC = () => {
                                     <option value="amount_desc">Amount: High → Low</option>
                                     <option value="amount_asc">Amount: Low → High</option>
                                 </select>
+
+                                {/* Apply Filters Button */}
+                                <Button 
+                                    onClick={() => {
+                                        if (currentPage === 1) {
+                                            loadTableData();
+                                        } else {
+                                            setCurrentPage(1);
+                                        }
+                                    }}
+                                    className="w-full lg:w-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded flex items-center justify-center gap-1.5 transition-colors"
+                                >
+                                    <Filter className="w-3.5 h-3.5" /> Apply Filters
+                                </Button>
                             </div>
 
                             {hasActivePaymentFilters && (

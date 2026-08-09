@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
 import { Select } from '../ui/Select';
-import { useAuth } from '../../contexts/AuthContext';
+import { createUser } from '../../services/userApi';
 import { createClient } from '../../services/clientApi';
 import { createContractor } from '../../services/contractorApi';
 
@@ -41,7 +41,6 @@ const PAYMENT_TERMS_OPTIONS = [
 ];
 
 export const AddUser: React.FC = () => {
-    const { register } = useAuth();
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({
         show: false,
@@ -123,8 +122,8 @@ export const AddUser: React.FC = () => {
         try {
             setLoading(true);
             
-            // 1. Create User
-            const response = await register(formData);
+            // 1. Create User (admin-only endpoint — does not touch session cookies)
+            const response = await createUser(formData);
             const newUserId = response?.user?.id;
 
             if (!newUserId) {

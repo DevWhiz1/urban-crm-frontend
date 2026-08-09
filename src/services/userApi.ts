@@ -11,6 +11,20 @@ export interface IUserResponse {
   updatedAt: string;
 }
 
+export interface ICreatedUser {
+  id: string;
+  userName: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+export const createUser = async (data: { userName: string; email: string; password: string; role: string }): Promise<{ message: string; user: ICreatedUser }> => {
+  const res = await apiClient.post('/api/user/create-user', data);
+  return res.data;
+};
+
+
 export const getAllUsers = async (params: { page?: number; limit?: number; search?: string; role?: string; status?: string } = {}): Promise<{ data: IUserResponse[], pagination: any }> => {
   const res = await apiClient.get('/api/user/get-all-users', { params });
   return { data: res.data?.data || [], pagination: res.data?.pagination };
