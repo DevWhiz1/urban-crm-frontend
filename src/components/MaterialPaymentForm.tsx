@@ -192,7 +192,6 @@ export const MaterialPaymentForm: React.FC = () => {
     };
 
     const projectOptions = projects
-        .filter(project => project.projectType === 'withMaterial')
         .map(project => ({
             value: project._id,
             label: `${project.name} (${project.projectCode}) - ${project.status}`

@@ -146,7 +146,7 @@ export const ProjectContractForm: React.FC = () => {
 
     const contractorOptions = contractors.map(contractor => ({
         value: contractor._id,
-        label: `${contractor.companyName} - ${contractor.user.userName} (${contractor.contractorType})`
+        label: `${contractor.companyName} - ${contractor.user?.userName ?? 'N/A'} (${contractor.contractorType})`
     }));
 
     const selectedProject = projects.find(p => p._id === formData.project);
