@@ -127,6 +127,13 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
   },
   {
+    id: 'statements',
+    label: 'Statements',
+    icon: FileText,
+    path: '/dashboard/statements',
+    roles: ['Admin'],
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: Settings,

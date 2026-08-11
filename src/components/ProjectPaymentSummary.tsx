@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
+import { useNavigate } from 'react-router-dom';
 import {
     Building2,
     Banknote,
@@ -111,6 +112,7 @@ interface Material {
 }
 
 export const ProjectPaymentSummary: React.FC = () => {
+    const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<PaymentSummary | null>(null);
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -367,131 +369,7 @@ export const ProjectPaymentSummary: React.FC = () => {
 
     const handlePrintPDF = (type: 'payments' | 'materials') => {
         if (!selectedProject) return;
-
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) return;
-
-        const content = generatePrintContent(selectedProject, type);
-        printWindow.document.write(content);
-        printWindow.document.close();
-        printWindow.print();
-    };
-
-    const generateReceiptNumber = () => {
-        return `UD-${Date.now().toString().slice(-8)}`;
-    };
-
-    const generatePrintContent = (summary: PaymentSummary, type: 'payments' | 'materials') => {
-        const receiptNo = generateReceiptNumber();
-        const isPayments = type === 'payments';
-
-        return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${summary.projectName} - ${isPayments ? 'Contractor Payments' : 'Material Payments'} Summary</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; color: #1e293b; }
-            .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; }
-            .company-name { font-size: 22px; font-weight: bold; color: #1e293b; }
-            .summary-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-            .summary-item { text-align: center; }
-            .summary-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }
-            .summary-value { font-size: 16px; font-weight: bold; margin-top: 4px; color: #0f172a; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
-            th { background-color: #f1f5f9; font-weight: 600; }
-            .amount { font-weight: bold; text-align: right; }
-            .credit { color: #059669; }
-            .debit { color: #dc2626; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="company-name">Urban Design & Construction</div>
-              <div style="color: #64748b; font-size: 13px;">${isPayments ? 'Contractor Payments Statement' : 'Material Expenses Statement'}</div>
-            </div>
-            <div style="text-align: right; font-size: 12px; color: #64748b;">
-              <div>Ref: ${receiptNo}</div>
-              <div>Date: ${new Date().toLocaleDateString()}</div>
-            </div>
-          </div>
-
-          <div class="summary-section">
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-label">Project Name</div>
-                <div class="summary-value">${summary.projectName}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Project Cost</div>
-                <div class="summary-value">${formatPKRCurrency(summary.projectCost.toString())}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Total Received</div>
-                <div class="summary-value credit">${formatPKRCurrency(summary.totalPaymentReceived.toString())}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">${isPayments ? 'Total Contractor Outflow' : 'Total Material Cost'}</div>
-                <div class="summary-value debit">${formatPKRCurrency((isPayments ? summary.totalDebits : summary.totalMaterialPayments).toString())}</div>
-              </div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              ${isPayments ? `
-                <tr>
-                  <th>Date</th>
-                  <th>Contractor</th>
-                  <th>Type</th>
-                  <th>Method</th>
-                  <th>Status</th>
-                  <th>Description</th>
-                  <th>Created By</th>
-                  <th style="text-align: right;">Amount</th>
-                </tr>
-              ` : `
-                <tr>
-                  <th>Date</th>
-                  <th>Material Detail</th>
-                  <th>Provider</th>
-                  <th>Qty & Rate</th>
-                  <th>Recorded Date</th>
-                  <th style="text-align: right;">Total Amount</th>
-                </tr>
-              `}
-            </thead>
-            <tbody>
-              ${isPayments ? paginatedPayments.map(p => `
-                <tr>
-                  <td>${new Date(p.date).toLocaleDateString()}</td>
-                  <td><strong>${p.contractor?.companyName || 'N/A'}</strong></td>
-                  <td>${p.type.toUpperCase()}</td>
-                  <td>${p.paymentMethod}</td>
-                  <td>${p.status}</td>
-                  <td>${p.workDescription || p.notes || '-'}</td>
-                  <td>${p.createdBy?.userName || 'System'}</td>
-                  <td class="amount ${p.type === 'credit' ? 'credit' : 'debit'}">${formatPKRCurrency(p.amount.toString())}</td>
-                </tr>
-              `).join('') : paginatedMaterials.map(m => `
-                <tr>
-                  <td>${new Date(m.date).toLocaleDateString()}</td>
-                  <td><strong>${m.materialDetail}</strong></td>
-                  <td>${m.materialProvider}</td>
-                  <td>${m.MaterialQuantity} @ ${formatPKRCurrency(m.MaterialRate.toString())}</td>
-                  <td>${new Date(m.createdAt).toLocaleDateString()}</td>
-                  <td class="amount debit">${formatPKRCurrency(m.totalAmount.toString())}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+        navigate(`/dashboard/statements?type=${type === 'payments' ? 'admin' : 'material'}&project=${selectedProject.projectId}`);
     };
 
     const getStatusColor = (status: string) => {
@@ -904,6 +782,16 @@ export const ProjectPaymentSummary: React.FC = () => {
                                                             title="View Details"
                                                         >
                                                             <Eye className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/dashboard/receipt/${payment._id}`);
+                                                            }}
+                                                            className="p-1.5 text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
+                                                            title="Generate Receipt"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={(e) => {

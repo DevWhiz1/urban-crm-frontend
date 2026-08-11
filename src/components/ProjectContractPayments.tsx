@@ -27,7 +27,8 @@ import {
     RotateCcw,
     CheckCircle,
     Edit,
-    Trash2
+    Trash2,
+    Download
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -42,6 +43,7 @@ import { formatPKRCurrency } from '../utils/paymentValidation';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { PaymentEditModal } from './PaymentEditModal';
 import { getPaginatedProjectPayments } from '../services/projectSummaryApi';
+import { useNavigate } from "react-router-dom";
 
 interface Project {
     _id: string;
@@ -71,6 +73,8 @@ interface ProjectContract {
 
 interface ContractPaymentSummary {
     projectContractId: string;
+    projectId: string;
+    contractorId: string;
     projectName: string;
     contractorName: string;
     contractType: string;
@@ -104,9 +108,11 @@ interface ContractPayment {
         userName: string;
     } | null;
     createdAt: string;
+    isActive?: boolean;
 }
 
 export const ProjectContractPayments: React.FC = () => {
+    const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [contracts, setContracts] = useState<ProjectContract[]>([]);
@@ -335,111 +341,7 @@ export const ProjectContractPayments: React.FC = () => {
 
     const handlePrintPDF = () => {
         if (!selectedContract) return;
-
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) return;
-
-        const content = generatePrintContent(selectedContract);
-        printWindow.document.write(content);
-        printWindow.document.close();
-        printWindow.print();
-    };
-
-    const generateReceiptNumber = () => {
-        return `UD-${Date.now().toString().slice(-8)}`;
-    };
-
-    const generatePrintContent = (summary: ContractPaymentSummary) => {
-        const receiptNo = generateReceiptNumber();
-        const paymentsToPrint = paginatedPayments; // Print only current page, or would need separate API call for all
-
-        return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Contract Payment Summary - ${summary.contractorName}</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; color: #1e293b; }
-            .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; }
-            .company-name { font-size: 22px; font-weight: bold; color: #1e293b; }
-            .summary-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-            .summary-item { text-align: center; }
-            .summary-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }
-            .summary-value { font-size: 16px; font-weight: bold; margin-top: 4px; color: #0f172a; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
-            th { background-color: #f1f5f9; font-weight: 600; }
-            .amount { font-weight: bold; text-align: right; }
-            .credit { color: #059669; }
-            .debit { color: #dc2626; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="company-name">Urban Design & Construction</div>
-              <div style="color: #64748b; font-size: 13px;">Contractor Payment Statement</div>
-            </div>
-            <div style="text-align: right; font-size: 12px; color: #64748b;">
-              <div>Ref: ${receiptNo}</div>
-              <div>Date: ${new Date().toLocaleDateString()}</div>
-            </div>
-          </div>
-
-          <div class="summary-section">
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-label">Contractor</div>
-                <div class="summary-value">${summary.contractorName}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Project</div>
-                <div class="summary-value">${summary.projectName}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Contract Amount</div>
-                <div class="summary-value">${formatPKRCurrency(summary.totalAmount.toString())}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Total Outflow Paid</div>
-                <div class="summary-value debit">${formatPKRCurrency(summary.totalPayments.toString())}</div>
-              </div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Method</th>
-                <th>Status</th>
-                <th>Ref ID</th>
-                <th>Description</th>
-                <th>Created By</th>
-                <th style="text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${paymentsToPrint.map(payment => `
-                <tr>
-                  <td>${new Date(payment.date).toLocaleDateString()}</td>
-                  <td><strong>${payment.type.toUpperCase()}</strong></td>
-                  <td>${payment.paymentMethod}</td>
-                  <td>${payment.status}</td>
-                  <td>${payment.transactionId || '-'}</td>
-                  <td>${payment.workDescription || payment.notes || '-'}</td>
-                  <td>${payment.createdBy?.userName || 'System'}</td>
-                  <td class="amount ${payment.type === 'credit' ? 'credit' : 'debit'}">${formatPKRCurrency(payment.amount.toString())}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+        navigate(`/dashboard/statements?type=contractor&project=${selectedContract.projectId}&contractor=${selectedContract.contractorId}`);
     };
 
     const getStatusColor = (status: string) => {
@@ -813,6 +715,16 @@ export const ProjectContractPayments: React.FC = () => {
                                                                 title={payment.isActive === false ? "Permanently Delete" : "Deactivate"}
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/dashboard/receipt/${payment._id}`);
+                                                                }}
+                                                                className="p-1.5 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors"
+                                                                title="Generate Receipt"
+                                                            >
+                                                                <Download className="w-4 h-4" />
                                                             </button>
                                                         </div>
                                                     </td>

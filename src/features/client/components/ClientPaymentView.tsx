@@ -129,6 +129,7 @@ export const ClientPaymentView: React.FC = () => {
                   <th className="px-5 py-3 text-left font-medium">Amount</th>
                   <th className="px-5 py-3 text-left font-medium">Method</th>
                   <th className="px-5 py-3 text-left font-medium">Status</th>
+                  <th className="px-5 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -148,6 +149,18 @@ export const ClientPaymentView: React.FC = () => {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusColors[payment.status] || 'bg-gray-100 text-gray-600'}`}>
                         {payment.status}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <a 
+                        href={`/client/receipt/${payment.id}`}
+                        className="inline-flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 w-8 h-8 rounded shadow-sm transition-all"
+                        title="View Receipt"
+                      >
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
                     </td>
                   </tr>
                 ))}

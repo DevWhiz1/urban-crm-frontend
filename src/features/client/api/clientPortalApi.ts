@@ -18,12 +18,14 @@ export interface ClientProjectDTO {
 export interface ClientPaymentDTO {
   id: string;
   paymentId: string;
+  receiptNo?: string;
   amount: number;
   date: string;
   paymentMethod: string;
   status: string;
   transactionId?: string;
   notes?: string;
+  workDescription?: string;
 }
 
 export interface ClientPaymentSummary {

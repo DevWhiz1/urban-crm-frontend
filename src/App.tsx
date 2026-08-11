@@ -19,6 +19,8 @@ import { PaymentForm } from './components/PaymentForm';
 import { MaterialPaymentForm } from './components/MaterialPaymentForm';
 import { ProjectPaymentForm } from './components/ProjectPaymentForm';
 import { ProjectPaymentSummary } from './components/ProjectPaymentSummary';
+import { AdminReceiptPage } from './components/AdminReceiptPage';
+import { StatementGenerator } from './components/statements/StatementGenerator';
 import { ProjectContractPayments } from './components/ProjectContractPayments';
 import { AddUser } from './components/users/AddUser';
 import { UsersList } from './components/users/UsersList';
@@ -69,6 +71,8 @@ function App() {
             <Route path="payments/material" element={<MaterialPaymentForm />} />
             <Route path="payments/project" element={<ProjectPaymentForm />} />
             <Route path="payments" element={<ProjectPaymentSummary />} />
+            <Route path="receipt/:id" element={<AdminReceiptPage />} />
+            <Route path="statements" element={<StatementGenerator />} />
             <Route path="users" element={<UsersList />} />
             <Route path="users/add" element={<AddUser />} />
             <Route path="employees" element={<EmployeesManagement />} />
