@@ -7,6 +7,7 @@ export interface Payment {
   date: string;
   amount: number;
   paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'upi' | 'digital_wallet' | 'online';
+  receiptNo?: string;
   transactionId?: string;
   workDescription?: string;
   status: 'pending' | 'paid' | 'verified' | 'disputed' | 'rejected';
