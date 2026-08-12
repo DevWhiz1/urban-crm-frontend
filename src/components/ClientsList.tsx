@@ -40,6 +40,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -62,13 +63,14 @@ export const ClientsList: React.FC<ClientsListProps> = ({
 
     useEffect(() => {
         loadClients();
-    }, [page, debouncedSearch]);
+    }, [page, debouncedSearch, statusFilter]);
 
     const loadClients = async () => {
         try {
             setLoading(true);
             const params: any = { page, limit: pageSize };
             if (debouncedSearch) params.search = debouncedSearch;
+            if (statusFilter !== 'All') params.status = statusFilter;
 
             const { data, pagination } = await getClientsPaginated(params);
             setFilteredClients(data);
@@ -153,9 +155,10 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                 </Button>
             </div>
 
-            {/* Search Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <div className="relative">
+            {/* Search and Filters Card */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
                             value={searchTerm}
@@ -164,7 +167,19 @@ export const ClientsList: React.FC<ClientsListProps> = ({
                             className="pl-10"
                         />
                     </div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                            className="w-full md:w-auto px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="InActive">Inactive</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
 
                 {/* Clients Table */}
                 {filteredClients.length === 0 ? (

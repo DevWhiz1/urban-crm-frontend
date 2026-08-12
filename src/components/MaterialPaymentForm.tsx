@@ -67,7 +67,8 @@ export const MaterialPaymentForm: React.FC = () => {
         status: 'paid',
         paymentMethod: 'online',
         transactionType: 'purchase',
-        receiptPhoto: ''
+        receiptPhoto: '',
+        description: ''
     });
 
     const [errors, setErrors] = useState<MaterialPaymentFormErrors>({});
@@ -147,7 +148,8 @@ export const MaterialPaymentForm: React.FC = () => {
                 status: 'paid',
                 paymentMethod: 'online',
                 transactionType: 'purchase',
-                receiptPhoto: ''
+                receiptPhoto: '',
+                description: ''
             });
 
             showNotification('success', 'Material payment recorded successfully!');
@@ -170,7 +172,8 @@ export const MaterialPaymentForm: React.FC = () => {
             status: 'paid',
             paymentMethod: 'online',
             transactionType: 'purchase',
-            receiptPhoto: ''
+            receiptPhoto: '',
+            description: ''
         });
         setErrors({});
     };
@@ -356,6 +359,7 @@ export const MaterialPaymentForm: React.FC = () => {
                                         error={errors.MaterialQuantity}
                                         placeholder="Enter quantity"
                                         step="0.01"
+                                        required
                                     />
 
                                     <Input
@@ -366,6 +370,7 @@ export const MaterialPaymentForm: React.FC = () => {
                                         error={errors.MaterialRate}
                                         placeholder="Enter rate per unit"
                                         step="0.01"
+                                        required
                                     />
 
                                     <div>
@@ -470,6 +475,13 @@ export const MaterialPaymentForm: React.FC = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6">
+                                    <Textarea
+                                        label="Description (Optional)"
+                                        value={formData.description || ''}
+                                        onChange={handleInputChange('description')}
+                                        placeholder="Enter any additional description or notes about this material purchase..."
+                                        rows={3}
+                                    />
                                     <div className="space-y-4">
                                         <label className="block text-sm font-medium text-gray-700">Receipt Photo (Optional)</label>
                                         <div className="flex items-center space-x-4">

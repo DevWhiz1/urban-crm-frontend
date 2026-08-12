@@ -21,12 +21,16 @@ export const validateMaterialPaymentForm = (data: MaterialPaymentFormData): Mate
 
 
   // Quantity validation
-  if (data.MaterialQuantity.trim() && (isNaN(parseFloat(data.MaterialQuantity)) || parseFloat(data.MaterialQuantity) <= 0)) {
+  if (!data.MaterialQuantity.trim()) {
+    errors.MaterialQuantity = 'Quantity is required';
+  } else if (isNaN(parseFloat(data.MaterialQuantity)) || parseFloat(data.MaterialQuantity) <= 0) {
     errors.MaterialQuantity = 'Please enter a valid quantity greater than 0';
   }
 
   // Rate validation
-  if (data.MaterialRate.trim() && (isNaN(parseFloat(data.MaterialRate)) || parseFloat(data.MaterialRate) <= 0)) {
+  if (!data.MaterialRate.trim()) {
+    errors.MaterialRate = 'Rate is required';
+  } else if (isNaN(parseFloat(data.MaterialRate)) || parseFloat(data.MaterialRate) <= 0) {
     errors.MaterialRate = 'Please enter a valid rate greater than 0';
   }
 

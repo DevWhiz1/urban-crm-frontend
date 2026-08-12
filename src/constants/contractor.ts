@@ -3,20 +3,27 @@ console.log('API URL:', BACKEND_URL);
 
 
 export const CONTRACTOR_TYPES = [
-  "Grey Structure",
-  "Finishing", 
-  "Interior",
-  "Exterior",
-  "Landscaping",
-  "Painting",
-  "Tiling",
-  "General",
-  "Electrical",
-  "Plumbing",
-  "Masonry",
-  "Carpentry",
-  "Roofing",
-  "Other"
+    { value: 'greyStructure', label: 'Grey Structure' },
+    { value: 'finishing', label: 'Finishing' },
+    { value: 'interior', label: 'Interior' },
+    { value: 'exterior', label: 'Exterior' },
+    { value: 'landscaping', label: 'Landscaping' },
+    { value: 'painting', label: 'Painting' },
+    { value: 'tiling', label: 'Tiling' },
+    { value: 'general', label: 'General' },
+    { value: 'electrical', label: 'Electrical' },
+    { value: 'plumbing', label: 'Plumbing' },
+    { value: 'masonry', label: 'Masonry' },
+    { value: 'carpentry', label: 'Carpentry' },
+    { value: 'roofing', label: 'Roofing' },
+    { value: 'bricks', label: 'Bricks' },
+    { value: 'steel', label: 'Steel' },
+    { value: 'plaster', label: 'Plaster' },
+    { value: 'woodwork', label: 'Woodwork' },
+    { value: 'concreteMixer', label: 'Concrete Mixer' },
+    { value: 'excavation', label: 'Excavation' },
+    { value: 'boring', label: 'Boring' },
+    { value: 'other', label: 'Other' },
 ] as const;
 
 export const PAYMENT_TERMS = [

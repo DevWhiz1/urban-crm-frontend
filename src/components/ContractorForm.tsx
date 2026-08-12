@@ -121,10 +121,7 @@ export const ContractorForm: React.FC = () => {
         label: `${user.userName} (${user.email})`
     }));
 
-    const contractorTypeOptions = CONTRACTOR_TYPES.map(type => ({
-        value: type,
-        label: type
-    }));
+    const contractorTypeOptions = [...CONTRACTOR_TYPES];
 
     const paymentTermOptions = PAYMENT_TERMS.map(term => ({
         value: term,

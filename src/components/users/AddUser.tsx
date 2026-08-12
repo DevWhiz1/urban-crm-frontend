@@ -15,22 +15,7 @@ const ROLE_OPTIONS = [
     { value: 'Client', label: 'Client' },
 ];
 
-const CONTRACTOR_TYPES = [
-    { value: 'greyStructure', label: 'Grey Structure' },
-    { value: 'finishing', label: 'Finishing' },
-    { value: 'interior', label: 'Interior' },
-    { value: 'exterior', label: 'Exterior' },
-    { value: 'landscaping', label: 'Landscaping' },
-    { value: 'painting', label: 'Painting' },
-    { value: 'tiling', label: 'Tiling' },
-    { value: 'general', label: 'General' },
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'plumbing', label: 'Plumbing' },
-    { value: 'masonry', label: 'Masonry' },
-    { value: 'carpentry', label: 'Carpentry' },
-    { value: 'roofing', label: 'Roofing' },
-    { value: 'other', label: 'Other' },
-];
+import { CONTRACTOR_TYPES } from '../../constants/contractor';
 
 const PAYMENT_TERMS_OPTIONS = [
     { value: 'daily', label: 'Daily' },
