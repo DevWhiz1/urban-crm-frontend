@@ -24,6 +24,13 @@ export const ContractorReportContent: React.FC<ContractorReportContentProps> = (
       finishing: 'bg-green-100 text-green-800',
       interior: 'bg-purple-100 text-purple-800',
       exterior: 'bg-orange-100 text-orange-800',
+      bricks: 'bg-red-100 text-red-800',
+      steel: 'bg-slate-100 text-slate-800',
+      plaster: 'bg-yellow-100 text-yellow-800',
+      woodwork: 'bg-amber-100 text-amber-800',
+      concreteMixer: 'bg-stone-100 text-stone-800',
+      excavation: 'bg-emerald-100 text-emerald-800',
+      boring: 'bg-cyan-100 text-cyan-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   };

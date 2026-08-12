@@ -155,9 +155,15 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
         label: `${user.userName} (${user.email})`
     }));
 
+    const getContractorTypeLabel = (val?: string) => {
+        if (!val) return 'N/A';
+        const found = CONTRACTOR_TYPES.find(t => t.value === val);
+        return found ? found.label : val;
+    };
+
     const contractorTypeOptions = [
-        ...CONTRACTOR_TYPES.map(type => ({ value: type, label: type })),
-        ...(formData.contractorType && !CONTRACTOR_TYPES.includes(formData.contractorType as any)
+        ...CONTRACTOR_TYPES,
+        ...(formData.contractorType && !CONTRACTOR_TYPES.find(t => t.value === formData.contractorType)
             ? [{ value: formData.contractorType, label: formData.contractorType }]
             : [])
     ];
@@ -224,7 +230,7 @@ export const ContractorModal: React.FC<ContractorModalProps> = ({
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Contractor Type:</span>
-                                                <span className="text-sm text-gray-900 capitalize">{contractor?.contractorType || 'N/A'}</span>
+                                                <span className="text-sm text-gray-900 capitalize">{getContractorTypeLabel(contractor?.contractorType)}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm font-medium text-gray-500">Status:</span>

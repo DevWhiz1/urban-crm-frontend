@@ -554,7 +554,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <Input
-                                        label="Start Date"
+                                        label="Start Date (Optional)"
                                         type="date"
                                         value={formData.startDate}
                                         onChange={handleInputChange('startDate')}
@@ -562,7 +562,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                     />
 
                                     <Input
-                                        label="Estimated Completion Date"
+                                        label="Estimated Completion Date (Optional)"
                                         type="date"
                                         value={formData.estimatedDuration}
                                         onChange={handleInputChange('estimatedDuration')}

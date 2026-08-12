@@ -18,9 +18,6 @@ export const validateProjectContractForm = (data: ProjectContractFormData): Proj
     errors.totalAmount = 'Please enter a valid amount greater than 0';
   }
 
-  if (!data.startDate.trim()) {
-    errors.startDate = 'Start date is required';
-  }
 
   // Date validations
   if (data.startDate && data.endDate) {

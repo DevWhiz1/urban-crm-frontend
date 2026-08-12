@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { ClientsList } from './ClientsList';
+import { useNavigate } from 'react-router-dom';
 import { ClientModal } from './ClientModal';
 import { Client } from '../types/client';
 
 type ViewMode = 'list' | 'add' | 'edit' | 'view';
 
 export const ClientsManagement: React.FC = () => {
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
@@ -20,8 +22,7 @@ export const ClientsManagement: React.FC = () => {
     };
 
     const handleAddClient = () => {
-        setSelectedClient(null);
-        setViewMode('add');
+        navigate('/dashboard/users/add');
     };
 
     const handleCloseModal = () => {

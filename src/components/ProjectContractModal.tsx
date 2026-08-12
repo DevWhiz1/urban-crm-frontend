@@ -354,12 +354,11 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Input
-                    label="Start Date"
+                    label="Start Date (Optional)"
                     type="date"
                     value={formData.startDate}
                     onChange={handleInputChange('startDate')}
                     error={errors.startDate}
-                    required
                   />
 
                   <Input

@@ -8,6 +8,7 @@ export interface MaterialPayment {
   totalAmount: number;
   transactionType: 'purchase' | 'return';
   date: string;
+  description?: string;
 }
 
 export interface MaterialPaymentFormData {
@@ -22,6 +23,7 @@ export interface MaterialPaymentFormData {
   status: string;
   paymentMethod: string;
   receiptPhoto: string;
+  description?: string;
 }
 
 export interface MaterialPaymentFormErrors {
