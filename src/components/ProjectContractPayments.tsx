@@ -478,7 +478,7 @@ export const ProjectContractPayments: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-lg sm:text-xl font-bold text-slate-900 break-words leading-tight">{selectedContract.totalPaymentCount}</p>
-                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Recorded Vouchers</span>
+                                <span className="text-xs text-slate-400 font-medium mt-1 inline-block">Recorded Payments</span>
                             </div>
                         </div>
                     </div>
@@ -1021,7 +1021,7 @@ export const ProjectContractPayments: React.FC = () => {
                                         <th className="py-3.5 px-4">Contractor Name</th>
                                         <th className="py-3.5 px-4">Contract Type</th>
                                         <th className="py-3.5 px-4 text-right">Contract Amount</th>
-                                        <th className="py-3.5 px-4 text-center">Recorded Vouchers</th>
+                                        <th className="py-3.5 px-4 text-center">Recorded Payments</th>
                                         <th className="py-3.5 px-4 text-center">Action</th>
                                     </tr>
                                 </thead>

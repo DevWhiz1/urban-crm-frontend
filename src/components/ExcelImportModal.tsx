@@ -116,7 +116,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
           } else if (typeof rawDate === 'string' && rawDate.trim() !== '') {
             const d = new Date(rawDate);
             if (!isNaN(d.getTime())) {
-              parsedDateStr = d.toISOString().split('T')[0];
+              parsedDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
           } else if (typeof rawDate === 'number') {
             // Excel serial date number handle
@@ -127,7 +127,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
           }
 
           if (!parsedDateStr) {
-            parsedDateStr = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            parsedDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           }
 
           const descText = rawDesc ? String(rawDesc).trim() : '';
@@ -138,7 +139,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               date: parsedDateStr,
               workDescription: descText !== '' ? descText : 'None',
               type: rawType && String(rawType).toLowerCase().includes('credit') ? 'credit' : 'debit',
-              paymentMethod: rawMethod ? String(rawMethod).toLowerCase().replace(/[^a-z_]/g, '') : 'cash',
+              paymentMethod: rawMethod ? String(rawMethod).toLowerCase().replace(/[^a-z_]/g, '') : 'online',
               notes: descText !== '' ? descText : ''
             });
           } else {

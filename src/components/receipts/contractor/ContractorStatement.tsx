@@ -109,25 +109,20 @@ export default function ContractorStatement({ onBack, data, dateRange }: Contrac
             <>
               <div className="w-full flex justify-end mt-[-35px] text-[14px] font-normal text-black">
                 <div className="flex flex-col text-left">
+                  <p><span className="font-bold">Ref:</span> STM-{Math.floor(Math.random() * 10000)}</p>
                   <p><span className="font-bold">Date:</span> {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }).replace(',', '')}</p>
+                  {dateRange?.startDate || dateRange?.endDate ? (
+                    <p><span className="font-bold">Period:</span> {dateRange.startDate ? new Date(dateRange.startDate).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : 'Beginning'} to {dateRange.endDate ? new Date(dateRange.endDate).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : 'Present'}</p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="w-full text-center mb-6">
-                <h1 className="text-[17px] font-bold uppercase underline underline-offset-4">Statement of Account</h1>
+                <h1 className="text-[17px] font-bold uppercase underline underline-offset-4">Contractor Statement of Account</h1>
               </div>
 
               <div className="flex flex-col gap-3 font-sans text-black">
-                <div className="text-[15px] font-bold underline underline-offset-2">a) {dateRange?.startDate || dateRange?.endDate ? (
-                    <div className="flex gap-4">
-                      <span className="font-bold underline underline-offset-4">Statement Date Range:</span>
-                      <span className="font-medium">
-                        {dateRange.startDate ? new Date(dateRange.startDate).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Beginning'} - 
-                        {dateRange.endDate ? new Date(dateRange.endDate).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Present'}
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
+                <div className="text-[15px] font-bold underline underline-offset-2">a) Account Summary</div>
                 
                 <div className="flex flex-col gap-2 mt-4 text-[13px]">
                   <div className="grid grid-cols-2 gap-4">

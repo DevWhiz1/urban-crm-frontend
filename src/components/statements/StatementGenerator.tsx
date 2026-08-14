@@ -13,11 +13,18 @@ export const StatementGenerator: React.FC = () => {
   const [statementType, setStatementType] = useState('client');
   const [projects, setProjects] = useState<any[]>([]);
   const [contractors, setContractors] = useState<any[]>([]);
+  const [projectContractorIds, setProjectContractorIds] = useState<Set<string>>(new Set());
   
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedContractor, setSelectedContractor] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 1);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   
   const [loading, setLoading] = useState(false);
   const [statementData, setStatementData] = useState<any>(null);
@@ -34,6 +41,28 @@ export const StatementGenerator: React.FC = () => {
       .then(res => setContractors(res.data.data || []))
       .catch(err => console.error(err));
   }, []);
+
+  useEffect(() => {
+    if (selectedProject) {
+      apiClient.get('/api/project-contract/get-all-project-contracts', { params: { project: selectedProject } })
+        .then(res => {
+          const contracts = res.data.data || [];
+          const ids = new Set<string>(contracts.map((c: any) => c.contractor?._id || c.contractor));
+          setProjectContractorIds(ids);
+          
+          if (selectedContractor && !ids.has(selectedContractor)) {
+            setSelectedContractor('');
+          }
+        })
+        .catch(console.error);
+    } else {
+      setProjectContractorIds(new Set());
+    }
+  }, [selectedProject]); // selectedContractor omitted intentionally so it doesn't loop
+  
+  const filteredContractors = selectedProject 
+    ? contractors.filter(c => projectContractorIds.has(c._id))
+    : contractors;
 
   const handleGenerate = async () => {
     if (!selectedProject) {
@@ -71,8 +100,10 @@ export const StatementGenerator: React.FC = () => {
     setStatementType('client');
     setSelectedProject('');
     setSelectedContractor('');
-    setStartDate('');
-    setEndDate('');
+    const date = new Date();
+    setEndDate(date.toISOString().split('T')[0]);
+    date.setFullYear(date.getFullYear() - 1);
+    setStartDate(date.toISOString().split('T')[0]);
     setStatementData(null);
     setError('');
   };
@@ -150,7 +181,7 @@ export const StatementGenerator: React.FC = () => {
                   className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3 border"
                 >
                   <option value="">-- Select Contractor --</option>
-                  {contractors.map(c => (
+                  {filteredContractors.map(c => (
                     <option key={c._id} value={c._id}>{c.user?.userName || c.companyName}</option>
                   ))}
                 </select>

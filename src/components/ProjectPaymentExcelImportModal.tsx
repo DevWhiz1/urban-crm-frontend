@@ -97,7 +97,7 @@ export const ProjectPaymentExcelImportModal: React.FC<ProjectPaymentExcelImportM
           } else if (typeof rawDate === 'string' && rawDate.trim() !== '') {
             const d = new Date(rawDate);
             if (!isNaN(d.getTime())) {
-              parsedDateStr = d.toISOString().split('T')[0];
+              parsedDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
           } else if (typeof rawDate === 'number') {
             const excelDate = new Date((rawDate - (25567 + 2)) * 86400 * 1000);
@@ -107,7 +107,8 @@ export const ProjectPaymentExcelImportModal: React.FC<ProjectPaymentExcelImportM
           }
 
           if (!parsedDateStr) {
-            parsedDateStr = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            parsedDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           }
 
           const descText = rawDesc ? String(rawDesc).trim() : '';
@@ -118,7 +119,7 @@ export const ProjectPaymentExcelImportModal: React.FC<ProjectPaymentExcelImportM
               date: parsedDateStr,
               workDescription: descText !== '' ? descText : 'None',
               type: 'credit',
-              paymentMethod: rawMethod ? String(rawMethod).toLowerCase().replace(/[^a-z_]/g, '') : 'bank_transfer',
+              paymentMethod: rawMethod ? String(rawMethod).toLowerCase().replace(/[^a-z_]/g, '') : 'online',
               notes: descText !== '' ? descText : ''
             });
           } else {
