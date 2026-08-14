@@ -34,7 +34,7 @@ import {
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
-import { fetchAllProjects, fetchProjectPaymentSummary, getPaginatedProjectPayments, getPaginatedProjectMaterials } from '../services/projectSummaryApi';
+import { fetchPaginatedProjects, fetchProjectPaymentSummary, getPaginatedProjectPayments, getPaginatedProjectMaterials } from '../services/projectSummaryApi';
 import { fetchContractorsForContract } from '../services/projectContractApi';
 import { updatePayment, deletePayment } from '../services/paymentApi';
 import { deleteMaterialPayment } from '../services/materialPaymentApi';
@@ -42,6 +42,7 @@ import { formatPKRCurrency } from '../utils/paymentValidation';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { PaymentEditModal } from './PaymentEditModal';
 import { MaterialEditModal } from './MaterialEditModal';
+import { Pagination } from './shared/Pagination';
 
 interface Project {
     _id: string;
@@ -158,6 +159,11 @@ export const ProjectPaymentSummary: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
 
+    // Project Pagination States
+    const [projectsCurrentPage, setProjectsCurrentPage] = useState(1);
+    const [projectsTotalPages, setProjectsTotalPages] = useState(1);
+    const [projectsTotalItems, setProjectsTotalItems] = useState(0);
+
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -165,7 +171,6 @@ export const ProjectPaymentSummary: React.FC = () => {
     });
 
     useEffect(() => {
-        loadProjects();
         loadContractors();
     }, []);
 
@@ -184,9 +189,14 @@ export const ProjectPaymentSummary: React.FC = () => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchTerm);
             setCurrentPage(1);
+            setProjectsCurrentPage(1);
         }, 500);
         return () => clearTimeout(handler);
     }, [searchTerm]);
+
+    useEffect(() => {
+        loadProjects();
+    }, [projectsCurrentPage, debouncedSearch]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -195,8 +205,16 @@ export const ProjectPaymentSummary: React.FC = () => {
     const loadProjects = async () => {
         try {
             setLoadingProjects(true);
-            const projectsData = await fetchAllProjects();
-            setProjects(projectsData);
+            const { data, pagination } = await fetchPaginatedProjects({
+                page: projectsCurrentPage,
+                limit: 10,
+                search: debouncedSearch
+            });
+            setProjects(data);
+            if (pagination) {
+                setProjectsTotalPages(pagination.totalPages || 1);
+                setProjectsTotalItems(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load projects');
         } finally {
@@ -383,10 +401,7 @@ export const ProjectPaymentSummary: React.FC = () => {
         }
     };
 
-    const filteredProjectsList = projects.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.projectCode.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProjectsList = projects;
 
     const hasActiveFilters = searchTerm !== '' || typeFilter !== 'ALL' || contractorFilter !== 'ALL' || providerFilter !== 'ALL' || methodFilter !== 'ALL' || sortBy !== 'date_desc';
 
@@ -937,72 +952,14 @@ export const ProjectPaymentSummary: React.FC = () => {
                             </table>
                             </div>
                         )}
-
-                        {/* Pagination Bar */}
-                        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
-                            <div className="flex items-center gap-3">
-                                <span>
-                                    Page <strong className="text-slate-800">{currentPage}</strong> of <strong className="text-slate-800">{totalPages}</strong>
-                                </span>
-                                <div className="flex items-center gap-1">
-                                    <span className="text-slate-400">Rows per page:</span>
-                                    <select
-                                        value={itemsPerPage}
-                                        onChange={(e) => {
-                                            setItemsPerPage(Number(e.target.value));
-                                            setCurrentPage(1);
-                                        }}
-                                        className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700"
-                                    >
-                                        <option value={10}>10</option>
-                                        <option value={25}>25</option>
-                                        <option value={50}>50</option>
-                                        <option value={100}>100</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Pagination Controls */}
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                                >
-                                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
-                                </button>
-
-                                <div className="flex items-center gap-1 px-1">
-                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                        let pageNum = i + 1;
-                                        if (totalPages > 5 && currentPage > 3) {
-                                            pageNum = currentPage - 3 + i;
-                                            if (pageNum > totalPages) pageNum = totalPages - (4 - i);
-                                        }
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                                className={`w-7 h-7 rounded text-xs font-semibold flex items-center justify-center transition-colors ${currentPage === pageNum
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                                                    }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                                    disabled={currentPage >= totalPages}
-                                    className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                                >
-                                    Next <ChevronRight className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalCount}
+                            pageSize={itemsPerPage}
+                            onPageChange={setCurrentPage}
+                            itemName={activeTab === 'payments' ? "payments" : "materials"}
+                        />
                     </div>
                 </div>
 
@@ -1374,6 +1331,16 @@ export const ProjectPaymentSummary: React.FC = () => {
                         </table>
                     </div>
                 </div>
+            )}
+            {!loadingProjects && filteredProjectsList.length > 0 && (
+                <Pagination
+                    currentPage={projectsCurrentPage}
+                    totalPages={projectsTotalPages}
+                    totalItems={projectsTotalItems}
+                    pageSize={10}
+                    onPageChange={setProjectsCurrentPage}
+                    itemName="projects"
+                />
             )}
 
             <Notification

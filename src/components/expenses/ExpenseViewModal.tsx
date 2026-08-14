@@ -69,6 +69,10 @@ const ExpenseViewModal: React.FC<Props> = ({ expense, categories, onClose }) => 
                       <p className="text-sm text-gray-500">Date</p>
                       <p className="font-medium text-gray-900">{new Date(expense.date).toLocaleDateString()}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Created By</p>
+                      <p className="font-medium text-gray-900">{expense.createdBy?.userName || 'System / Admin'}</p>
+                    </div>
                   </div>
                 </div>
 

@@ -35,6 +35,7 @@ import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import {
     fetchAllProjectsForContracts,
+    fetchPaginatedProjectsForContracts,
     fetchProjectContracts,
     fetchContractPaymentSummary
 } from '../services/contractPaymentApi';
@@ -44,6 +45,7 @@ import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
 import { PaymentEditModal } from './PaymentEditModal';
 import { getPaginatedProjectPayments } from '../services/projectSummaryApi';
 import { useNavigate } from "react-router-dom";
+import { Pagination } from './shared/Pagination';
 
 interface Project {
     _id: string;
@@ -148,17 +150,19 @@ export const ProjectContractPayments: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
 
+    // Project Pagination States
+    const [projectsCurrentPage, setProjectsCurrentPage] = useState(1);
+    const [projectsTotalPages, setProjectsTotalPages] = useState(1);
+    const [projectsTotalItems, setProjectsTotalItems] = useState(0);
+
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
         message: ''
     });
 
-    useEffect(() => {
-        loadProjects();
-    }, []);
-
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [debouncedProjectSearch, setDebouncedProjectSearch] = useState('');
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -168,6 +172,18 @@ export const ProjectContractPayments: React.FC = () => {
         return () => clearTimeout(handler);
     }, [paymentSearchTerm]);
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedProjectSearch(searchTerm);
+            setProjectsCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        loadProjects();
+    }, [projectsCurrentPage, debouncedProjectSearch]);
+
     // Reset pagination on contract change
     useEffect(() => {
         setCurrentPage(1);
@@ -176,8 +192,16 @@ export const ProjectContractPayments: React.FC = () => {
     const loadProjects = async () => {
         try {
             setLoadingProjects(true);
-            const projectsData = await fetchAllProjectsForContracts();
-            setProjects(projectsData);
+            const { data, pagination } = await fetchPaginatedProjectsForContracts({
+                page: projectsCurrentPage,
+                limit: 10,
+                search: debouncedProjectSearch
+            });
+            setProjects(data);
+            if (pagination) {
+                setProjectsTotalPages(pagination.totalPages || 1);
+                setProjectsTotalItems(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load projects');
         } finally {
@@ -355,10 +379,7 @@ export const ProjectContractPayments: React.FC = () => {
         }
     };
 
-    const filteredProjects = projects.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.projectCode.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProjects = projects;
 
     const hasActivePaymentFilters = paymentSearchTerm !== '' || typeFilter !== 'ALL' || methodFilter !== 'ALL' || statusFilter !== 'ALL' || sortBy !== 'date_desc';
 
@@ -736,52 +757,14 @@ export const ProjectContractPayments: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Pagination Bar */}
-                        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
-                            <div className="flex items-center gap-3">
-                                <span>
-                                    Page <strong className="text-slate-800">{currentPage}</strong> of <strong className="text-slate-800">{totalPages}</strong>
-                                </span>
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                                >
-                                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
-                                </button>
-                                
-                                <div className="hidden sm:flex items-center gap-1 px-2">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1).map((pageNum, idx, arr) => {
-                                        if (idx > 0 && pageNum - arr[idx - 1] > 1) {
-                                            return <span key={`ellipsis-${pageNum}`} className="text-slate-400 px-1">...</span>;
-                                        }
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                                className={`w-7 h-7 rounded text-xs font-semibold flex items-center justify-center transition-colors ${currentPage === pageNum
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                                                    }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage >= totalPages}
-                                    className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                                >
-                                    Next <ChevronRight className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalCount}
+                            pageSize={itemsPerPage}
+                            onPageChange={setCurrentPage}
+                            itemName="payments"
+                        />
                     </div>
 
                     {/* PAYMENT DETAIL MODAL */}
@@ -1192,6 +1175,16 @@ export const ProjectContractPayments: React.FC = () => {
                         </table>
                     </div>
                 </div>
+            )}
+            {!loadingProjects && filteredProjects.length > 0 && (
+                <Pagination
+                    currentPage={projectsCurrentPage}
+                    totalPages={projectsTotalPages}
+                    totalItems={projectsTotalItems}
+                    pageSize={10}
+                    onPageChange={setProjectsCurrentPage}
+                    itemName="projects"
+                />
             )}
 
             <Notification

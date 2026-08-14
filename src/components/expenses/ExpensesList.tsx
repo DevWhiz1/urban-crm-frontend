@@ -40,6 +40,7 @@ const ExpensesList: React.FC<Props> = ({ expenses, categories, onEdit, onView, o
             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Type & Association</th>
             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Vendor & Payment</th>
             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Amount</th>
+            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Created By</th>
             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
             <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
           </tr>
@@ -61,6 +62,9 @@ const ExpensesList: React.FC<Props> = ({ expenses, categories, onEdit, onView, o
               </td>
               <td className="px-6 py-4">
                 <div className="font-bold text-gray-900">Rs {expense.amount.toLocaleString()}</div>
+              </td>
+              <td className="px-6 py-4">
+                <div className="text-sm font-medium text-gray-900">{expense.createdBy?.userName || 'System / Admin'}</div>
               </td>
               <td className="px-6 py-4">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

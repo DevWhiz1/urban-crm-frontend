@@ -10,6 +10,16 @@ export const fetchAllProjects = async () => {
   }
 };
 
+export const fetchPaginatedProjects = async (params: any = {}) => {
+  try {
+    const response = await apiClient.get('/api/project/get-all-projects', { params });
+    return { data: response.data.data || [], pagination: response.data.pagination };
+  } catch (error) {
+    console.error('Failed to fetch paginated projects:', error);
+    throw new Error('Failed to load paginated projects');
+  }
+};
+
 export const fetchProjectPaymentSummary = async (projectId: string) => {
   try {
     const response = await apiClient.get(`/api/payment/full-summary/${projectId}`);
