@@ -6,6 +6,8 @@ export const createProjectPayment = async (data: ProjectPaymentFormData): Promis
     const projectPaymentData = {
       ...data,
       amount: parseFloat(data.paymentAmount),
+      date: data.paymentDate,
+      status: data.paymentStatus,
       transactionId: data.transactionId || undefined,
       receiptPhoto: data.receiptPhoto || undefined,
       paymentMethod: data.paymentMethod || 'online',

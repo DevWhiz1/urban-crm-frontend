@@ -6,6 +6,7 @@ export const createProjectContract = async (data: ProjectContractFormData): Prom
     const contractData = {
       ...data,
       totalAmount: parseFloat(data.totalAmount),
+      startDate: data.startDate || new Date().toISOString().split('T')[0],
       endDate: data.endDate || undefined,
     };
 
@@ -39,10 +40,20 @@ export const fetchContractorsForContract = async (projectId?: string): Promise<C
 
 export const fetchAllProjectContracts = async (): Promise<ProjectContract[]> => {
   try {
-    const response = await apiClient.get('/api/project-contract/get-all-project-contracts');
+    const response = await apiClient.get('/api/project-contract/get-all-project-contracts?limit=all');
     return response.data.data || [];
   } catch (error) {
     console.error('Failed to fetch project contracts:', error);
+    throw new Error('Failed to load project contracts');
+  }
+};
+
+export const getProjectContractsPaginated = async (params: { page?: number; limit?: number; search?: string } = {}): Promise<{ data: ProjectContract[], pagination: any }> => {
+  try {
+    const response = await apiClient.get('/api/project-contract/get-all-project-contracts', { params });
+    return { data: response.data.data || [], pagination: response.data.pagination };
+  } catch (error) {
+    console.error('Failed to fetch paginated project contracts:', error);
     throw new Error('Failed to load project contracts');
   }
 };

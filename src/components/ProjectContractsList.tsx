@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { fetchAllProjectContracts, deleteProjectContract, updateProjectContract } from '../services/projectContractApi';
+import { getProjectContractsPaginated, deleteProjectContract, updateProjectContract } from '../services/projectContractApi';
 import { ProjectContract } from '../types/projectContract';
 import { formatPKRCurrency } from '../utils/projectContractValidation';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
@@ -50,44 +50,42 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
         isInactive: false
     });
 
-    useEffect(() => {
-        loadContracts();
-    }, []);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 10;
 
     useEffect(() => {
-        filterContracts();
-    }, [contracts, searchTerm]);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        loadContracts();
+    }, [page, debouncedSearch]);
 
     const loadContracts = async () => {
         try {
             setLoading(true);
-            const contractsData = await fetchAllProjectContracts();
-            setContracts(contractsData);
+            const params: any = { page, limit: pageSize };
+            if (debouncedSearch) params.search = debouncedSearch;
+
+            const { data, pagination } = await getProjectContractsPaginated(params);
+            setContracts(data);
+            setFilteredContracts(data);
+            if (pagination) {
+                setTotalPages(pagination.totalPages || 1);
+                setTotalCount(pagination.total || 0);
+            }
         } catch (error) {
             showNotification('error', 'Failed to load project contracts. Please try again.');
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterContracts = () => {
-        let filtered = [...contracts];
-
-        if (searchTerm) {
-            filtered = filtered.filter(contract => {
-                const projectName = typeof contract.project === 'object' ? contract.project.name : '';
-                const contractorName = typeof contract.contractor === 'object' ? contract.contractor.companyName : '';
-                const contractType = contract.contractType || '';
-
-                return (
-                    projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    contractorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    contractType.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-            });
-        }
-
-        setFilteredContracts(filtered);
     };
 
     const handleInitiateDelete = (contract: ProjectContract) => {
@@ -224,12 +222,12 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                         <Handshake className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Contracts Found</h3>
                         <p className="text-gray-600 mb-6">
-                            {contracts.length === 0
+                            {totalCount === 0
                                 ? "You haven't created any project contracts yet. Start by adding your first contract."
                                 : "No contracts match your current search. Try adjusting your search criteria."
                             }
                         </p>
-                        {contracts.length === 0 && (
+                        {totalCount === 0 && (
                             <Button
                                 onClick={onAddContract}
                                 className="bg-orange-600 hover:bg-orange-700"
@@ -398,6 +396,48 @@ export const ProjectContractsList: React.FC<ProjectContractsListProps> = ({
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {totalCount > 0 && (
+                    <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4 text-sm bg-white p-4 rounded-xl border border-gray-200">
+                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} contracts</p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(1)}
+                            >
+                                First
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                            >
+                                Prev
+                            </Button>
+                            <span className="px-2 font-medium">Page {page} / {totalPages}</span>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={page === totalPages}
+                                onClick={() => setPage(totalPages)}
+                            >
+                                Last
+                            </Button>
                         </div>
                     </div>
                 )}

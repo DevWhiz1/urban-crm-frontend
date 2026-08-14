@@ -283,160 +283,148 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ onViewProject, onEdi
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {filteredProjects.map((project) => (
-                            <div key={project._id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden transition-all duration-300">
-                                {/* Project Header */}
-                                <div className="p-6 border-b border-gray-100">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-xl font-semibold text-gray-900 mb-1">{project.name}</h3>
-                                            <p className="text-sm text-gray-600 font-mono">{project.projectCode}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {project.isActive === false ? (
-                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-red-600 bg-red-100">
-                                                    <XCircle className="w-4 h-4" />
-                                                    INACTIVE
-                                                </span>
-                                            ) : (
-                                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                                                    {getStatusIcon(project.status)}
-                                                    {project.status.replace('_', ' ').toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                                        <div className="flex items-center gap-1">
-                                            <MapPin className="w-4 h-4" />
-                                            <span>{project.location}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="w-4 h-4" />
-                                            <span>{formatDate(project.startDate)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Project Details */}
-                                <div className="p-6">
-                                    <div className="space-y-4">
-                                        {/* Project Info */}
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <span className="text-gray-500">Category:</span>
-                                                <p className="font-medium text-gray-900 capitalize">{project.projectCategory}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">Type:</span>
-                                                <p className="font-medium text-gray-900 capitalize">{project.projectType.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Cost Information */}
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">Revised Total Cost:</span>
-                                                <span className="font-semibold text-gray-900">{getProjectCost(project)}</span>
-                                            </div>
-                                            {getProjectAdditionsTotal(project) > 0 && (
-                                                <div className="flex items-center justify-between mt-1 text-xs text-amber-700 font-medium">
-                                                    <span>Includes Additions:</span>
-                                                    <span>+{formatPKRCurrency(getProjectAdditionsTotal(project).toString())}</span>
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Project Info
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Details
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Financials
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredProjects.map((project) => (
+                                        <tr key={project._id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-4 shrink-0">
+                                                        <Building className="w-5 h-5 text-indigo-600" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {project.name}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500 font-mono">
+                                                            {project.projectCode}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            {project.totalCoverageArea && (
-                                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200/60">
-                                                    <span className="text-sm text-gray-600">Coverage Area:</span>
-                                                    <span className="text-sm font-medium text-gray-900">{project.totalCoverageArea} sq ft</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center text-sm text-gray-900">
+                                                        <MapPin className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+                                                        <span className="truncate max-w-[200px]">{project.location}</span>
+                                                    </div>
+                                                    <div className="flex items-center text-sm text-gray-500">
+                                                        <Calendar className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+                                                        {formatDate(project.startDate)}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 capitalize mt-1">
+                                                        {project.projectCategory} • {project.projectType.replace(/([A-Z])/g, ' $1').trim()}
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* Contractors */}
-                                        {project.contractors && project.contractors.length > 0 && (
-                                            <div>
-                                                <span className="text-sm text-gray-500">Contractors:</span>
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    <Users className="w-4 h-4 text-gray-400" />
-                                                    <span className="text-sm font-medium text-gray-900">
-                                                        {project.contractors.length} assigned
-                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="space-y-1">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {getProjectCost(project)}
+                                                    </div>
+                                                    {getProjectAdditionsTotal(project) > 0 && (
+                                                        <div className="text-xs text-amber-700 font-medium">
+                                                            +{formatPKRCurrency(getProjectAdditionsTotal(project).toString())} (Additions)
+                                                        </div>
+                                                    )}
+                                                    <div className="w-24 bg-gray-200 rounded-full h-1.5 mt-2">
+                                                        <div
+                                                            className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                                            style={{ width: `${project.progress || 0}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-500 mt-0.5">{project.progress || 0}% Progress</div>
                                                 </div>
-                                            </div>
-                                        )}
-
-                                        {/* Progress */}
-                                        <div>
-                                            <div className="flex items-center justify-between text-sm mb-2">
-                                                <span className="text-gray-600">Progress</span>
-                                                <span className="font-medium text-gray-900">{project.progress || 0}%</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                                                    style={{ width: `${project.progress || 0}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => onViewProject(project)}
-                                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2"
-                                                title="View Project"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
-                                            {isAdmin && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => onEditProject(project)}
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 p-2"
-                                                    title="Edit Project"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                        {isAdmin && (
-                                            <div className="flex items-center gap-2">
-                                                {project.isActive === false && (
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="space-y-2">
+                                                    {project.isActive === false ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100 border border-red-200">
+                                                            <XCircle className="w-4 h-4" />
+                                                            INACTIVE
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(project.status).replace('text-', 'border-').replace('-600', '-200')} ${getStatusColor(project.status)}`}>
+                                                            {getStatusIcon(project.status)}
+                                                            {project.status.replace('_', ' ').toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <div className="flex items-center gap-2">
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleActivateProject(project)}
-                                                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                                        title="Activate Project"
+                                                        onClick={() => onViewProject(project)}
+                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2"
+                                                        title="View Project"
                                                     >
-                                                        <CheckCircle className="w-4 h-4" />
+                                                        <Eye className="w-4 h-4" />
                                                     </Button>
-                                                )}
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleInitiateDelete(project)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    title={project.isActive === false ? "Permanently Delete" : "Deactivate"}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                                                    {isAdmin && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => onEditProject(project)}
+                                                            className="text-green-600 hover:text-green-700 hover:bg-green-50 p-2"
+                                                            title="Edit Project"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                    {isAdmin && (
+                                                        <>
+                                                            {project.isActive === false && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleActivateProject(project)}
+                                                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-2"
+                                                                    title="Activate Project"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleInitiateDelete(project)}
+                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+                                                                title={project.isActive === false ? "Permanently Delete" : "Deactivate"}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
 
