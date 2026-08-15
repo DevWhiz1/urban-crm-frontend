@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, PlusCircle, Banknote } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, PlusCircle, Banknote, Edit } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
@@ -12,6 +12,7 @@ interface PriceAdditionModalProps {
   onSubmit: (amount: number, reason: string) => Promise<void>;
   title: string;
   entityName?: string;
+  editData?: { _id: string; amount: number; reason: string } | null;
 }
 
 export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
@@ -19,7 +20,8 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
   onClose,
   onSubmit,
   title,
-  entityName
+  entityName,
+  editData
 }) => {
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
@@ -30,6 +32,22 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
     type: 'success',
     message: ''
   });
+
+  const isEditMode = !!editData;
+
+  useEffect(() => {
+    if (isOpen && editData) {
+      setAmount(editData.amount.toString());
+      setReason(editData.reason);
+      setErrors({});
+      setNotification({ show: false, type: 'success', message: '' });
+    } else if (isOpen && !editData) {
+      setAmount('');
+      setReason('');
+      setErrors({});
+      setNotification({ show: false, type: 'success', message: '' });
+    }
+  }, [isOpen, editData]);
 
   if (!isOpen) return null;
 
@@ -60,7 +78,7 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
       setNotification({
         show: true,
         type: 'success',
-        message: 'Price addition added successfully!'
+        message: isEditMode ? 'Price addition updated successfully!' : 'Price addition added successfully!'
       });
       setTimeout(() => {
         setAmount('');
@@ -72,7 +90,7 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
       setNotification({
         show: true,
         type: 'error',
-        message: err.message || 'Failed to submit price addition'
+        message: err.message || (isEditMode ? 'Failed to update price addition' : 'Failed to submit price addition')
       });
     } finally {
       setLoading(false);
@@ -80,29 +98,44 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden transform transition-all">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+      <div
+        className="bg-white rounded-2xl max-w-md w-full shadow-xl overflow-hidden transform transition-all"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4 flex items-center justify-between text-white">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-              <PlusCircle className="h-6 w-6 text-white" />
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isEditMode ? 'bg-amber-50' : 'bg-indigo-50'
+              }`}
+            >
+              {isEditMode ? (
+                <Edit className="w-5 h-5 text-amber-600" />
+              ) : (
+                <PlusCircle className="w-5 h-5 text-indigo-600" />
+              )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold">{title}</h3>
-              {entityName && <p className="text-xs text-emerald-100">{entityName}</p>}
+              <h3 className="text-base font-semibold text-gray-900">
+                {isEditMode ? 'Edit Price Addition' : 'Add Price Addition'}
+              </h3>
+              {entityName && (
+                <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[220px]">{entityName}</p>
+              )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-emerald-100 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {notification.show && (
-          <div className="p-4">
+          <div className="px-6 pt-4">
             <Notification
               type={notification.type}
               message={notification.message}
@@ -111,15 +144,15 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Amount Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Addition Amount (PKR) <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Amount (PKR) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Banknote className="h-5 w-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-400">Rs.</span>
               </div>
               <Input
                 type="number"
@@ -129,39 +162,39 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
                   setAmount(e.target.value);
                   if (errors.amount) setErrors(prev => ({ ...prev, amount: undefined }));
                 }}
-                placeholder="e.g. 50000"
+                placeholder="e.g. 50,000"
                 className="pl-10"
                 error={errors.amount}
               />
             </div>
             {amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && (
-              <p className="mt-1 text-xs text-emerald-600 font-medium">
-                {formatPKRCurrency(amount)}
-              </p>
+              <div className="mt-2 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+                <span className="text-xs font-semibold text-emerald-700">
+                  {formatPKRCurrency(amount)}
+                </span>
+              </div>
             )}
           </div>
 
           {/* Reason Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Reason / Scope Description <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Reason / Description <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <Textarea
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  if (errors.reason) setErrors(prev => ({ ...prev, reason: undefined }));
-                }}
-                placeholder="Explain why this price addition was made (e.g. Client requested extra floor tiles, scope expansion)"
-                rows={3}
-                error={errors.reason}
-              />
-            </div>
+            <Textarea
+              value={reason}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (errors.reason) setErrors(prev => ({ ...prev, reason: undefined }));
+              }}
+              placeholder="e.g. Client requested extra floor tiles, scope expansion..."
+              rows={3}
+              error={errors.reason}
+            />
           </div>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
+          {/* Footer Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
             <Button
               type="button"
               variant="outline"
@@ -173,9 +206,16 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className={`text-white ${
+                isEditMode
+                  ? 'bg-amber-500 hover:bg-amber-600'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
             >
-              {loading ? 'Adding...' : 'Add Addition'}
+              {loading
+                ? (isEditMode ? 'Updating...' : 'Adding...')
+                : (isEditMode ? 'Update Addition' : 'Add Addition')
+              }
             </Button>
           </div>
         </form>

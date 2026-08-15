@@ -115,3 +115,25 @@ export const addContractAddition = async (id: string, amount: number, reason: st
     throw new Error(msg);
   }
 };
+
+export const updateContractAddition = async (id: string, additionId: string, amount: number, reason: string): Promise<ProjectContract> => {
+  try {
+    const response = await apiClient.put(`/api/project-contract/update-addition/${id}/${additionId}`, { amount, reason });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update contract price addition:', error);
+    const msg = error.response?.data?.message || 'Failed to update price addition. Please try again.';
+    throw new Error(msg);
+  }
+};
+
+export const deleteContractAddition = async (id: string, additionId: string): Promise<ProjectContract> => {
+  try {
+    const response = await apiClient.delete(`/api/project-contract/delete-addition/${id}/${additionId}`);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to delete contract price addition:', error);
+    const msg = error.response?.data?.message || 'Failed to delete price addition. Please try again.';
+    throw new Error(msg);
+  }
+};

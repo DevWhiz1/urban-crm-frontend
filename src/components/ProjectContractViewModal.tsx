@@ -13,12 +13,16 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  PlusCircle
+  PlusCircle,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Notification } from './ui/Notification';
-import { fetchProjectContractById, addContractAddition } from '../services/projectContractApi';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
+import { fetchProjectContractById, addContractAddition, updateContractAddition, deleteContractAddition } from '../services/projectContractApi';
 import { ProjectContract } from '../types/projectContract';
+import { PriceAddition } from '../types/project';
 import { formatPKRCurrency } from '../utils/projectContractValidation';
 import { PriceAdditionModal } from './PriceAdditionModal';
 
@@ -38,6 +42,9 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
   const [contract, setContract] = useState<ProjectContract | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
+  const [editingAddition, setEditingAddition] = useState<PriceAddition | null>(null);
+  const [deleteAdditionTarget, setDeleteAdditionTarget] = useState<PriceAddition | null>(null);
+  const [isDeleteAdditionModalOpen, setIsDeleteAdditionModalOpen] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     type: 'success' as 'success' | 'error',
@@ -46,9 +53,41 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
 
   const handleAddContractAddition = async (amount: number, reason: string) => {
     if (!contract) return;
-    const updatedContract = await addContractAddition(contract._id, amount, reason);
-    setContract(updatedContract);
-    showNotification('success', 'Price addition added to contract successfully!');
+    if (editingAddition && editingAddition._id) {
+      // Edit mode
+      const updatedContract = await updateContractAddition(contract._id, editingAddition._id, amount, reason);
+      setContract(updatedContract);
+      showNotification('success', 'Price addition updated successfully!');
+    } else {
+      // Add mode
+      const updatedContract = await addContractAddition(contract._id, amount, reason);
+      setContract(updatedContract);
+      showNotification('success', 'Price addition added to contract successfully!');
+    }
+  };
+
+  const handleEditAddition = (addition: PriceAddition) => {
+    setEditingAddition(addition);
+    setIsAdditionModalOpen(true);
+  };
+
+  const handleDeleteAdditionClick = (addition: PriceAddition) => {
+    setDeleteAdditionTarget(addition);
+    setIsDeleteAdditionModalOpen(true);
+  };
+
+  const handleConfirmDeleteAddition = async () => {
+    if (!contract || !deleteAdditionTarget?._id) return;
+    try {
+      const updatedContract = await deleteContractAddition(contract._id, deleteAdditionTarget._id);
+      setContract(updatedContract);
+      showNotification('success', 'Price addition deleted successfully!');
+    } catch (error: any) {
+      showNotification('error', error.message || 'Failed to delete price addition.');
+    } finally {
+      setIsDeleteAdditionModalOpen(false);
+      setDeleteAdditionTarget(null);
+    }
   };
 
   const getTotalContractAdditions = (c: ProjectContract) => {
@@ -308,16 +347,32 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
                     <div className="bg-emerald-50/50 rounded-lg p-3 border border-emerald-100 divide-y divide-emerald-100 max-h-48 overflow-y-auto">
                       {contract.additions.map((item, idx) => (
                         <div key={item._id || idx} className="py-2 first:pt-0 last:pb-0 flex items-start justify-between text-xs">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-emerald-800">+{formatPKRCurrency(item.amount.toString())}</span>
                               <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">by {formatAddedBy(item.addedBy)}</span>
                             </div>
                             <p className="text-gray-700 mt-0.5">{item.reason}</p>
                           </div>
-                          <span className="text-gray-400 whitespace-nowrap ml-2">
-                            {new Date(item.date).toLocaleDateString()}
-                          </span>
+                          <div className="flex items-center gap-1 ml-2 shrink-0">
+                            <span className="text-gray-400 whitespace-nowrap">
+                              {new Date(item.date).toLocaleDateString()}
+                            </span>
+                            <button
+                              onClick={() => handleEditAddition(item)}
+                              className="p-1 rounded-md text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                              title="Edit addition"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAdditionClick(item)}
+                              className="p-1 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                              title="Delete addition"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -488,10 +543,26 @@ export const ProjectContractViewModal: React.FC<ProjectContractViewModalProps> =
 
       <PriceAdditionModal
         isOpen={isAdditionModalOpen}
-        onClose={() => setIsAdditionModalOpen(false)}
+        onClose={() => {
+          setIsAdditionModalOpen(false);
+          setEditingAddition(null);
+        }}
         onSubmit={handleAddContractAddition}
         title="Add Price Addition to Contract"
         entityName={`${getContractorName(contract.contractor)} - ${getProjectName(contract.project)}`}
+        editData={editingAddition}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteAdditionModalOpen}
+        onClose={() => {
+          setIsDeleteAdditionModalOpen(false);
+          setDeleteAdditionTarget(null);
+        }}
+        onConfirmDelete={handleConfirmDeleteAddition}
+        itemName={deleteAdditionTarget ? `addition of ${formatPKRCurrency(deleteAdditionTarget.amount.toString())}` : 'this addition'}
+        itemType="Price Addition"
+        isInactive={true}
       />
 
       <Notification

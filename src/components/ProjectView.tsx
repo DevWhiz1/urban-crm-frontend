@@ -31,12 +31,15 @@ import {
     CreditCard,
     Briefcase,
     FolderOpen,
+    Pencil,
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Notification } from './ui/Notification';
-import { fetchProjectById, deleteProject, addProjectAddition } from '../services/projectApi';
+import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
+import { fetchProjectById, deleteProject, addProjectAddition, updateProjectAddition, deleteProjectAddition } from '../services/projectApi';
 import { fetchProjectContractsByProjectId } from '../services/projectContractApi';
 import { Project } from '../types/project';
+import { PriceAddition } from '../types/project';
 import { ProjectContract } from '../types/projectContract';
 import { formatPKRCurrency } from '../utils/projectValidation';
 import { PriceAdditionModal } from './PriceAdditionModal';
@@ -61,6 +64,9 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     const [loading, setLoading] = useState(true);
 
     const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
+    const [editingAddition, setEditingAddition] = useState<PriceAddition | null>(null);
+    const [deleteAdditionTarget, setDeleteAdditionTarget] = useState<PriceAddition | null>(null);
+    const [isDeleteAdditionModalOpen, setIsDeleteAdditionModalOpen] = useState(false);
     const [notification, setNotification] = useState({
         show: false,
         type: 'success' as 'success' | 'error',
@@ -73,9 +79,41 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
 
     const handleAddAddition = async (amount: number, reason: string) => {
         if (!project) return;
-        const updatedProject = await addProjectAddition(project._id, amount, reason);
-        setProject(updatedProject);
-        showNotification('success', 'Price addition recorded successfully!');
+        if (editingAddition && editingAddition._id) {
+            // Edit mode
+            const updatedProject = await updateProjectAddition(project._id, editingAddition._id, amount, reason);
+            setProject(updatedProject);
+            showNotification('success', 'Price addition updated successfully!');
+        } else {
+            // Add mode
+            const updatedProject = await addProjectAddition(project._id, amount, reason);
+            setProject(updatedProject);
+            showNotification('success', 'Price addition recorded successfully!');
+        }
+    };
+
+    const handleEditAddition = (addition: PriceAddition) => {
+        setEditingAddition(addition);
+        setIsAdditionModalOpen(true);
+    };
+
+    const handleDeleteAdditionClick = (addition: PriceAddition) => {
+        setDeleteAdditionTarget(addition);
+        setIsDeleteAdditionModalOpen(true);
+    };
+
+    const handleConfirmDeleteAddition = async () => {
+        if (!project || !deleteAdditionTarget?._id) return;
+        try {
+            const updatedProject = await deleteProjectAddition(project._id, deleteAdditionTarget._id);
+            setProject(updatedProject);
+            showNotification('success', 'Price addition deleted successfully!');
+        } catch (error: any) {
+            showNotification('error', error.message || 'Failed to delete price addition.');
+        } finally {
+            setIsDeleteAdditionModalOpen(false);
+            setDeleteAdditionTarget(null);
+        }
     };
 
     const getTotalAdditions = (proj: Project) => {
@@ -314,6 +352,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                                     <th className="px-3 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                                                     <th className="px-3 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
                                                     <th className="px-3 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                                                    <th className="px-3 py-2 text-center text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-100">
@@ -323,6 +362,24 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                                                         <td className="px-3 py-1.5 whitespace-nowrap font-semibold text-emerald-700">+{formatPKRCurrency(item.amount.toString())}</td>
                                                         <td className="px-3 py-1.5 text-gray-900">{item.reason}</td>
                                                         <td className="px-3 py-1.5 whitespace-nowrap text-gray-500 text-[10px] sm:text-xs font-medium">{formatAddedBy(item.addedBy)}</td>
+                                                        <td className="px-3 py-1.5 whitespace-nowrap text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <button
+                                                                    onClick={() => handleEditAddition(item)}
+                                                                    className="p-1 rounded-md text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                                                                    title="Edit addition"
+                                                                >
+                                                                    <Pencil className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteAdditionClick(item)}
+                                                                    className="p-1 rounded-md text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                                                                    title="Delete addition"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -664,10 +721,26 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
             {/* Modal & Notification */}
             <PriceAdditionModal
                 isOpen={isAdditionModalOpen}
-                onClose={() => setIsAdditionModalOpen(false)}
+                onClose={() => {
+                    setIsAdditionModalOpen(false);
+                    setEditingAddition(null);
+                }}
                 onSubmit={handleAddAddition}
                 title="Add Price Addition to Project"
                 entityName={project.name}
+                editData={editingAddition}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteAdditionModalOpen}
+                onClose={() => {
+                    setIsDeleteAdditionModalOpen(false);
+                    setDeleteAdditionTarget(null);
+                }}
+                onConfirmDelete={handleConfirmDeleteAddition}
+                itemName={deleteAdditionTarget ? `addition of ${formatPKRCurrency(deleteAdditionTarget.amount.toString())}` : 'this addition'}
+                itemType="Price Addition"
+                isInactive={true}
             />
 
             <Notification
