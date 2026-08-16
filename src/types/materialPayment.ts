@@ -3,6 +3,7 @@ export interface MaterialPayment {
   project: string;
   materialDetail: string;
   materialProvider: string;
+  supplier?: string | { _id: string; companyName: string; };
   MaterialQuantity: number;
   MaterialRate: number;
   totalAmount: number;
@@ -30,6 +31,7 @@ export interface MaterialPaymentFormErrors {
   project?: string;
   materialDetail?: string;
   materialProvider?: string;
+  supplier?: string;
   MaterialQuantity?: string;
   MaterialRate?: string;
   totalAmount?: string;

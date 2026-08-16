@@ -1,58 +1,58 @@
 import React, { useState } from 'react';
-import { ClientsList } from './ClientsList';
+import { SuppliersList } from './SuppliersList';
 import { useNavigate } from 'react-router-dom';
-import { ClientModal } from './ClientModal';
-import { Client } from '../types/client';
+import { SupplierModal } from './SupplierModal';
+import { Supplier } from '../types/supplier';
 
 type ViewMode = 'list' | 'add' | 'edit' | 'view';
 
-export const ClientsManagement: React.FC = () => {
+export const SuppliersManagement: React.FC = () => {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const handleViewClient = (client: Client) => {
-        setSelectedClient(client);
+    const handleViewSupplier = (supplier: Supplier) => {
+        setSelectedSupplier(supplier);
         setViewMode('view');
     };
 
-    const handleEditClient = (client: Client) => {
-        setSelectedClient(client);
+    const handleEditSupplier = (supplier: Supplier) => {
+        setSelectedSupplier(supplier);
         setViewMode('edit');
     };
 
-    const handleAddClient = () => {
+    const handleAddSupplier = () => {
         navigate('/dashboard/users/add');
     };
 
     const handleCloseModal = () => {
-        setSelectedClient(null);
+        setSelectedSupplier(null);
         setViewMode('list');
     };
 
-    const handleClientSaved = (client: Client) => {
-        setSelectedClient(null);
+    const handleSupplierSaved = (supplier: Supplier) => {
+        setSelectedSupplier(null);
         setViewMode('list');
         setRefreshTrigger(prev => prev + 1);
     };
 
     return (
         <>
-            <ClientsList
-                onViewClient={handleViewClient}
-                onEditClient={handleEditClient}
-                onAddClient={handleAddClient}
+            <SuppliersList
+                onViewSupplier={handleViewSupplier}
+                onEditSupplier={handleEditSupplier}
+                onAddSupplier={handleAddSupplier}
                 refreshTrigger={refreshTrigger}
             />
 
             {/* Add/Edit/View Modal */}
             {(viewMode === 'add' || viewMode === 'edit' || viewMode === 'view') && (
-                <ClientModal
+                <SupplierModal
                     isOpen={true}
                     onClose={handleCloseModal}
-                    onSave={handleClientSaved}
-                    client={selectedClient || undefined}
+                    onSave={handleSupplierSaved}
+                    supplier={selectedSupplier || undefined}
                     mode={viewMode}
                 />
             )}

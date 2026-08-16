@@ -1,0 +1,31 @@
+export const SUPPLIER_TYPES = [
+  { value: 'steel', label: 'Steel' },
+  { value: 'cement', label: 'Cement' },
+  { value: 'bricks', label: 'Bricks' },
+  { value: 'sand', label: 'Sand' },
+  { value: 'gravel', label: 'Gravel / Crush' },
+  { value: 'wood', label: 'Wood / Timber' },
+  { value: 'paint', label: 'Paint' },
+  { value: 'tiles', label: 'Tiles' },
+  { value: 'glass', label: 'Glass' },
+  { value: 'pipes', label: 'Pipes & Fittings' },
+  { value: 'electrical', label: 'Electrical Supplies' },
+  { value: 'plumbing', label: 'Plumbing Supplies' },
+  { value: 'hardware', label: 'Hardware & Fixtures' },
+  { value: 'roofing', label: 'Roofing Materials' },
+  { value: 'insulation', label: 'Insulation' },
+  { value: 'concrete', label: 'Ready-Mix Concrete' },
+  { value: 'marble', label: 'Marble & Granite' },
+  { value: 'aluminium', label: 'Aluminium & Profiles' },
+  { value: 'waterproofing', label: 'Waterproofing Materials' },
+  { value: 'other', label: 'Other (Specify)' },
+] as const;
+
+export const SUPPLIER_PAYMENT_TERMS = [
+  { value: 'immediate', label: 'Immediate / COD' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'bi-weekly', label: 'Bi-Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'net30', label: 'Net 30' },
+  { value: 'net60', label: 'Net 60' },
+] as const;

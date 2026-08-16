@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { Mail, Lock, User, Briefcase, Phone, MapPin, Building, CreditCard } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Phone, MapPin, Building, CreditCard, Package } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
@@ -8,14 +8,17 @@ import { Select } from '../ui/Select';
 import { createUser } from '../../services/userApi';
 import { createClient } from '../../services/clientApi';
 import { createContractor } from '../../services/contractorApi';
+import { createSupplier } from '../../services/supplierApi';
 
 const ROLE_OPTIONS = [
     { value: 'Admin', label: 'Admin' },
     { value: 'Contractor', label: 'Contractor' },
     { value: 'Client', label: 'Client' },
+    { value: 'Supplier', label: 'Supplier' },
 ];
 
 import { CONTRACTOR_TYPES } from '../../constants/contractor';
+import { SUPPLIER_TYPES, SUPPLIER_PAYMENT_TERMS } from '../../constants/supplier';
 
 const PAYMENT_TERMS_OPTIONS = [
     { value: 'daily', label: 'Daily' },
@@ -56,7 +59,18 @@ export const AddUser: React.FC = () => {
         address: '',
     });
 
-    const [errors, setErrors] = useState<{ userName?: string; email?: string; password?: string; role?: string }>({});
+    const [supplierData, setSupplierData] = useState({
+        companyName: '',
+        phoneNumber: '',
+        supplierType: '',
+        paymentTerms: 'monthly',
+        accountNumber: '',
+        address: '',
+    });
+
+    const [customSupplierType, setCustomSupplierType] = useState('');
+
+    const [errors, setErrors] = useState<{ userName?: string; email?: string; password?: string; role?: string; supplierCompanyName?: string; supplierType?: string }>({});
 
     const handleInputChange = (field: keyof typeof formData) => (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -79,8 +93,20 @@ export const AddUser: React.FC = () => {
         setContractorData(prev => ({ ...prev, [field]: e.target.value }));
     };
 
+    const handleSupplierChange = (field: keyof typeof supplierData) => (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
+        setSupplierData(prev => ({ ...prev, [field]: e.target.value }));
+        if (field === 'companyName' && errors.supplierCompanyName) {
+            setErrors(prev => ({ ...prev, supplierCompanyName: undefined }));
+        }
+        if (field === 'supplierType' && errors.supplierType) {
+            setErrors(prev => ({ ...prev, supplierType: undefined }));
+        }
+    };
+
     const validateForm = () => {
-        const newErrors: { userName?: string; email?: string; password?: string; role?: string } = {};
+        const newErrors: { userName?: string; email?: string; password?: string; role?: string; supplierCompanyName?: string; supplierType?: string } = {};
         if (!formData.userName.trim()) {
             newErrors.userName = 'Username is required';
         }
@@ -97,6 +123,20 @@ export const AddUser: React.FC = () => {
         if (!formData.role) {
             newErrors.role = 'Role is required';
         }
+
+        // Supplier-specific validations
+        if (formData.role === 'Supplier') {
+            if (!supplierData.companyName.trim()) {
+                newErrors.supplierCompanyName = 'Company name is required for suppliers';
+            }
+            if (!supplierData.supplierType) {
+                newErrors.supplierType = 'Supplier type is required';
+            }
+            if (supplierData.supplierType === 'other' && !customSupplierType.trim()) {
+                newErrors.supplierType = 'Please specify the supplier type';
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -115,7 +155,7 @@ export const AddUser: React.FC = () => {
                 throw new Error("User creation failed, could not retrieve user ID.");
             }
 
-            // 2. Create Client or Contractor Profile based on role
+            // 2. Create Client, Contractor or Supplier Profile based on role
             if (formData.role === 'Client') {
                 await createClient({
                     user: newUserId,
@@ -125,6 +165,15 @@ export const AddUser: React.FC = () => {
                 await createContractor({
                     user: newUserId,
                     ...contractorData
+                });
+            } else if (formData.role === 'Supplier') {
+                const finalSupplierType = supplierData.supplierType === 'other' 
+                    ? customSupplierType.trim() 
+                    : supplierData.supplierType;
+                await createSupplier({
+                    user: newUserId,
+                    ...supplierData,
+                    supplierType: finalSupplierType,
                 });
             }
 
@@ -138,6 +187,8 @@ export const AddUser: React.FC = () => {
             setFormData({ userName: '', email: '', password: '', role: 'Client' });
             setClientData({ paymentTerms: '', bankDetails: '', address: '', phoneNumber: '' });
             setContractorData({ companyName: '', phoneNumber: '', contractorType: 'general', paymentTerms: 'weekly', accountNumber: '', address: '' });
+            setSupplierData({ companyName: '', phoneNumber: '', supplierType: '', paymentTerms: 'monthly', accountNumber: '', address: '' });
+            setCustomSupplierType('');
         } catch (error: any) {
             setNotification({
                 show: true,
@@ -161,7 +212,7 @@ export const AddUser: React.FC = () => {
 
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Add New User</h1>
-                <p className="text-sm text-gray-500 mt-1">Create a user profile. Selecting Client or Contractor will show additional fields.</p>
+                <p className="text-sm text-gray-500 mt-1">Create a user profile. Selecting Client, Contractor, or Supplier will show additional fields.</p>
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sm:p-8">
@@ -296,6 +347,83 @@ export const AddUser: React.FC = () => {
                                     type="text"
                                     value={contractorData.address}
                                     onChange={handleContractorChange('address')}
+                                    placeholder="Enter address"
+                                    icon={<MapPin className="w-4 h-4 text-gray-400" />}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Dynamic Supplier Fields */}
+                    {formData.role === 'Supplier' && (
+                        <div className="bg-teal-50/50 p-6 rounded-xl border border-teal-100">
+                            <h2 className="text-lg font-semibold text-teal-900 mb-4 flex items-center gap-2">
+                                <Package className="w-5 h-5" /> Supplier Details
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Input
+                                    label="Company Name"
+                                    type="text"
+                                    value={supplierData.companyName}
+                                    onChange={handleSupplierChange('companyName')}
+                                    placeholder="Enter company name"
+                                    error={errors.supplierCompanyName}
+                                    required
+                                    icon={<Building className="w-4 h-4 text-gray-400" />}
+                                />
+                                <Input
+                                    label="Phone Number"
+                                    type="text"
+                                    value={supplierData.phoneNumber}
+                                    onChange={handleSupplierChange('phoneNumber')}
+                                    placeholder="Enter phone number"
+                                    icon={<Phone className="w-4 h-4 text-gray-400" />}
+                                />
+                                <div>
+                                    <Select
+                                        label="Supplier Type"
+                                        value={supplierData.supplierType}
+                                        onChange={handleSupplierChange('supplierType')}
+                                        options={[{ value: '', label: 'Select supplier type...' }, ...SUPPLIER_TYPES]}
+                                        error={errors.supplierType}
+                                        required
+                                    />
+                                </div>
+                                {supplierData.supplierType === 'other' && (
+                                    <Input
+                                        label="Specify Type"
+                                        type="text"
+                                        value={customSupplierType}
+                                        onChange={(e) => {
+                                            setCustomSupplierType(e.target.value);
+                                            if (errors.supplierType) {
+                                                setErrors(prev => ({ ...prev, supplierType: undefined }));
+                                            }
+                                        }}
+                                        placeholder="Enter custom supplier type"
+                                        error={errors.supplierType && supplierData.supplierType === 'other' ? errors.supplierType : undefined}
+                                        required
+                                    />
+                                )}
+                                <Select
+                                    label="Payment Terms"
+                                    value={supplierData.paymentTerms}
+                                    onChange={handleSupplierChange('paymentTerms')}
+                                    options={SUPPLIER_PAYMENT_TERMS}
+                                />
+                                <Input
+                                    label="Account Number"
+                                    type="text"
+                                    value={supplierData.accountNumber}
+                                    onChange={handleSupplierChange('accountNumber')}
+                                    placeholder="Enter account details"
+                                    icon={<CreditCard className="w-4 h-4 text-gray-400" />}
+                                />
+                                <Input
+                                    label="Address"
+                                    type="text"
+                                    value={supplierData.address}
+                                    onChange={handleSupplierChange('address')}
                                     placeholder="Enter address"
                                     icon={<MapPin className="w-4 h-4 text-gray-400" />}
                                 />

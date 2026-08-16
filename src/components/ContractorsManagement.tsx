@@ -10,6 +10,7 @@ export const ContractorsManagement: React.FC = () => {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const handleViewContractor = (contractor: Contractor) => {
         setSelectedContractor(contractor);
@@ -33,6 +34,7 @@ export const ContractorsManagement: React.FC = () => {
     const handleContractorSaved = (contractor: Contractor) => {
         setSelectedContractor(null);
         setViewMode('list');
+        setRefreshTrigger(prev => prev + 1);
     };
 
     return (
@@ -41,6 +43,7 @@ export const ContractorsManagement: React.FC = () => {
                 onViewContractor={handleViewContractor}
                 onEditContractor={handleEditContractor}
                 onAddContractor={handleAddContractor}
+                refreshTrigger={refreshTrigger}
             />
 
             {/* Add/Edit/View Modal */}

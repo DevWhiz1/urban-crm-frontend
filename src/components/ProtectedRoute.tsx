@@ -46,6 +46,8 @@ export const getRoleDashboard = (role: string): string => {
       return '/client/dashboard';
     case 'Contractor':
       return '/contractor/dashboard';
+    case 'Supplier':
+      return '/dashboard';
     default:
       return '/dashboard';
   }

@@ -893,7 +893,9 @@ export const ProjectPaymentSummary: React.FC = () => {
 
                                             {/* Provider */}
                                             <td className="py-3 px-4 whitespace-nowrap font-medium text-slate-700">
-                                                {material.materialProvider}
+                                                {typeof material.supplier === 'object' && material.supplier?.companyName 
+                                                    ? material.supplier.companyName 
+                                                    : material.materialProvider}
                                             </td>
 
                                             {/* Qty & Rate */}
@@ -1144,7 +1146,11 @@ export const ProjectPaymentSummary: React.FC = () => {
 
                                     <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100">
                                         <span className="text-slate-400 block font-medium">Provider / Supplier</span>
-                                        <span className="font-bold text-slate-900 text-sm">{selectedMaterialDetail.materialProvider}</span>
+                                        <span className="font-bold text-slate-900 text-sm">
+                                            {typeof selectedMaterialDetail.supplier === 'object' && selectedMaterialDetail.supplier?.companyName 
+                                                ? selectedMaterialDetail.supplier.companyName 
+                                                : selectedMaterialDetail.materialProvider}
+                                        </span>
                                     </div>
 
                                     <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100">

@@ -267,7 +267,11 @@ export default function AdminMaterialStatement({ onBack, data, dateRange }: Admi
                       <td className="py-2.5 px-2 whitespace-nowrap">{p.date ? new Date(p.date).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
                       <td className="py-2.5 px-2 capitalize">{p.transactionType || '—'}</td>
                       <td className="py-2.5 px-2 text-left">{p.materialDetail || '—'}</td>
-                      <td className="py-2.5 px-2 text-left">{p.materialProvider || '—'}</td>
+                      <td className="py-2.5 px-2 text-left">
+                        {typeof p.supplier === 'object' && p.supplier?.companyName 
+                          ? p.supplier.companyName 
+                          : (p.materialProvider || '—')}
+                      </td>
                       <td className="py-2.5 px-2">{p.MaterialQuantity || '0'} @ {p.MaterialRate != null ? `PKR ${p.MaterialRate.toLocaleString()}` : '0'}</td>
                       <td className="py-2.5 px-2 capitalize">{p.status || '—'}</td>
                       <td className="py-2.5 px-2 text-right">{p.amount != null ? (p.transactionType === 'return' ? `-PKR ${p.amount.toLocaleString()}` : `PKR ${p.amount.toLocaleString()}`) : '—'}</td>

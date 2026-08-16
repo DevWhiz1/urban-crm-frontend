@@ -23,11 +23,13 @@ import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
 import { MaterialExcelImportModal } from './MaterialExcelImportModal';
 import { createMaterialPayment, fetchProjectsForMaterial } from '../services/materialPaymentApi';
+import { fetchAllSuppliers } from '../services/supplierApi';
 import { uploadApi } from '../services/uploadApi';
 import { validateMaterialPaymentForm, hasMaterialPaymentErrors, formatPKRCurrency } from '../utils/materialPaymentValidation';
 import { getPaymentStatusColor } from '../utils/paymentValidation';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { MaterialPaymentFormData, MaterialPaymentFormErrors, MaterialPaymentNotificationState, MaterialProjectOption } from '../types/materialPayment';
+import { Supplier } from '../types/supplier';
 
 const MATERIAL_TYPES = [
     { value: 'Cement', label: 'Cement' },
@@ -45,6 +47,7 @@ const MATERIAL_TYPES = [
 
 export const MaterialPaymentForm: React.FC = () => {
     const [projects, setProjects] = useState<MaterialProjectOption[]>([]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [uploadingReceipt, setUploadingReceipt] = useState(false);
@@ -60,6 +63,7 @@ export const MaterialPaymentForm: React.FC = () => {
         project: '',
         materialDetail: '',
         materialProvider: '',
+        supplier: '',
         MaterialQuantity: '',
         MaterialRate: '',
         totalAmount: '',
@@ -74,7 +78,7 @@ export const MaterialPaymentForm: React.FC = () => {
     const [errors, setErrors] = useState<MaterialPaymentFormErrors>({});
 
     useEffect(() => {
-        loadProjects();
+        loadInitialData();
     }, []);
 
     // Auto-calculate total amount when quantity or rate changes
@@ -89,17 +93,21 @@ export const MaterialPaymentForm: React.FC = () => {
         }
     }, [formData.MaterialQuantity, formData.MaterialRate]);
 
-    const loadProjects = async () => {
+    const loadInitialData = async () => {
         try {
             setLoadingData(true);
-            const projectsData = await fetchProjectsForMaterial();
+            const [projectsData, suppliersData] = await Promise.all([
+                fetchProjectsForMaterial(),
+                fetchAllSuppliers()
+            ]);
             setProjects(projectsData);
+            setSuppliers(suppliersData);
 
             if (projectsData.length === 0) {
                 showNotification('error', 'No projects found. Please create projects first.');
             }
         } catch (error) {
-            showNotification('error', 'Failed to load projects. Please refresh the page.');
+            showNotification('error', 'Failed to load necessary data. Please refresh the page.');
         } finally {
             setLoadingData(false);
         }
@@ -141,6 +149,7 @@ export const MaterialPaymentForm: React.FC = () => {
                 project: '',
                 materialDetail: '',
                 materialProvider: '',
+                supplier: '',
                 MaterialQuantity: '',
                 MaterialRate: '',
                 totalAmount: '',
@@ -165,6 +174,7 @@ export const MaterialPaymentForm: React.FC = () => {
             project: '',
             materialDetail: '',
             materialProvider: '',
+            supplier: '',
             MaterialQuantity: '',
             MaterialRate: '',
             totalAmount: '',
@@ -199,6 +209,11 @@ export const MaterialPaymentForm: React.FC = () => {
             value: project._id,
             label: `${project.name} (${project.projectCode}) - ${project.status}`
         }));
+
+    const supplierOptions = [
+        { value: '', label: 'Select a supplier...' },
+        ...suppliers.map(s => ({ value: s._id, label: s.companyName }))
+    ];
 
     const selectedProject = projects.find(p => p._id === formData.project);
 
@@ -331,12 +346,19 @@ export const MaterialPaymentForm: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <Input
-                                        label="Material Provider"
-                                        value={formData.materialProvider}
-                                        onChange={handleInputChange('materialProvider')}
-                                        error={errors.materialProvider}
-                                        placeholder="Enter supplier/vendor name"
+                                    <Select
+                                        label="Supplier / Vendor"
+                                        options={supplierOptions}
+                                        value={formData.supplier || ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const selectedSupplier = suppliers.find(s => s._id === val);
+                                            setFormData(prev => ({ 
+                                                ...prev, 
+                                                supplier: val,
+                                                materialProvider: selectedSupplier ? selectedSupplier.companyName : ''
+                                            }));
+                                        }}
                                     />
                                 </div>
                             </div>
