@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Notification } from '../ui/Notification';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRoleDashboard } from '../ProtectedRoute';
+import { getRoleDashboard } from '../shared/ProtectedRoute';
 
 export const Login: React.FC = () => {
   const { user, login } = useAuth();
