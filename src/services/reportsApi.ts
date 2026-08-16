@@ -14,6 +14,7 @@ export interface ProjectReport {
     otherExpenses: number;
     pendingAmount: number;
     netVolume: number;
+    expectedProfit: number;
   };
   projects: Array<{
     _id: string;
@@ -32,7 +33,14 @@ export interface ProjectReport {
     otherExpenses?: number;
     pendingAmount?: number;
     netVolume?: number;
+    expectedProfit?: number;
   }>;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export interface ContractorReport {
@@ -127,6 +135,8 @@ export interface ReportFilters {
   isActive?: boolean;
   paymentType?: string;
   projectIds?: string[];
+  page?: number;
+  limit?: number;
 }
 
 // Get project reports
@@ -216,3 +226,4 @@ export const getPaymentAnalytics = async (period: string = 'monthly'): Promise<P
     throw new Error('Failed to load payment analytics');
   }
 };
+
