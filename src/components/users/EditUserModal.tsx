@@ -17,6 +17,7 @@ const ROLE_OPTIONS = [
     { value: 'Admin', label: 'Admin' },
     { value: 'Contractor', label: 'Contractor' },
     { value: 'Client', label: 'Client' },
+    { value: 'Supplier', label: 'Supplier' },
 ];
 
 const STATUS_OPTIONS = [

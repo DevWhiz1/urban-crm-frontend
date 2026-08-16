@@ -28,16 +28,19 @@ interface ClientsListProps {
     onViewClient: (client: Client) => void;
     onEditClient: (client: Client) => void;
     onAddClient: () => void;
+    refreshTrigger?: number;
 }
 
 export const ClientsList: React.FC<ClientsListProps> = ({
     onViewClient,
     onEditClient,
-    onAddClient
+    onAddClient,
+    refreshTrigger = 0
 }) => {
     const [clients, setClients] = useState<Client[]>([]);
     const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [initialLoad, setInitialLoad] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -63,7 +66,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
 
     useEffect(() => {
         loadClients();
-    }, [page, debouncedSearch, statusFilter]);
+    }, [page, debouncedSearch, statusFilter, refreshTrigger]);
 
     const loadClients = async () => {
         try {
@@ -83,6 +86,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
             showNotification('error', 'Failed to load clients. Please try again.');
         } finally {
             setLoading(false);
+            setInitialLoad(false);
         }
     };
 
@@ -127,7 +131,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
         return user && typeof user === 'object' ? user.status : 'Unknown';
     };
 
-    if (loading) {
+    if (initialLoad) {
         return (
             <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>

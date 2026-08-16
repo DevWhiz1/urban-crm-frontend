@@ -4,14 +4,18 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { updateMaterialPayment } from '../services/materialPaymentApi';
+import { fetchAllSuppliers } from '../services/supplierApi';
 import { uploadApi } from '../services/uploadApi';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
+import { Supplier } from '../types/supplier';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 
 interface Material {
     _id: string;
     project: string;
     materialDetail: string;
     materialProvider: string;
+    supplier?: string | { _id: string; companyName: string; };
     MaterialQuantity: number;
     MaterialRate: number;
     totalAmount: number;
@@ -38,6 +42,7 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
     const [formData, setFormData] = useState({
         materialDetail: '',
         materialProvider: '',
+        supplier: '',
         MaterialQuantity: '',
         MaterialRate: '',
         transactionType: 'purchase',
@@ -49,6 +54,13 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [uploadingReceipt, setUploadingReceipt] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchAllSuppliers().then(setSuppliers).catch(console.error);
+        }
+    }, [isOpen]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -70,6 +82,7 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
             setFormData({
                 materialDetail: material.materialDetail || '',
                 materialProvider: material.materialProvider || '',
+                supplier: typeof material.supplier === 'object' ? material.supplier?._id : (material.supplier || ''),
                 MaterialQuantity: material.MaterialQuantity?.toString() || '1',
                 MaterialRate: material.MaterialRate?.toString() || '0',
                 transactionType: material.transactionType || 'purchase',
@@ -157,11 +170,22 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
                                 onChange={handleInputChange('materialDetail')}
                                 required
                             />
-                            <Input
-                                label="Material Provider"
-                                value={formData.materialProvider}
-                                onChange={handleInputChange('materialProvider')}
-                                required
+                            <Select
+                                label="Supplier / Vendor"
+                                options={[
+                                    { value: '', label: 'Select a supplier...' },
+                                    ...suppliers.map(s => ({ value: s._id, label: s.companyName }))
+                                ]}
+                                value={formData.supplier || ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    const selectedSupplier = suppliers.find(s => s._id === val);
+                                    setFormData(prev => ({ 
+                                        ...prev, 
+                                        supplier: val,
+                                        materialProvider: selectedSupplier ? selectedSupplier.companyName : ''
+                                    }));
+                                }}
                             />
                         </div>
 
@@ -249,12 +273,17 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
 
                         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center">
                             <span className="text-sm font-medium text-slate-600">Calculated Total</span>
-                            <span className="text-lg font-bold text-teal-600">
-                                {isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) 
-                                    ? 'Rs 0.00' 
-                                    : `Rs ${(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)).toLocaleString()}`
-                                }
-                            </span>
+                            <div className="text-right">
+                                <span className="text-lg font-bold text-teal-600 block">
+                                    {isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) 
+                                        ? 'Rs 0.00' 
+                                        : `Rs ${(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)).toLocaleString()}`
+                                    }
+                                </span>
+                                <span className="text-sm text-gray-400">
+                                    {!isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) && formatCurrencyToWords(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate))}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">

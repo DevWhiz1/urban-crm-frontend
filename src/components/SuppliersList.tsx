@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import {
-    Wrench,
+    User,
     Plus,
     Search,
     Eye,
@@ -10,42 +10,41 @@ import {
     Phone,
     Mail,
     MapPin,
-    Building,
-    Star,
+    Truck,
     CheckCircle,
     XCircle,
-    User
+    Banknote,
+    CreditCard
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Notification } from './ui/Notification';
 import { DeleteConfirmationModal } from './ui/DeleteConfirmationModal';
-import { getContractorsPaginated, deleteContractor } from '../services/contractorApi';
+import { getSuppliersPaginated, deleteSupplier } from '../services/supplierApi';
 import { updateUser } from '../services/userApi';
-import { Contractor } from '../types/contractor';
-import { CONTRACTOR_TYPES } from '../constants/contractor';
+import { Supplier } from '../types/supplier';
 
-interface ContractorsListProps {
-    onViewContractor: (contractor: Contractor) => void;
-    onEditContractor: (contractor: Contractor) => void;
-    onAddContractor: () => void;
+interface SuppliersListProps {
+    onViewSupplier: (supplier: Supplier) => void;
+    onEditSupplier: (supplier: Supplier) => void;
+    onAddSupplier: () => void;
     refreshTrigger?: number;
 }
 
-export const ContractorsList: React.FC<ContractorsListProps> = ({
-    onViewContractor,
-    onEditContractor,
-    onAddContractor,
+export const SuppliersList: React.FC<SuppliersListProps> = ({
+    onViewSupplier,
+    onEditSupplier,
+    onAddSupplier,
     refreshTrigger = 0
 }) => {
-    const [contractors, setContractors] = useState<Contractor[]>([]);
-    const [filteredContractors, setFilteredContractors] = useState<Contractor[]>([]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
     const [loading, setLoading] = useState(false);
     const [initialLoad, setInitialLoad] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [contractorTypeFilter, setContractorTypeFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [typeFilter, setTypeFilter] = useState('All');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -56,7 +55,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
         message: ''
     });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [contractorToDelete, setContractorToDelete] = useState<Contractor | null>(null);
+    const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -67,34 +66,34 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
     }, [searchTerm]);
 
     useEffect(() => {
-        loadContractors();
-    }, [page, debouncedSearch, contractorTypeFilter, statusFilter, refreshTrigger]);
+        loadSuppliers();
+    }, [page, debouncedSearch, statusFilter, typeFilter, refreshTrigger]);
 
-    const loadContractors = async () => {
+    const loadSuppliers = async () => {
         try {
             setLoading(true);
             const params: any = { page, limit: pageSize };
             if (debouncedSearch) params.search = debouncedSearch;
-            if (contractorTypeFilter !== 'All') params.contractorType = contractorTypeFilter;
             if (statusFilter !== 'All') params.status = statusFilter;
+            if (typeFilter !== 'All') params.supplierType = typeFilter;
 
-            const { data, pagination } = await getContractorsPaginated(params);
-            setFilteredContractors(data);
-            setContractors(data); // Using filtered as main display array
+            const { data, pagination } = await getSuppliersPaginated(params);
+            setFilteredSuppliers(data);
+            setSuppliers(data);
             if (pagination) {
                 setTotalPages(pagination.totalPages || 1);
                 setTotalCount(pagination.total || 0);
             }
         } catch (error) {
-            showNotification('error', 'Failed to load contractors. Please try again.');
+            showNotification('error', 'Failed to load suppliers. Please try again.');
         } finally {
             setLoading(false);
             setInitialLoad(false);
         }
     };
 
-    const handleDeleteContractor = (contractor: Contractor) => {
-        setContractorToDelete(contractor);
+    const handleDeleteSupplier = (supplier: Supplier) => {
+        setSupplierToDelete(supplier);
         setIsDeleteModalOpen(true);
     };
 
@@ -114,38 +113,30 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
             : <XCircle className="w-4 h-4" />;
     };
 
-    const getUserName = (user: Contractor['user']) => {
+    const getUserName = (user: Supplier['user']) => {
         return user && typeof user === 'object' ? user.userName : 'Unknown User';
     };
 
-    const getUserEmail = (user: Contractor['user']) => {
+    const getUserEmail = (user: Supplier['user']) => {
         return user && typeof user === 'object' ? user.email : 'N/A';
     };
 
-    const getUserPhone = (user: Contractor['user']) => {
+    const getUserPhone = (user: Supplier['user']) => {
         return user && typeof user === 'object' ? user.phoneNumber : 'N/A';
     };
 
-    const getUserAddress = (user: Contractor['user']) => {
+    const getUserAddress = (user: Supplier['user']) => {
         return user && typeof user === 'object' ? user.address : 'N/A';
     };
 
-    const getUserStatus = (user: Contractor['user']) => {
+    const getUserStatus = (user: Supplier['user']) => {
         return user && typeof user === 'object' ? user.status : 'Unknown';
     };
-
-    const getContractorTypeLabel = (val?: string) => {
-        if (!val) return 'N/A';
-        const found = CONTRACTOR_TYPES.find(t => t.value === val);
-        return found ? found.label : val;
-    };
-
-
 
     if (initialLoad) {
         return (
             <div className="max-w-7xl mx-auto flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
             </div>
         );
     }
@@ -157,16 +148,16 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">All Contractors</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage contractor profiles, types, and assignment details</p>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">All Suppliers</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage supplier accounts and materials</p>
                 </div>
                 <Button
-                    onClick={onAddContractor}
+                    onClick={onAddSupplier}
                     variant="primary"
                     size="md"
                 >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add New Contractor
+                    Add New Supplier
                 </Button>
             </div>
 
@@ -178,20 +169,29 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                         <Input
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by company name, type, user name, or email..."
+                            placeholder="Search by company name, type, email..."
                             className="pl-10"
                         />
                     </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <select
-                            value={contractorTypeFilter}
-                            onChange={(e) => { setContractorTypeFilter(e.target.value); setPage(1); }}
+                            value={typeFilter}
+                            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
                             className="w-full md:w-auto px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                         >
                             <option value="All">All Types</option>
-                            {CONTRACTOR_TYPES.map(type => (
-                                <option key={type.value} value={type.value}>{type.label}</option>
-                            ))}
+                            <option value="Steel">Steel</option>
+                            <option value="Cement">Cement</option>
+                            <option value="Bricks">Bricks</option>
+                            <option value="Gravel">Gravel</option>
+                            <option value="Sand">Sand</option>
+                            <option value="Wood">Wood</option>
+                            <option value="Glass">Glass</option>
+                            <option value="Tiles">Tiles</option>
+                            <option value="Paint">Paint</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Other">Other</option>
                         </select>
                         <select
                             value={statusFilter}
@@ -206,18 +206,18 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                 </div>
             </div>
 
-                {/* Contractors Table */}
-                {filteredContractors.length === 0 ? (
+                {/* Suppliers Table */}
+                {filteredSuppliers.length === 0 ? (
                     <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                        <Wrench className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Contractors Found</h3>
+                        <Truck className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Suppliers Found</h3>
                         {totalCount === 0 && (
                             <Button
-                                onClick={onAddContractor}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={onAddSupplier}
+                                className="bg-green-600 hover:bg-green-700"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Add First Contractor
+                                Add First Supplier
                             </Button>
                         )}
                     </div>
@@ -228,13 +228,13 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Company & User
+                                            Supplier Info
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Contact Info
+                                            Contact Details
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type
+                                            Business Info
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
@@ -245,20 +245,19 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredContractors.map((contractor) => (
-                                        <tr key={contractor._id} className="hover:bg-gray-50">
+                                    {filteredSuppliers.map((supplier) => (
+                                        <tr key={supplier._id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                                                        <Building className="w-5 h-5 text-blue-600" />
+                                                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-4">
+                                                        <Truck className="w-5 h-5 text-amber-600" />
                                                     </div>
                                                     <div>
                                                         <div className="text-sm font-medium text-gray-900">
-                                                            {contractor.companyName || 'N/A'}
+                                                            {supplier.companyName || getUserName(supplier.user)}
                                                         </div>
-                                                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                                                            <User className="w-3 h-3" />
-                                                            {getUserName(contractor.user)}
+                                                        <div className="text-sm text-gray-500">
+                                                            User: {getUserName(supplier.user)}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -267,34 +266,40 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                 <div className="space-y-1">
                                                     <div className="flex items-center text-sm text-gray-900">
                                                         <Mail className="w-4 h-4 text-gray-400 mr-2" />
-                                                        {getUserEmail(contractor.user)}
+                                                        {getUserEmail(supplier.user)}
                                                     </div>
                                                     <div className="flex items-center text-sm text-gray-500">
                                                         <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                                                        {contractor.phoneNumber || getUserPhone(contractor.user) || 'N/A'}
+                                                        {supplier.phoneNumber || getUserPhone(supplier.user) || 'N/A'}
                                                     </div>
                                                     <div className="flex items-center text-sm text-gray-500">
                                                         <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                                                        {contractor.address || getUserAddress(contractor.user) || 'N/A'}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="space-y-2">
-                                                    <div className="text-sm text-gray-900 capitalize">
-                                                        {getContractorTypeLabel(contractor.contractorType)}
+                                                        {supplier.address || getUserAddress(supplier.user) || 'N/A'}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="space-y-1">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(getUserStatus(contractor.user) === 'Active')}`}>
-                                                        {getStatusIcon(getUserStatus(contractor.user) === 'Active')}
-                                                        {getUserStatus(contractor.user) === 'Active' ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                    <div className="text-xs text-gray-500">
-                                                        User: {getUserStatus(contractor.user)}
+                                                    <div className="flex items-center text-sm text-gray-900">
+                                                        <span className="font-semibold text-gray-700 mr-2">Type:</span>
+                                                        <span className="truncate max-w-32 capitalize">
+                                                            {supplier.supplierType || 'N/A'}
+                                                        </span>
                                                     </div>
+                                                    <div className="flex items-center text-sm text-gray-500">
+                                                        <Banknote className="w-4 h-4 text-gray-400 mr-2" />
+                                                        <span className="truncate max-w-32">
+                                                            {supplier.paymentTerms || 'N/A'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="space-y-1">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(getUserStatus(supplier.user) === 'Active')}`}>
+                                                        {getStatusIcon(getUserStatus(supplier.user) === 'Active')}
+                                                        {getUserStatus(supplier.user) === 'Active' ? 'Active' : 'Inactive'}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -302,7 +307,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => onViewContractor(contractor)}
+                                                        onClick={() => onViewSupplier(supplier)}
                                                         className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -310,7 +315,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => onEditContractor(contractor)}
+                                                        onClick={() => onEditSupplier(supplier)}
                                                         className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                                     >
                                                         <Edit className="w-4 h-4" />
@@ -318,7 +323,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handleDeleteContractor(contractor)}
+                                                        onClick={() => handleDeleteSupplier(supplier)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -336,7 +341,7 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                 {/* Pagination Controls */}
                 {totalCount > 0 && (
                     <div className="flex flex-col md:flex-row items-center justify-between mt-6 gap-4 text-sm bg-white p-4 rounded-xl border border-gray-200">
-                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} contractors</p>
+                        <p className="text-gray-600">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount} suppliers</p>
                         <div className="flex items-center gap-2">
                             <Button
                                 size="sm"
@@ -375,52 +380,6 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                     </div>
                 )}
 
-                {/* Stats Summary */}
-                {contractors.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-                        <div className="bg-white rounded-xl p-6 border border-gray-200">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Wrench className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">Total Contractors</p>
-                                    <p className="text-2xl font-bold text-gray-900">{contractors.length}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-gray-200">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <CheckCircle className="w-5 h-5 text-green-600" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">Active</p>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {contractors.filter(c => getUserStatus(c.user) === 'Active').length}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-gray-200">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <XCircle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">Inactive</p>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {contractors.filter(c => getUserStatus(c.user) !== 'Active').length}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                )}
-
                 <Notification
                     show={notification.show}
                     type={notification.type}
@@ -429,21 +388,21 @@ export const ContractorsList: React.FC<ContractorsListProps> = ({
                 />
                 <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
-                onClose={() => { setIsDeleteModalOpen(false); setContractorToDelete(null); }}
-                itemName={contractorToDelete?.companyName || 'Unknown'}
-                itemType="Contractor"
-                isInactive={contractorToDelete?.user && typeof contractorToDelete.user === 'object' ? contractorToDelete.user.status === 'InActive' : false}
+                onClose={() => { setIsDeleteModalOpen(false); setSupplierToDelete(null); }}
+                itemName={supplierToDelete?.companyName || (supplierToDelete?.user && typeof supplierToDelete.user === 'object' ? supplierToDelete.user.userName : 'Unknown')}
+                itemType="Supplier"
+                isInactive={supplierToDelete?.user && typeof supplierToDelete.user === 'object' ? supplierToDelete.user.status === 'InActive' : false}
                 onConfirmDeactivate={async () => {
-                    if (!contractorToDelete || typeof contractorToDelete.user !== 'object') return;
-                    await updateUser(contractorToDelete.user._id, { status: 'InActive' });
-                    setNotification({ show: true, type: 'success', message: 'Contractor deactivated successfully' });
-                    loadContractors();
+                    if (!supplierToDelete || typeof supplierToDelete.user !== 'object') return;
+                    await updateUser(supplierToDelete.user._id, { status: 'InActive' });
+                    setNotification({ show: true, type: 'success', message: 'Supplier deactivated successfully' });
+                    loadSuppliers();
                 }}
                 onConfirmDelete={async () => {
-                    if (!contractorToDelete) return;
-                    await deleteContractor(contractorToDelete._id);
-                    setContractors(prev => prev.filter(c => c._id !== contractorToDelete._id));
-                    setNotification({ show: true, type: 'success', message: 'Contractor permanently deleted' });
+                    if (!supplierToDelete) return;
+                    await deleteSupplier(supplierToDelete._id);
+                    setSuppliers(prev => prev.filter(s => s._id !== supplierToDelete._id));
+                    setNotification({ show: true, type: 'success', message: 'Supplier permanently deleted' });
                 }}
             />
         </div>

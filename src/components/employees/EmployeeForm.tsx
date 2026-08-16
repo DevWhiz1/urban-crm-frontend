@@ -9,6 +9,7 @@ import { Notification } from '../ui/Notification';
 import { employeeApi } from '../../services/employeeApi';
 import { uploadApi } from '../../services/uploadApi';
 import { validateEmployeeForm, hasEmployeeErrors } from '../../utils/employeeValidation';
+import { formatCurrencyToWords } from '../../utils/currencyFormatter';
 import { EmployeeFormData, EmployeeDocument } from '../../types/employee';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -342,6 +343,7 @@ export const EmployeeForm: React.FC = () => {
                                     value={formData.salary?.toString()}
                                     onChange={handleInputChange('salary')}
                                     error={errors.salary}
+                                    helperText={formData.salary ? formatCurrencyToWords(formData.salary.toString()) : ''}
                                     placeholder="0.00"
                                 />
                                 <Select

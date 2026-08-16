@@ -19,7 +19,8 @@ import {
   Handshake,
   CreditCard,
   Briefcase,
-  Receipt
+  Receipt,
+  Truck
 } from 'lucide-react';
 
 interface MenuItem {
@@ -87,6 +88,15 @@ const allMenuItems: MenuItem[] = [
     roles: ['Admin'],
     children: [
       { id: 'list-clients', label: 'All Clients', icon: List, path: '/dashboard/clients', roles: ['Admin'] },
+    ],
+  },
+  {
+    id: 'suppliers',
+    label: 'Suppliers',
+    icon: Truck,
+    roles: ['Admin'],
+    children: [
+      { id: 'list-suppliers', label: 'All Suppliers', icon: List, path: '/dashboard/suppliers', roles: ['Admin'] },
     ],
   },
   {

@@ -151,6 +151,7 @@ export const UsersList: React.FC = () => {
                             <option value="Admin">Admin</option>
                             <option value="Contractor">Contractor</option>
                             <option value="Client">Client</option>
+                            <option value="Supplier">Supplier</option>
                         </select>
                         <select
                             value={statusFilter}
@@ -199,6 +200,7 @@ export const UsersList: React.FC = () => {
                                         <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                                             user.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 
                                             user.role === 'Contractor' ? 'bg-orange-100 text-orange-700' : 
+                                            user.role === 'Supplier' ? 'bg-teal-100 text-teal-700' :
                                             'bg-emerald-100 text-emerald-700'
                                         }`}>
                                             {user.role}

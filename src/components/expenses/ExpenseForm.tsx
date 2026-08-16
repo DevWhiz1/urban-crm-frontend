@@ -11,6 +11,7 @@ import { uploadApi } from '../../services/uploadApi';
 import { fetchAllProjects } from '../../services/projectApi';
 import { employeeApi } from '../../services/employeeApi';
 import { validateExpenseForm, hasExpenseErrors } from '../../utils/expenseValidation';
+import { formatCurrencyToWords } from '../../utils/currencyFormatter';
 import { ExpenseFormData, ExpenseCategory } from '../../types/expense';
 import { useParams } from 'react-router-dom';
 
@@ -279,7 +280,7 @@ export const ExpenseForm: React.FC = () => {
         ...categories.map(c => ({ value: c._id, label: c.name })),
         { value: OTHER_CATEGORY_VALUE, label: 'Other (add new)' },
     ];
-    const projectOptions = projects.map(p => ({ value: p._id, label: p.title || p.name || 'Unnamed Project' }));
+    const projectOptions = projects.map(p => ({ value: p._id, label: `${p.title || p.name || 'Unnamed Project'} (${p.status || 'unknown'})` }));
     const employeeOptions = employees.map(e => ({ value: e._id, label: e.fullName }));
 
     return (
@@ -356,6 +357,7 @@ export const ExpenseForm: React.FC = () => {
                                     value={formData.amount?.toString()}
                                     onChange={handleInputChange('amount')}
                                     error={errors.amount}
+                                    helperText={formData.amount ? formatCurrencyToWords(formData.amount.toString()) : ''}
                                     placeholder="0.00"
                                 />
                             </div>

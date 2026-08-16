@@ -9,6 +9,7 @@ import { ContractorForm } from './components/ContractorForm';
 import { ClientForm } from './components/ClientForm';
 import { ContractorsManagement } from './components/ContractorsManagement';
 import { ClientsManagement } from './components/ClientsManagement';
+import { SuppliersManagement } from './components/SuppliersManagement';
 import { ProjectForm } from './components/ProjectForm';
 import { ProjectsManagement } from './components/ProjectsManagement';
 import { ProjectContractForm } from './components/ProjectContractForm';
@@ -61,6 +62,7 @@ function App() {
             <Route path="contractors" element={<ContractorsManagement />} />
             <Route path="clients/add" element={<ClientForm />} />
             <Route path="clients" element={<ClientsManagement />} />
+            <Route path="suppliers" element={<SuppliersManagement />} />
             <Route path="projects/add" element={<ProjectForm />} />
             <Route path="projects" element={<ProjectsManagement />} />
             <Route path="project-contracts/add" element={<ProjectContractForm />} />
