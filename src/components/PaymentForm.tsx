@@ -41,6 +41,7 @@ import {
   formatPKRCurrency,
   getPaymentStatusColor
 } from '../utils/paymentValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 import {
   PaymentFormData,
   PaymentFormErrors,
@@ -253,12 +254,12 @@ export const PaymentForm: React.FC = () => {
 
   const projectOptions = projects.map(project => ({
     value: project._id,
-    label: `${project.name} (${project.projectCode}) - ${project.status}`
+    label: `${project.name} (${project.status})`
   }));
 
   const contractorOptions = contractors.map(contractor => ({
     value: contractor._id,
-    label: `${contractor.companyName} - ${contractor.user.userName} (${contractor.contractorType})`
+    label: `${contractor.companyName} (${contractor.contractorType})`
   }));
 
   const contractOptions = filteredContracts.map(contract => ({
@@ -354,7 +355,7 @@ export const PaymentForm: React.FC = () => {
                                 ? "Loading contractors..." 
                                 : contractors.length === 0 
                                     ? "No contractors found for this project" 
-                                    : "Choose a contractor"
+                                    : "Search and select a contractor..."
                       }
                       disabled={loadingData || !formData.project || contractors.length === 0}
                     />
@@ -475,22 +476,16 @@ export const PaymentForm: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <Input
-                      label="Payment Amount ($)"
+                      label="Payment Amount"
                       type="number"
                       value={formData.amount}
                       onChange={handleInputChange('amount')}
                       error={errors.amount}
+                      helperText={formatCurrencyToWords(formData.amount)}
                       placeholder="Enter payment amount"
                       step="0.01"
                       required
                     />
-                    {formData.amount && !isNaN(parseFloat(formData.amount)) && (
-                      <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                        <p className="text-sm text-green-800 font-medium">
-                          Amount: {formatPKRCurrency(formData.amount)}
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   <Input

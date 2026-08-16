@@ -22,6 +22,7 @@ import {
 } from '../services/projectContractApi';
 import { validateProjectContractForm, hasProjectContractErrors, formatPKRCurrency } from '../utils/projectContractValidation';
 import { formatDateForInput } from '../utils/projectValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption, ProjectContract } from '../types/projectContract';
 
 interface ProjectContractModalProps {
@@ -177,12 +178,12 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
 
   const projectOptions = projects.map(project => ({
     value: project._id,
-    label: `${project.name} (${project.projectCode}) - ${project.status}`
+    label: `${project.name} (${project.status})`
   }));
 
   const contractorOptions = contractors.map(contractor => ({
     value: contractor._id,
-    label: `${contractor.companyName} - ${contractor.user.userName} (${contractor.contractorType})`
+    label: `${contractor.companyName} (${contractor.contractorType})`
   }));
 
   const selectedProject = projects.find(p => p._id === formData.project);
@@ -265,7 +266,7 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
                       onChange={handleInputChange('contractor')}
                       error={errors.contractor}
                       required
-                      placeholder={loadingData ? "Loading contractors..." : "Choose a contractor"}
+                      placeholder={loadingData ? "Loading contractors..." : "Search and select a contractor..."}
                       disabled={loadingData}
                     />
                     {selectedContractor && (
@@ -309,22 +310,16 @@ export const ProjectContractModal: React.FC<ProjectContractModalProps> = ({
 
                   <div>
                     <Input
-                      label="Total Amount (PKR)"
+                      label="Total Amount"
                       type="number"
                       value={formData.totalAmount}
                       onChange={handleInputChange('totalAmount')}
                       error={errors.totalAmount}
+                      helperText={formatCurrencyToWords(formData.totalAmount)}
                       placeholder="Enter contract amount"
                       step="0.01"
                       required
                     />
-                    {formData.totalAmount && !isNaN(parseFloat(formData.totalAmount)) && (
-                      <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                        <p className="text-sm text-green-800 font-medium">
-                          Base Amount: {formatPKRCurrency(formData.totalAmount)}
-                        </p>
-                      </div>
-                    )}
                     {contract?.additions && contract.additions.length > 0 && (
                       <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-1.5 text-xs">
                         <div className="flex items-center justify-between font-medium text-amber-900">

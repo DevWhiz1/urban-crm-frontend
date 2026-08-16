@@ -8,6 +8,7 @@ import { fetchAllSuppliers } from '../services/supplierApi';
 import { uploadApi } from '../services/uploadApi';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { Supplier } from '../types/supplier';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 
 interface Material {
     _id: string;
@@ -272,12 +273,17 @@ export const MaterialEditModal: React.FC<MaterialEditModalProps> = ({
 
                         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center">
                             <span className="text-sm font-medium text-slate-600">Calculated Total</span>
-                            <span className="text-lg font-bold text-teal-600">
-                                {isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) 
-                                    ? 'Rs 0.00' 
-                                    : `Rs ${(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)).toLocaleString()}`
-                                }
-                            </span>
+                            <div className="text-right">
+                                <span className="text-lg font-bold text-teal-600 block">
+                                    {isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) 
+                                        ? 'Rs 0.00' 
+                                        : `Rs ${(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)).toLocaleString()}`
+                                    }
+                                </span>
+                                <span className="text-sm text-gray-400">
+                                    {!isNaN(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate)) && formatCurrencyToWords(parseFloat(formData.MaterialQuantity) * parseFloat(formData.MaterialRate))}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">

@@ -7,6 +7,7 @@ import { Textarea } from './ui/Textarea';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { updatePayment } from '../services/paymentApi';
 import { uploadApi } from '../services/uploadApi';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 
 interface Payment {
     _id: string;
@@ -142,6 +143,7 @@ export const PaymentEditModal: React.FC<PaymentEditModalProps> = ({
                                 step="0.01"
                                 value={formData.amount}
                                 onChange={handleInputChange('amount')}
+                                helperText={formatCurrencyToWords(formData.amount)}
                                 required
                             />
                             <Input

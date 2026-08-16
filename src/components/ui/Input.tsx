@@ -4,6 +4,7 @@ import { AlertCircle } from 'lucide-react';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helperText?: React.ReactNode;
   required?: boolean;
   icon?: React.ReactNode;
   rightElement?: React.ReactNode;
@@ -12,6 +13,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input: React.FC<InputProps> = ({ 
   label, 
   error, 
+  helperText,
   required = false, 
   className = '', 
   type,
@@ -67,8 +69,13 @@ export const Input: React.FC<InputProps> = ({
           </div>
         )}
       </div>
+      {helperText && !error && (
+        <div className="mt-1 text-sm text-gray-400">
+          {helperText}
+        </div>
+      )}
       {error && (
-        <div className="flex items-center gap-2 text-red-600 text-sm">
+        <div className="flex items-center gap-2 text-red-600 text-sm mt-1">
           <AlertCircle size={16} />
           <span>{error}</span>
         </div>

@@ -26,6 +26,7 @@ import { createMaterialPayment, fetchProjectsForMaterial } from '../services/mat
 import { fetchAllSuppliers } from '../services/supplierApi';
 import { uploadApi } from '../services/uploadApi';
 import { validateMaterialPaymentForm, hasMaterialPaymentErrors, formatPKRCurrency } from '../utils/materialPaymentValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 import { getPaymentStatusColor } from '../utils/paymentValidation';
 import { PAYMENT_METHODS, PAYMENT_STATUSES } from '../constants/payment';
 import { MaterialPaymentFormData, MaterialPaymentFormErrors, MaterialPaymentNotificationState, MaterialProjectOption } from '../types/materialPayment';
@@ -207,7 +208,7 @@ export const MaterialPaymentForm: React.FC = () => {
     const projectOptions = projects
         .map(project => ({
             value: project._id,
-            label: `${project.name} (${project.projectCode}) - ${project.status}`
+            label: `${project.name} (${project.status})`
         }));
 
     const supplierOptions = [
@@ -402,17 +403,11 @@ export const MaterialPaymentForm: React.FC = () => {
                                             value={formData.totalAmount}
                                             onChange={handleInputChange('totalAmount')}
                                             placeholder="Auto-calculated"
+                                            helperText={formatCurrencyToWords(formData.totalAmount)}
                                             disabled
                                             className="bg-gray-50"
                                             required
                                         />
-                                        {formData.totalAmount && !isNaN(parseFloat(formData.totalAmount)) && (
-                                            <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                                                <p className="text-sm text-green-800 font-medium">
-                                                    Total: {formatPKRCurrency(formData.totalAmount)}
-                                                </p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 

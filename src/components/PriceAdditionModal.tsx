@@ -5,6 +5,7 @@ import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
 import { formatPKRCurrency } from '../utils/paymentValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 
 interface PriceAdditionModalProps {
   isOpen: boolean;
@@ -148,7 +149,7 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
           {/* Amount Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Amount (PKR) <span className="text-red-500">*</span>
+              Amount <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -165,15 +166,9 @@ export const PriceAdditionModal: React.FC<PriceAdditionModalProps> = ({
                 placeholder="e.g. 50,000"
                 className="pl-10"
                 error={errors.amount}
+                helperText={formatCurrencyToWords(amount)}
               />
             </div>
-            {amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && (
-              <div className="mt-2 flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-                <span className="text-xs font-semibold text-emerald-700">
-                  {formatPKRCurrency(amount)}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Reason Field */}

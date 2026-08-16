@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Filter, FileText, RotateCcw } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { Select } from '../ui/Select';
 
 // Components
 import ClientStatement from '../receipts/client/ClientStatement';
@@ -143,48 +144,40 @@ export const StatementGenerator: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Statement Type</label>
-              <select
+              <Select
                 value={statementType}
                 onChange={(e) => {
                   setStatementType(e.target.value);
                   setStatementData(null);
                 }}
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3 border"
-              >
-                <option value="client">Client Statement (Income)</option>
-                <option value="contractor">Contractor Statement (Expenses)</option>
-                <option value="material">Material Statement (Expenses)</option>
-                <option value="admin">Admin Summary (All)</option>
-              </select>
+                options={[
+                  { value: 'client', label: 'Client Statement (Income)' },
+                  { value: 'contractor', label: 'Contractor Statement (Expenses)' },
+                  { value: 'material', label: 'Material Statement (Expenses)' },
+                  { value: 'admin', label: 'Admin Summary (All)' }
+                ]}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-              <select
+              <Select
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3 border"
-              >
-                <option value="">-- Select Project --</option>
-                {projects.map(p => (
-                  <option key={p._id} value={p._id}>{p.name} ({p.projectCode})</option>
-                ))}
-              </select>
+                placeholder="-- Select Project --"
+                options={projects.map(p => ({ value: p._id, label: `${p.name} (${p.status})` }))}
+              />
             </div>
 
             {statementType === 'contractor' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contractor</label>
-                <select
+                <Select
                   value={selectedContractor}
                   onChange={(e) => setSelectedContractor(e.target.value)}
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3 border"
-                >
-                  <option value="">-- Select Contractor --</option>
-                  {filteredContractors.map(c => (
-                    <option key={c._id} value={c._id}>{c.user?.userName || c.companyName}</option>
-                  ))}
-                </select>
+                  placeholder="-- Select Contractor --"
+                  options={filteredContractors.map(c => ({ value: c._id, label: `${c.companyName} (${c.contractorType})` }))}
+                />
               </div>
             )}
 

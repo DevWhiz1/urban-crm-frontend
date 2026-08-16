@@ -24,6 +24,7 @@ import { Notification } from './ui/Notification';
 import { createProject, updateProject, fetchBasicClients } from '../services/projectApi';
 import { PROJECT_CATEGORIES, PROJECT_TYPES, PROJECT_STATUSES } from '../constants/project';
 import { validateProjectForm, hasProjectErrors, calculateTotalCost, calculateTotalLabourCost, formatPKRCurrency, formatDateForInput } from '../utils/projectValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 import { ProjectFormData, ProjectFormErrors, ProjectNotificationState, Client, Project } from '../types/project';
 
 interface ProjectFormProps {
@@ -286,7 +287,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
     const clientOptions = clients.map(client => ({
         value: client._id,
-        label: `${client.user.userName} (${client.user.email})`
+        label: `${client.user.userName}`
     }));
 
     const isWithMaterial = formData.projectType === 'withMaterial';
@@ -458,16 +459,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                                     value={formData.totalCost}
                                                     onChange={handleInputChange('totalCost')}
                                                     placeholder="Auto-calculated"
+                                                    helperText={formatCurrencyToWords(formData.totalCost)}
                                                     disabled
                                                     className="bg-gray-50"
                                                 />
-                                                {formData.totalCost && !isNaN(parseFloat(formData.totalCost)) && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                                                        <p className="text-sm text-green-800 font-medium">
-                                                            Base Cost: {formatPKRCurrency(formData.totalCost)}
-                                                        </p>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                         {project?.additions && project.additions.length > 0 && (
@@ -511,16 +506,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                                                     value={formData.totalCost}
                                                     onChange={handleInputChange('totalCost')}
                                                     placeholder="Auto-calculated"
+                                                    helperText={formatCurrencyToWords(formData.totalCost)}
                                                     disabled
                                                     className="bg-gray-50"
                                                 />
-                                                {formData.totalCost && !isNaN(parseFloat(formData.totalCost)) && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                                                        <p className="text-sm text-green-800 font-medium">
-                                                            Calculated Total Cost: {formatPKRCurrency(formData.totalCost)}
-                                                        </p>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                         {project?.additions && project.additions.length > 0 && (

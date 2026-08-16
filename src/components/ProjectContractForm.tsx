@@ -21,6 +21,7 @@ import { Textarea } from './ui/Textarea';
 import { Notification } from './ui/Notification';
 import { createProjectContract, fetchProjects, fetchContractorsForContract } from '../services/projectContractApi';
 import { validateProjectContractForm, hasProjectContractErrors, formatPKRCurrency } from '../utils/projectContractValidation';
+import { formatCurrencyToWords } from '../utils/currencyFormatter';
 import { ProjectContractFormData, ProjectContractFormErrors, ProjectContractNotificationState, ProjectOption, ContractorOption } from '../types/projectContract';
 
 export const ProjectContractForm: React.FC = () => {
@@ -141,12 +142,12 @@ export const ProjectContractForm: React.FC = () => {
 
     const projectOptions = projects.map(project => ({
         value: project._id,
-        label: `${project.name} (${project.projectCode}) - ${project.status}`
+        label: `${project.name} (${project.status})`
     }));
 
     const contractorOptions = contractors.map(contractor => ({
         value: contractor._id,
-        label: `${contractor.companyName} - ${contractor.user?.userName ?? 'N/A'} (${contractor.contractorType})`
+        label: `${contractor.companyName} (${contractor.contractorType})`
     }));
 
     const selectedProject = projects.find(p => p._id === formData.project);
@@ -218,7 +219,7 @@ export const ProjectContractForm: React.FC = () => {
                                                         ? "Loading contractors..." 
                                                         : contractors.length === 0 
                                                             ? "No contractors found for this project" 
-                                                            : "Choose a contractor"
+                                                            : "Search and select a contractor..."
                                             }
                                             disabled={loadingData || !formData.project || contractors.length === 0}
                                         />
@@ -265,22 +266,16 @@ export const ProjectContractForm: React.FC = () => {
 
                                     <div>
                                         <Input
-                                            label="Total Amount (PKR)"
+                                            label="Total Amount"
                                             type="number"
                                             value={formData.totalAmount}
                                             onChange={handleInputChange('totalAmount')}
                                             error={errors.totalAmount}
+                                            helperText={formatCurrencyToWords(formData.totalAmount)}
                                             placeholder="Enter contract amount"
                                             step="0.01"
                                             required
                                         />
-                                        {formData.totalAmount && !isNaN(parseFloat(formData.totalAmount)) && (
-                                            <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                                                <p className="text-sm text-green-800 font-medium">
-                                                    Amount: {formatPKRCurrency(formData.totalAmount)}
-                                                </p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
