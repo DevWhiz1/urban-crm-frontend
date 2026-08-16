@@ -384,7 +384,8 @@ export const AddUser: React.FC = () => {
                                         label="Supplier Type"
                                         value={supplierData.supplierType}
                                         onChange={handleSupplierChange('supplierType')}
-                                        options={[{ value: '', label: 'Select supplier type...' }, ...SUPPLIER_TYPES]}
+                                        options={SUPPLIER_TYPES}
+                                        placeholder="Select supplier type..."
                                         error={errors.supplierType}
                                         required
                                     />
