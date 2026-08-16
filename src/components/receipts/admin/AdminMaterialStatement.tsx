@@ -93,8 +93,11 @@ export default function AdminMaterialStatement({ onBack, data, dateRange }: Admi
         </svg>
 
         {/* Header Content */}
-        <div className="relative z-10 pt-8 pl-12 flex justify-start">
+        <div className="relative z-10 pt-8 px-12 flex justify-between items-start">
           <Logo />
+          <div className="text-white/90 text-[13px] font-medium tracking-wide mt-2">
+            Page {pageIndex + 1} of {totalPages}
+          </div>
         </div>
       </header>
 
@@ -256,7 +259,6 @@ export default function AdminMaterialStatement({ onBack, data, dateRange }: Admi
                     <th className="py-2 px-1 font-bold">Material Detail</th>
                     <th className="py-2 px-1 font-bold">Provider</th>
                     <th className="py-2 px-1 font-bold">Qty & Rate</th>
-                    <th className="py-2 px-1 font-bold">Status</th>
                     <th className="py-2 px-1 font-bold text-right">Total Amount</th>
                   </tr>
                 </thead>
@@ -273,18 +275,17 @@ export default function AdminMaterialStatement({ onBack, data, dateRange }: Admi
                           : (p.materialProvider || '—')}
                       </td>
                       <td className="py-2.5 px-2">{p.MaterialQuantity || '0'} @ {p.MaterialRate != null ? `PKR ${p.MaterialRate.toLocaleString()}` : '0'}</td>
-                      <td className="py-2.5 px-2 capitalize">{p.status || '—'}</td>
                       <td className="py-2.5 px-2 text-right">{p.amount != null ? (p.transactionType === 'return' ? `-PKR ${p.amount.toLocaleString()}` : `PKR ${p.amount.toLocaleString()}`) : '—'}</td>
                     </tr>
                   ))}
                   {pageMaterials.length === 0 && (
                     <tr className="text-center">
-                      <td colSpan={8} className="px-2 py-4 border-b border-[#e5e7eb] italic text-gray-500">No material records found.</td>
+                      <td colSpan={7} className="px-2 py-4 border-b border-[#e5e7eb] italic text-gray-500">No material records found.</td>
                     </tr>
                   )}
                   {pageIndex === pages.length - 1 && (
                     <tr className="border-b-2 border-black font-bold">
-                      <td colSpan={7} className="py-3 px-2 text-right pr-12">Net Material Cost:</td>
+                      <td colSpan={6} className="py-3 px-2 text-right pr-12">Net Material Cost:</td>
                       <td className="py-3 px-2 text-right">{data?.summary?.netMaterialCost != null ? `PKR ${data.summary.netMaterialCost.toLocaleString()}` : '—'}</td>
                     </tr>
                   )}

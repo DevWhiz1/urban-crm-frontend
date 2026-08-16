@@ -93,8 +93,11 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
         </svg>
 
         {/* Header Content */}
-        <div className="relative z-10 pt-8 pl-12 flex justify-start">
+        <div className="relative z-10 pt-8 px-12 flex justify-between items-start">
           <Logo />
+          <div className="text-white/90 text-[13px] font-medium tracking-wide mt-2">
+            Page {pageIndex + 1} of {totalPages}
+          </div>
         </div>
       </header>
 
@@ -243,7 +246,6 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
                     <th className="py-2 px-1 font-bold">Type</th>
                     <th className="py-2 px-1 font-bold">Method</th>
                     <th className="py-2 px-1 font-bold">Description</th>
-                    <th className="py-2 px-1 font-bold">Status</th>
                     <th className="py-2 px-1 font-bold text-right">Amount</th>
                   </tr>
                 </thead>
@@ -257,18 +259,17 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
                       </td>
                       <td className="py-2.5 px-2 capitalize">{p.paymentMethod || '—'}</td>
                       <td className="py-2.5 px-2 text-left">{p.workDescription || p.notes || '—'}</td>
-                      <td className="py-2.5 px-2 capitalize">{p.status || '—'}</td>
                       <td className="py-2.5 px-2 text-right">{p.amount != null ? `PKR ${p.amount.toLocaleString()}` : '—'}</td>
                     </tr>
                   ))}
                   {pagePayments.length === 0 && (
                     <tr className="text-center">
-                      <td colSpan={7} className="px-2 py-4 border-b border-[#e5e7eb] italic text-gray-500">No transactions found.</td>
+                      <td colSpan={6} className="px-2 py-4 border-b border-[#e5e7eb] italic text-gray-500">No transactions found.</td>
                     </tr>
                   )}
                   {pageIndex === pages.length - 1 && (
                     <tr className="border-b-2 border-black font-bold">
-                      <td colSpan={6} className="py-3 px-2 text-right pr-12">Total Received:</td>
+                      <td colSpan={5} className="py-3 px-2 text-right pr-12">Total Received:</td>
                       <td className="py-3 px-2 text-right">{data?.summary?.totalReceived != null ? `PKR ${data.summary.totalReceived.toLocaleString()}` : '—'}</td>
                     </tr>
                   )}

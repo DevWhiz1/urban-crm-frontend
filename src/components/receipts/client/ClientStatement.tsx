@@ -93,8 +93,11 @@ export default function ClientStatement({ onBack, data, dateRange }: ClientState
         </svg>
 
         {/* Header Content */}
-        <div className="relative z-10 pt-8 pl-12 flex justify-start">
+        <div className="relative z-10 pt-8 px-12 flex justify-between items-start">
           <Logo />
+          <div className="text-white/90 text-[13px] font-medium tracking-wide mt-2">
+            Page {pageIndex + 1} of {totalPages}
+          </div>
         </div>
       </header>
 
@@ -241,7 +244,6 @@ export default function ClientStatement({ onBack, data, dateRange }: ClientState
                     <th className="py-3 px-2 font-bold">Payment ID</th>
                     <th className="py-3 px-2 font-bold">Date</th>
                     <th className="py-3 px-2 font-bold">Method</th>
-                    <th className="py-3 px-2 font-bold">Status</th>
                     <th className="py-3 px-2 font-bold text-right">Amount</th>
                   </tr>
                 </thead>
@@ -251,18 +253,17 @@ export default function ClientStatement({ onBack, data, dateRange }: ClientState
                       <td className="py-2.5 px-2">{p.paymentId || '—'}</td>
                       <td className="py-2.5 px-2 whitespace-nowrap">{p.date ? new Date(p.date).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
                       <td className="py-2.5 px-2 capitalize">{p.paymentMethod || '—'}</td>
-                      <td className="py-2.5 px-2 capitalize">{p.status || '—'}</td>
                       <td className="py-2.5 px-2 text-right">{p.amount != null ? `PKR ${p.amount.toLocaleString()}` : '—'}</td>
                     </tr>
                   ))}
                   {pagePayments.length === 0 && (
                     <tr className="text-center">
-                      <td colSpan={5} className="px-2 py-4 border border-black border-collapse italic text-gray-500">No payments found in this period.</td>
+                      <td colSpan={4} className="px-2 py-4 border border-black border-collapse italic text-gray-500">No payments found in this period.</td>
                     </tr>
                   )}
                   {pageIndex === pages.length - 1 && (
                     <tr className="border-b-2 border-black font-bold">
-                      <td colSpan={4} className="py-3 px-2 text-right pr-12">Total Paid:</td>
+                      <td colSpan={3} className="py-3 px-2 text-right pr-12">Total Paid:</td>
                       <td className="py-3 px-2 text-right">{data?.summary?.totalPaid != null ? `PKR ${data.summary.totalPaid.toLocaleString()}` : '—'}</td>
                     </tr>
                   )}
