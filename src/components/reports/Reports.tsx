@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { 
-  Download, 
   Filter, 
   BarChart3,
   PieChart,
@@ -9,10 +8,10 @@ import {
   Wrench,
   CreditCard,
   Building,
-  Banknote,
   RefreshCw,
   Check,
-  ChevronDown
+  ChevronDown,
+  Banknote
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -47,8 +46,8 @@ export const Reports: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const [filters, setFilters] = useState<ReportFilters>({
-    startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
+    startDate: '',
+    endDate: '',
     projectIds: []
   });
 
@@ -145,6 +144,22 @@ export const Reports: React.FC = () => {
     });
   };
 
+  const handlePageChange = async (page: number) => {
+    const newFilters = { ...filters, page };
+    setFilters(newFilters);
+    try {
+      setLoading(true);
+      if (activeReport === 'projects') {
+        const projectData = await getProjectReports(newFilters);
+        setReportData(prev => ({ ...prev, projects: projectData }));
+      }
+    } catch (error) {
+      console.error('Failed to load page:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleAllProjects = () => {
     setFilters(prev => {
       if (prev.projectIds && prev.projectIds.length === projectList.length) {
@@ -155,9 +170,6 @@ export const Reports: React.FC = () => {
     });
   };
 
-  const exportReport = () => {
-    console.log('Export report:', activeReport, reportData[activeReport]);
-  };
 
   const reportTypes = [
     { id: 'projects', name: 'Projects', icon: Building },
@@ -171,16 +183,9 @@ export const Reports: React.FC = () => {
     <div className="max-w-7xl mx-auto space-y-4">
       <Breadcrumbs />
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Reports & Analytics</h1>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button onClick={exportReport} variant="outline" size="sm" className="bg-white border-gray-200 shadow-sm hover:bg-gray-50">
-            <Download className="w-4 h-4 mr-2 text-gray-500" />
-            Export
-          </Button>
         </div>
       </div>
 
@@ -355,7 +360,10 @@ export const Reports: React.FC = () => {
         ) : (
           <div>
             {activeReport === 'projects' && reportData.projects && (
-              <ProjectReportContent data={reportData.projects} />
+              <ProjectReportContent 
+                data={reportData.projects} 
+                onPageChange={handlePageChange}
+              />
             )}
             {activeReport === 'contractors' && reportData.contractors && (
               <ContractorReportContent data={reportData.contractors} />

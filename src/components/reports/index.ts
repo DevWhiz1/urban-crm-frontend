@@ -1,5 +1,5 @@
-export { ContractorReportContent } from './ContractorReportContent';
-export { ClientReportContent } from './ClientReportContent';
-export { PaymentReportContent } from './PaymentReportContent';
-export { FinancialReportContent } from './FinancialReportContent';
-export { ProjectReportContent } from './ProjectReportContent';
+export * from './ContractorReportContent';
+export * from './ClientReportContent';
+export * from './PaymentReportContent';
+export * from './FinancialReportContent';
+export * from './ProjectReportContent';
