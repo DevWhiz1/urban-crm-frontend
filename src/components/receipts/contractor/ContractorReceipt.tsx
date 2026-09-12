@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef } from 'react';
-import { MapPin, Phone, Mail, MousePointer2, Download, ArrowLeft } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { MapPin, Phone, Mail, MousePointer2, Download, ArrowLeft, Share2 } from 'lucide-react';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { ContractorPaymentDTO } from '../../../features/contractor/api/contractorPortalApi';
+import EmailStatementModal from '../../statements/EmailStatementModal';
+import apiClient from '../../../services/apiClient';
 
 const Logo = ({ isWatermark = false }: { isWatermark?: boolean }) => {
   return (
@@ -43,6 +46,7 @@ interface ContractorReceiptProps {
 
 export default function ContractorReceipt({ payment, project, contractorName, onBack, hideBackButton }: ContractorReceiptProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const formattedDate = new Date(payment.date).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
   const filename = `Contractor-Receipt-${contractorName.replace(/\s+/g, '-')}-${formattedDate}.pdf`;
@@ -68,6 +72,36 @@ export default function ContractorReceipt({ payment, project, contractorName, on
     }).save();
   };
 
+  const handleShare = async () => {
+    if (!printRef.current) return;
+    const blob = await html2pdf().set(getPdfOptions()).from(printRef.current).output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+    } else {
+      handleDownloadPdf();
+    }
+  };
+
+  const handleEmailSubmit = async (email: string, subject: string, message: string, recipientName: string) => {
+    if (!printRef.current) return;
+
+    const pdfBlob = await html2pdf().set(getPdfOptions()).from(printRef.current).output('blob');
+
+    const formData = new FormData();
+    formData.append('toEmail', email);
+    formData.append('subject', subject);
+    formData.append('message', message);
+    formData.append('recipientName', recipientName);
+    formData.append('pdfFile', pdfBlob, filename);
+
+    await apiClient.post('/api/email/send-statement', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#f3f4f680] flex items-center justify-center py-8 font-sans print:p-0 print:bg-transparent overflow-auto">
       
@@ -87,6 +121,20 @@ export default function ContractorReceipt({ payment, project, contractorName, on
       {/* Floating Actions */}
       <div className="fixed bottom-8 right-8 z-50 print:hidden flex flex-col gap-3">
         <button 
+          onClick={() => setIsEmailModalOpen(true)}
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 font-medium"
+        >
+          <Mail size={20} />
+          <span className="hidden sm:inline">Email</span>
+        </button>
+        <button 
+          onClick={handleShare}
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 font-medium"
+        >
+          <Share2 size={20} />
+          <span className="hidden sm:inline">Share</span>
+        </button>
+        <button 
           onClick={handleDownloadPdf}
           className="flex items-center justify-center gap-2 bg-[#926F34] hover:bg-[#7a5c2b] text-white px-6 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 font-medium"
         >
@@ -94,6 +142,15 @@ export default function ContractorReceipt({ payment, project, contractorName, on
           <span>Save PDF</span>
         </button>
       </div>
+
+      <EmailStatementModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        onSubmit={handleEmailSubmit}
+        defaultEmail={(payment as any)?.contractor?.user?.email || (payment as any)?.contractorEmail || ''}
+        defaultSubject={`Payment Receipt - ${project.name}`}
+        recipientName={contractorName}
+      />
 
       {/* A4 Paper Container */}
       <div ref={printRef} className="w-[210mm] h-[297mm] shrink-0 bg-[#ffffff] relative flex flex-col mx-auto overflow-hidden border border-[#0000001a] print:border-none shadow-2xl print:shadow-none">

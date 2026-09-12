@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { MapPin, Phone, Mail, MousePointer2, Download, ArrowLeft } from 'lucide-react';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import EmailStatementModal from '../../statements/EmailStatementModal';
+import apiClient from '../../../services/apiClient';
 
 const Logo = ({ isWatermark = false }: { isWatermark?: boolean }) => {
   return (
@@ -27,6 +29,7 @@ interface AdminStatementProps {
 
 export default function AdminStatement({ onBack, data, dateRange }: AdminStatementProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const pages: any[] = [];
   const payments = [...(data?.payments || [])];
@@ -66,6 +69,46 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
 
     // Restore visual gap for screen
     printRef.current.classList.add('gap-8');
+  };
+
+  const handleEmailSubmit = async (email: string, subject: string, message: string, recipientName: string) => {
+    if (!printRef.current) return;
+    
+    printRef.current.classList.remove('gap-8');
+
+    const opt = {
+      margin:       0,
+      filename:     'admin-statement.pdf',
+      image:        { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+    };
+
+    const expectedPages = pages.length;
+    const pdfBlob = await html2pdf().set(opt).from(printRef.current).toPdf().get('pdf').then((pdf: any) => {
+      const totalPages = pdf.internal.getNumberOfPages();
+      if (totalPages > expectedPages) {
+        for (let i = totalPages; i > expectedPages; i--) {
+          pdf.deletePage(i);
+        }
+      }
+      return pdf.output('blob');
+    });
+
+    printRef.current.classList.add('gap-8');
+
+    const formData = new FormData();
+    formData.append('toEmail', email);
+    formData.append('subject', subject);
+    formData.append('message', message);
+    formData.append('recipientName', recipientName);
+    formData.append('pdfFile', pdfBlob, 'admin-statement.pdf');
+
+    await apiClient.post('/api/email/send-statement', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
   };
 
   const PageTemplate = ({ children, showSummary = false, pageIndex, totalPages }: any) => (
@@ -218,7 +261,14 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
       )}
 
       {/* Floating Print Action */}
-      <div className="fixed bottom-8 right-8 z-50 print:hidden">
+      <div className="fixed bottom-8 right-8 z-50 print:hidden flex items-center gap-4">
+        <button 
+          onClick={() => setIsEmailModalOpen(true)}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 font-medium"
+        >
+          <Mail size={20} />
+          <span>Email Statement</span>
+        </button>
         <button 
           onClick={handleDownloadPdf}
           className="flex items-center gap-2 bg-[#926F34] hover:bg-[#7a5c2b] text-white px-6 py-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 font-medium"
@@ -227,6 +277,14 @@ export default function AdminStatement({ onBack, data, dateRange }: AdminStateme
           <span>Save as PDF</span>
         </button>
       </div>
+
+      <EmailStatementModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        onSubmit={handleEmailSubmit}
+        defaultEmail={data?.summary?.clientEmail || ''}
+        recipientName={data?.summary?.client || 'Valued Client'}
+      />
 
       {/* Pages Container */}
       <div ref={printRef} className="flex flex-col gap-8 print:gap-0">
